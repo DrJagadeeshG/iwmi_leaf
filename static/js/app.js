@@ -15,6 +15,11 @@ const state = {
     logic: 'AND',
     interventionConfig: null,
     chart: null,
+    currentBlock: null,
+    blockMiniMap: null,
+    blockFeature: null,
+    allBlocks: [],  // Store all block data for filtering
+    currentState: '',
 };
 
 // Feasibility colors
@@ -35,6 +40,7 @@ const FEASIBILITY_COLORS = {
 document.addEventListener('DOMContentLoaded', () => {
     initMap();
     initEventListeners();
+    loadLocationDropdowns();
 
     // Auto-select first intervention
     const interventionSelect = document.getElementById('intervention-select');
@@ -101,8 +107,8 @@ function onEachFeature(feature, layer) {
         Category: ${label}
     `);
 
-    // Click handler
-    layer.on('click', () => showBlockDetails(props));
+    // Click handler - pass the full feature for block detail view
+    layer.on('click', () => showBlockDetails(props, feature));
 
     // Hover effects
     layer.on('mouseover', () => {
@@ -118,11 +124,12 @@ function onEachFeature(feature, layer) {
 // =============================================================================
 
 function initEventListeners() {
+    // Location dropdowns
+    document.getElementById('state-select').addEventListener('change', handleStateChange);
+    document.getElementById('block-select').addEventListener('change', handleBlockChange);
+
     // Intervention change
     document.getElementById('intervention-select').addEventListener('change', handleInterventionChange);
-
-    // Variable group change
-    document.getElementById('group-select').addEventListener('change', handleGroupChange);
 
     // Logic toggle
     document.getElementById('logic-and').addEventListener('click', () => setLogic('AND'));
@@ -144,8 +151,112 @@ function initEventListeners() {
     // Export button
     document.getElementById('export-btn').addEventListener('click', exportCSV);
 
-    // Close block details
-    document.getElementById('close-details').addEventListener('click', hideBlockDetails);
+    // Back to overview link
+    document.getElementById('back-to-overview').addEventListener('click', (e) => {
+        e.preventDefault();
+        showOverviewView();
+    });
+}
+
+// =============================================================================
+// Location Dropdown Handling
+// =============================================================================
+
+async function loadLocationDropdowns() {
+    try {
+        const response = await fetch('/api/locations');
+        const data = await response.json();
+
+        state.allBlocks = data.blocks || [];
+
+        // Populate state dropdown
+        const stateSelect = document.getElementById('state-select');
+        const states = [...new Set(state.allBlocks.map(b => b.state).filter(s => s))].sort();
+        states.forEach(s => {
+            const option = document.createElement('option');
+            option.value = s;
+            option.textContent = s;
+            stateSelect.appendChild(option);
+        });
+
+        // Populate block dropdown with all blocks initially
+        const blockSelect = document.getElementById('block-select');
+        const blockNames = [...new Set(state.allBlocks.map(b => b.block_name).filter(b => b))].sort();
+        blockNames.forEach(b => {
+            const option = document.createElement('option');
+            option.value = b;
+            option.textContent = b;
+            blockSelect.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error('Error loading locations:', error);
+    }
+}
+
+function handleStateChange() {
+    const selectedState = document.getElementById('state-select').value;
+    state.currentState = selectedState;
+
+    // Update block dropdown
+    const blockSelect = document.getElementById('block-select');
+    blockSelect.innerHTML = '<option value="">All Blocks</option>';
+
+    let filteredBlocks = state.allBlocks;
+    if (selectedState) {
+        filteredBlocks = filteredBlocks.filter(b => b.state === selectedState);
+    }
+
+    const blockNames = [...new Set(filteredBlocks.map(b => b.block_name).filter(b => b))].sort();
+    blockNames.forEach(b => {
+        const option = document.createElement('option');
+        option.value = b;
+        option.textContent = b;
+        blockSelect.appendChild(option);
+    });
+
+    // Update map to show filtered blocks
+    filterMapByLocation();
+}
+
+function handleBlockChange() {
+    const selectedBlock = document.getElementById('block-select').value;
+
+    if (selectedBlock) {
+        // Find the block feature and show detail view
+        if (state.geojsonLayer) {
+            state.geojsonLayer.eachLayer(layer => {
+                const props = layer.feature.properties;
+                const blockName = props.Block_name || '';
+                if (blockName === selectedBlock) {
+                    showBlockDetailView(layer.feature);
+                }
+            });
+        }
+    } else {
+        showOverviewView();
+        filterMapByLocation();
+    }
+}
+
+function filterMapByLocation() {
+    if (!state.geojsonLayer) return;
+
+    state.geojsonLayer.eachLayer(layer => {
+        const props = layer.feature.properties;
+        let visible = true;
+
+        if (state.currentState) {
+            const blockState = props.State_name || props.STATE || props.state || '';
+            visible = visible && (blockState === state.currentState);
+        }
+
+        if (visible) {
+            layer.setStyle({ fillOpacity: 0.7 });
+        } else {
+            layer.setStyle({ fillOpacity: 0.1 });
+        }
+    });
 }
 
 // =============================================================================
@@ -186,13 +297,6 @@ async function handleInterventionChange() {
     } catch (error) {
         console.error('Error loading intervention config:', error);
     }
-}
-
-function handleGroupChange() {
-    // Reset intervention when group is selected
-    document.getElementById('intervention-select').value = '';
-    state.currentIntervention = null;
-    // TODO: Implement group-based filtering
 }
 
 function setLogic(logic) {
@@ -495,56 +599,187 @@ function updateActiveFilters(filters) {
 }
 
 // =============================================================================
+// View Switching
+// =============================================================================
+
+function showOverviewView() {
+    document.getElementById('overviewView').style.display = 'grid';
+    document.getElementById('blockDetailView').style.display = 'none';
+    state.currentBlock = null;
+
+    // Destroy mini map if exists
+    if (state.blockMiniMap) {
+        state.blockMiniMap.remove();
+        state.blockMiniMap = null;
+    }
+}
+
+function showBlockDetailView(feature) {
+    document.getElementById('overviewView').style.display = 'none';
+    document.getElementById('blockDetailView').style.display = 'block';
+
+    const props = feature.properties;
+    state.currentBlock = props.Block_name || '';
+    state.blockFeature = feature;
+
+    renderBlockDetail(feature);
+    initBlockMiniMap(feature);
+}
+
+// =============================================================================
 // Block Details
 // =============================================================================
 
-function showBlockDetails(props) {
-    const panel = document.getElementById('block-details');
-    const nameEl = document.getElementById('block-name');
-    const contentEl = document.getElementById('block-content');
-
-    nameEl.textContent = props.Block_name || 'Unknown Block';
-
-    // Build content
-    const feasibility = props.feasibility !== null ? props.feasibility.toFixed(1) : 'N/A';
-    const color = props.feasibility_color || FEASIBILITY_COLORS.no_data;
-
-    let html = `
-        <div class="detail-item">
-            <div class="label">Feasibility</div>
-            <div class="value">
-                <span class="feasibility-badge" style="background: ${color}">
-                    ${feasibility}%
-                </span>
-            </div>
-        </div>
-        <div class="detail-item">
-            <div class="label">Category</div>
-            <div class="value">${props.feasibility_label || 'No Data'}</div>
-        </div>
-    `;
-
-    // Add filter variable values
-    if (state.currentFilters.length > 0) {
-        state.currentFilters.forEach(f => {
-            const value = props[f.column];
-            const displayValue = value !== null && value !== undefined ?
-                (typeof value === 'number' ? value.toFixed(2) : value) : 'N/A';
-            html += `
-                <div class="detail-item">
-                    <div class="label">${f.label}</div>
-                    <div class="value">${displayValue}</div>
-                </div>
-            `;
-        });
+function showBlockDetails(props, feature) {
+    if (feature) {
+        showBlockDetailView(feature);
     }
-
-    contentEl.innerHTML = html;
-    panel.classList.remove('hidden');
 }
 
-function hideBlockDetails() {
-    document.getElementById('block-details').classList.add('hidden');
+function renderBlockDetail(feature) {
+    const props = feature.properties;
+
+    // Update header
+    const blockName = props.Block_name || 'Unknown Block';
+    document.getElementById('detail-block-name').textContent = blockName;
+
+    // State name - hardcoded as Assam since shapefile only has STATE_ID
+    document.getElementById('detail-block-location').textContent = 'Assam';
+
+    // Update feasibility badge
+    const badgesContainer = document.getElementById('feasibility-badges');
+    const feasibility = props.feasibility !== null ? props.feasibility.toFixed(1) : 'N/A';
+    const label = props.feasibility_label || 'No Data';
+    const color = props.feasibility_color || FEASIBILITY_COLORS.no_data;
+    const badgeClass = label.toLowerCase().replace(' ', '-');
+
+    badgesContainer.innerHTML = `
+        <span class="feasibility-badge ${badgeClass}" style="background: ${color}">
+            <i class="bi bi-check-circle"></i> ${label} (${feasibility}%)
+        </span>
+    `;
+
+    // Render metrics by category
+    renderLandAgriMetrics(props);
+    renderWaterMetrics(props);
+    renderInfrastructureMetrics(props);
+    renderLivestockMetrics(props);
+    renderPeopleMetrics(props);
+}
+
+function renderLandAgriMetrics(props) {
+    const container = document.getElementById('land-agri-metrics');
+    const metrics = [
+        { key: 'J', label: 'Cropping Intensity', unit: '%', icon: 'bi-graph-up-arrow' },
+        { key: 'AD', label: 'Paddy Area', unit: '%', icon: 'bi-flower1' },
+        { key: 'AF', label: 'Horticulture Area', unit: '%', icon: 'bi-tree' },
+        { key: 'AG', label: 'Crop Diversification Index', unit: '', icon: 'bi-diagram-3' },
+        { key: 'AE', label: 'Fodder Crop Area', unit: '%', icon: 'bi-flower2' },
+        { key: 'A', label: 'Farming Households', unit: '%', icon: 'bi-house' },
+    ];
+    renderMetricItems(container, props, metrics);
+}
+
+function renderWaterMetrics(props) {
+    const container = document.getElementById('water-metrics');
+    const metrics = [
+        { key: 'C', label: 'Cultivated Area Irrigated', unit: '%', icon: 'bi-droplet' },
+        { key: 'BC', label: 'Groundwater Development', unit: '%', icon: 'bi-moisture' },
+        { key: 'AK', label: 'Micro-irrigation Coverage', unit: '%', icon: 'bi-water' },
+        { key: 'E', label: 'Community Rainwater Harvesting', unit: '%', icon: 'bi-cloud-rain' },
+        { key: 'B', label: 'Source of Irrigation', unit: '', icon: 'bi-droplet-half' },
+    ];
+    renderMetricItems(container, props, metrics);
+}
+
+function renderInfrastructureMetrics(props) {
+    const container = document.getElementById('infrastructure-metrics');
+    const metrics = [
+        { key: 'X', label: 'Regular Markets/Mandies', unit: '%', icon: 'bi-shop' },
+        { key: 'V', label: 'Banks (<5 km)', unit: '%', icon: 'bi-bank' },
+        { key: 'I', label: 'Custom Hiring Centre', unit: '%', icon: 'bi-tools' },
+        { key: 'K', label: 'Soil Testing Centres', unit: '%', icon: 'bi-clipboard-check' },
+        { key: 'G', label: 'Warehouse for Food Grain', unit: '%', icon: 'bi-box-seam' },
+        { key: 'S', label: 'All Weather Road', unit: '%', icon: 'bi-signpost-split' },
+    ];
+    renderMetricItems(container, props, metrics);
+}
+
+function renderLivestockMetrics(props) {
+    const container = document.getElementById('livestock-metrics');
+    const metrics = [
+        { key: 'BF', label: 'Cattle Density', unit: 'per 100 ha', icon: 'bi-piggy-bank' },
+        { key: 'BG', label: 'Buffalo Density', unit: 'per 100 ha', icon: 'bi-piggy-bank' },
+        { key: 'M', label: 'Livestock Extension', unit: '%', icon: 'bi-building' },
+        { key: 'N', label: 'Milk Collection Facility', unit: '%', icon: 'bi-cup-straw' },
+        { key: 'O', label: 'Veterinary Clinic', unit: '%', icon: 'bi-hospital' },
+    ];
+    renderMetricItems(container, props, metrics);
+}
+
+function renderPeopleMetrics(props) {
+    const container = document.getElementById('people-metrics');
+    const metrics = [
+        { key: 'Z', label: 'Households in SHGs', unit: '%', icon: 'bi-people' },
+        { key: 'F', label: 'Villages with FPOs/PACs', unit: '%', icon: 'bi-building' },
+        { key: 'AB', label: 'Households in Producer Groups', unit: '%', icon: 'bi-diagram-2' },
+        { key: 'AC', label: 'SHGs Accessing Bank Loans', unit: '%', icon: 'bi-cash-coin' },
+        { key: 'W', label: 'Jan Dhan Accounts', unit: '%', icon: 'bi-credit-card' },
+        { key: 'BP', label: 'Literacy Rate', unit: '%', icon: 'bi-book' },
+    ];
+    renderMetricItems(container, props, metrics);
+}
+
+function renderMetricItems(container, props, metrics) {
+    let html = '';
+    metrics.forEach(m => {
+        const value = props[m.key];
+        let displayValue = 'N/A';
+        if (value !== null && value !== undefined && value !== '') {
+            displayValue = typeof value === 'number' ? value.toFixed(2) : value;
+        }
+        html += `
+            <div class="metric-item">
+                <span class="metric-label">
+                    <i class="bi ${m.icon}"></i>
+                    ${m.label}
+                </span>
+                <span class="metric-value">${displayValue}<span class="metric-unit">${m.unit}</span></span>
+            </div>
+        `;
+    });
+    container.innerHTML = html || '<p class="no-data">No data available</p>';
+}
+
+function initBlockMiniMap(feature) {
+    // Destroy existing mini map
+    if (state.blockMiniMap) {
+        state.blockMiniMap.remove();
+    }
+
+    // Create new mini map
+    state.blockMiniMap = L.map('block-mini-map', {
+        zoomControl: false,
+        attributionControl: false,
+    });
+
+    // Add tile layer
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+        maxZoom: 18,
+    }).addTo(state.blockMiniMap);
+
+    // Add block boundary
+    const blockLayer = L.geoJSON(feature, {
+        style: {
+            fillColor: '#0297A6',
+            color: '#28537D',
+            weight: 2,
+            fillOpacity: 0.3,
+        }
+    }).addTo(state.blockMiniMap);
+
+    // Fit bounds
+    state.blockMiniMap.fitBounds(blockLayer.getBounds(), { padding: [20, 20] });
 }
 
 // =============================================================================

@@ -64,6 +64,35 @@ def api_blocks():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/locations')
+def api_locations():
+    """Return list of states and blocks for dropdowns."""
+    try:
+        gdf = load_shapefile()
+
+        blocks = []
+        for _, row in gdf.iterrows():
+            # State name - hardcoded as Assam since shapefile only has STATE_ID
+            state_name = 'Assam'
+
+            # Block_name contains the block names
+            block_name = None
+            for col in ['Block_name', 'BLOCK', 'block', 'Block']:
+                if col in row and pd.notna(row[col]):
+                    block_name = str(row[col])
+                    break
+
+            if block_name:  # Only add if we have a block name
+                blocks.append({
+                    'state': state_name,
+                    'block_name': block_name,
+                })
+
+        return jsonify({'blocks': blocks})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/blocks/<block_id>')
 def api_block_detail(block_id):
     """Return single block details."""
