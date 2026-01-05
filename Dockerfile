@@ -26,17 +26,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code
 COPY . .
 
-# Copy data files from parent directory
-COPY ../4DSS_VAR_2.0.* ./data/
-COPY ../DSS_input2.csv ./data/
-
 # Set environment variables
 ENV FLASK_APP=app.py
 ENV FLASK_ENV=production
 ENV SHAPE_RESTORE_SHX=YES
 
 # Expose port
-EXPOSE 5000
+EXPOSE 10000
 
-# Run with gunicorn
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "--threads", "4", "--timeout", "120", "app:app"]
+# Run with gunicorn (Render uses PORT env variable)
+CMD gunicorn --bind 0.0.0.0:${PORT:-10000} --workers 2 --threads 4 --timeout 120 app:app
