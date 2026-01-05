@@ -9,8 +9,8 @@ import json
 from pathlib import Path
 from functools import lru_cache
 
-# Data directory - can be configured via environment
-DATA_DIR = Path(__file__).parent.parent  # Parent of leaf_flask
+# Data directory - inside leaf_flask/data/
+DATA_DIR = Path(__file__).parent / "data"
 
 
 @lru_cache(maxsize=1)
