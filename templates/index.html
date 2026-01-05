@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEAF DSS - Landscape Evaluation & Assessment Framework</title>
+    <link rel="icon" href="https://www.iwmi.org/wp-content/uploads/2025/06/iwmi-favicon-512x512-1.png">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-section">
+                <img src="{{ url_for('static', filename='images/iwmi_logo.png') }}" alt="IWMI Logo" class="logo" onerror="this.style.display='none'">
+                <div class="title-section">
+                    <h1>LEAF DSS</h1>
+                    <p>Landscape Evaluation & Assessment Framework</p>
+                </div>
+            </div>
+            <div class="logo-section">
+                <img src="{{ url_for('static', filename='images/cgiar_logo.png') }}" alt="CGIAR Logo" class="logo" onerror="this.style.display='none'">
+            </div>
+        </div>
+    </header>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <div class="filter-group">
+            <label for="intervention-select">Intervention</label>
+            <select id="intervention-select">
+                <option value="">Select Intervention</option>
+                {% for key, val in interventions.items() %}
+                <option value="{{ key }}">{{ val.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label for="group-select">Variable Group</label>
+            <select id="group-select">
+                <option value="">Select Variable Group</option>
+                {% for key, val in variable_groups.items() %}
+                <option value="{{ key }}">{{ val.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Logic</label>
+            <div class="logic-toggle">
+                <button id="logic-and" class="logic-btn active">AND</button>
+                <button id="logic-or" class="logic-btn">OR</button>
+            </div>
+        </div>
+
+        <div class="filter-group">
+            <button id="configure-btn" class="btn-primary"><i class="bi bi-sliders"></i> Configure</button>
+        </div>
+
+        <div class="filter-group">
+            <button id="export-btn" class="btn-export"><i class="bi bi-download"></i> Export CSV</button>
+        </div>
+    </div>
+
+    <!-- Configuration Modal -->
+    <div id="config-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modal-title">Configuration</h2>
+                <button id="modal-close" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body" id="config-form">
+                <!-- Dynamic content loaded here -->
+            </div>
+            <div class="modal-footer">
+                <button id="apply-config" class="btn-primary"><i class="bi bi-check-lg"></i> Apply</button>
+                <button id="cancel-config" class="btn-secondary"><i class="bi bi-x-lg"></i> Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Map Section (Left) -->
+        <section class="map-section">
+            <div class="map-header">
+                <h3><i class="bi bi-map"></i> Block Feasibility Map</h3>
+                <div class="legend-items" id="map-legend">
+                    <!-- Dynamic legend loaded by JS -->
+                </div>
+            </div>
+            <div id="map"></div>
+        </section>
+
+        <!-- Distribution Section (Middle) -->
+        <section class="distribution-section">
+            <h3><i class="bi bi-pie-chart"></i> Distribution</h3>
+            <div class="chart-container">
+                <canvas id="distribution-chart"></canvas>
+            </div>
+            <div class="chart-legend" id="chart-legend">
+                <!-- Dynamic legend loaded by JS -->
+            </div>
+        </section>
+
+        <!-- Filters Section (Right) -->
+        <section class="filters-section">
+            <div id="active-filters">
+                <p class="no-filters">Select an intervention to see filters</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Block Details Panel -->
+    <div id="block-details" class="block-details hidden">
+        <div class="block-details-header">
+            <h3 id="block-name">Block Name</h3>
+            <button id="close-details" class="modal-close">&times;</button>
+        </div>
+        <div class="block-details-content" id="block-content">
+            <!-- Dynamic content -->
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>LEAF DSS | IWMI - International Water Management Institute</p>
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>

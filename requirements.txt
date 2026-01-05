@@ -1,0 +1,16 @@
+# LEAF DSS - Flask Application Dependencies
+
+# Web Framework
+flask>=3.0.0
+flask-cors>=4.0.0
+gunicorn>=21.2.0
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+
+# Geospatial
+geopandas>=0.14.0
+shapely>=2.0.0
+pyproj>=3.6.0
+fiona>=1.9.0
