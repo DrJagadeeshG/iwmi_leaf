@@ -1,0 +1,80 @@
+﻿Cluster,I_variable,range_min,range_max,Preference,I_weight,I_label,I_description,group,subgroup,variable,Weight,label,Description
+Organic Farming,AD,20,60,moderate,1,% Paddy Area,Moderate paddy area allows diversification and reduces chemical-intensive dependency.,Land & Agri,Cropping system,A,1,Farming Households (%),Share of households with farming as major activity
+Organic Farming,AF,15,40.67,higher,1,% Area Under Horticulture,Horticulture crops yield higher organic premiums and support income growth.,Water,Irrigation,B,1,Source of irrigation,Main source of irrigation in village
+Organic Farming,C,33,487.9,higher,1,Cultivated area irrigated (%),Organic yields are more sensitive to moisture stress,Water,Irrigation,C,1,Cultivated area irrigated (%),Area irrigated as per cent of gross cropped area
+Organic Farming,M,25,97.9,higher,1,% villages with Livestock extension,Livestock extension,Infrastructure,Agricutlure-Input,D,1,% Villages with Govt Seed Centre (< 5 km),Villages having Government Seed Centre in village or within 5 kms (percent)
+Organic Farming,BF,0.5,0.98,higher,1,Cattle density (per 100 hectares),Livestock provides manure—critical for organic nutrient cycling.,Water,Irrigation,E,1,% villages with community rainwater harvesting system,Villages having Community rain water harvesting systems (percent)
+Organic Farming,BG,0.5,0.97,higher,1,Bufallow density (per 100 hectares),Livestock provides manure—critical for organic nutrient cycling.,People,Collectives,F,1,% villages with FPOs/PACs,Villages having Farmers Produce Organization (FPOs)/Primary Agriculture Cooperative Society (PACS) or both (percent)
+Organic Farming,Z,40,73.64,higher,1,% Households in SHGs,"High social mobilisation supports certification, collective action, and input preparation.",Infrastructure,Post Production/Market,G,1,% Villages with Warehouse for food grain storage (< 5 km),Villages having Warehouse for food grain storage in village or within 5 kms (percent)
+Organic Farming,AB,5,21.32,higher,1,% Households in Producer Groups,Producer groups strengthen aggregation and market linkages for organic produce.,Infrastructure,Post Production/Market,H,1,% Villages with primary processing facility (< 5 km),Villages having primary processing facility (percent) 
+Organic Farming,AC,25,92.54,higher,1,% SHGs Accessing Bank Loans,Financial access enables investment in compost pits and bio-input units.,Infrastructure,Agricutlure-Input,I,1,% Villages with custom hiring centre (< 5 km),Villages having access to custom hiring centre (percent) 
+Organic Farming,X,75,100,higher,1,% Villages with Regular Markets,Market availability ensures timely sale of organic produce.,Land & Agri,Cropping system,J,1,Cropping intensity (%),Cropping intensity - Gross cultivated area/Net cultivated area
+Organic Farming,V,45,90.58,higher,1,% Villages with Banks (<5 km),Access to finance supports certification and collective marketing.,Infrastructure,Agricutlure-Input,K,1,% Villages with soil testing centres (< 5 km),Villages having soil testing centres in village or within 5 kms (percent)
+Organic Farming,W,33,74.61,higher,1,% Households with Jan Dhan Accounts,Financial inclusion supports subsidy flow and payments to farmers.,Infrastructure,Agricutlure-Input,L,1,% Villages with fertiliser shop (< 5 km),Villages having fertilizer shop in village or within 5 kms (percent)
+Integrated Farming,AE,0.3,1.9,higher,1,Fodder crop area (%),Area under fodder crops,Livestock,Extension,M,1,% villages with Livestock extension,Villages having Livestock extension services (percent)
+Integrated Farming,AF,15.3,40.7,higher,1,Horticulture area (%),Area under horticulture crops,Livestock,Extension,N,1,% Villages with milk collection facility (< 5 km),Villages having Availability of milk collection centre (percent)
+Integrated Farming,AG,0.6,0.9,higher,1,Crop Diversifcation Index,High values reflected greater diversity of crops,Livestock,Extension,O,1,% villages with veterinary clinic (< 5 km),Villages having Availability of veterinary clinic in village or within 5 kms (percent)
+Integrated Farming,C,25.8,83.2,higher,1,Cultivated area irrigated (%),Area irrigated as per cent of gross cropped area,Livestock,Extension,P,1,% villages with community ponds for fisheires ,Villages having Community ponds for fisheires (percent)
+Integrated Farming,BC,1,15.8,lower,1,Statge of Groundwater Development (%),Groundwater abstraction to recharge ratio,Livestock,Livestock density,Q,1,% villages have Pisciculture,Villages having Pisciculture (fishery(percent)
+Integrated Farming,AJ,2.5,20.1,higher,1,Soil Testing Coverage (%),% Farmers receiving soil testing report,Livestock,Extension,R,1,% villages with Aquaculture extension,Villages having Extension facility for aquaculture in village or within 5 kms. (percent)
+Integrated Farming,AU,2128.5,3405.3,higher,1,Average annual Rainfall (mm),Average annual Rainfall (mm),Infrastructure,Logistics,S,1,% Villages connected to all weather road  (< 5 km),Villages connected to all weather road or located within 5 kms. of it (percent)
+Integrated Farming,BF,0.5,1,higher,1,Cattle density (per 100 hectares),No. of cattle per 100 hectares ,Infrastructure,Logistics,T,1,% Villages having railway station  (< 10 km),Villages having railway statation in village or within 10 kms. (percent)
+Integrated Farming,X,12.7,100,higher,1,% Villages with  regular market/mandies/weekly hat,Villages having regular market/ mandies/ Weekly Haat in village or within 5 kms. (percent),Infrastructure,Institutions/Banks,U,1,% Villages with Common service centre ,Villages having A COMMON SERVICE CENTRE (CSC) IN THE VILLAGE (percent)
+Natural Farming,AE,0.3,1.9,higher,1,Fodder crop area (%),Area under fodder crops,Infrastructure,Institutions/Banks,V,1,% Villages with Banks (< 5 km),Villages having BANKS  in village or within 5 kms. (percent)
+Natural Farming,AF,15.3,40.7,higher,1,Horticulture area (%),Area under horticulture crops,Infrastructure,Institutions/Banks,W,1,% housheholds with Jan Dhan account,% Households in villages having Jan Dhan Account
+Natural Farming,AG,0.6,0.9,higher,1,Crop Diversifcation Index,High values reflected greater diversity of crops,Infrastructure,Post Production/Market,X,1,% Villages with  regular market/mandies/weekly hat,Villages having regular market/ mandies/ Weekly Haat in village or within 5 kms. (percent)
+Natural Farming,C,25.8,83.2,higher,1,Cultivated area irrigated (%),Area irrigated as per cent of gross cropped area,People,Collectives,Y,1,Number of SHGs,Number of Self Help Groups (SHGs)
+Natural Farming,BC,1,15.8,lower,1,Statge of Groundwater Development (%),Groundwater abstraction to recharge ratio,People,Collectives,Z,1,% Households mobilised in SHGs (%),SHARE OF HOUSEHOLDS MOBILIZED INTO SHGS (%)
+Natural Farming,AJ,2.5,20.1,higher,1,Soil Testing Coverage (%),% Farmers receiving soil testing report,People,Collectives,AA,1,% Households SHGs to VOs (%),SHARE OF SHGS FEDERATED INTO VILLAGE ORGANISATIONS (VOS) (%)
+Natural Farming,AU,2128.5,3405.3,higher,1,Average annual Rainfall (mm),Average annual Rainfall (mm),People,Collectives,AB,1,% Households mobilised in PRODUCER GROUPS  (%),PERCENT SHARE OF HOUSEHOLDS MOBILIZED INTO PRODUCER GROUPS (PGS)
+Natural Farming,BF,0.5,1,higher,1,Cattle density (per 100 hectares),No. of cattle per 100 hectares ,People,Collectives,AC,1,% Households SHGs accessing Bank Loans (%),PERCENT SHARE OF SHGS WHICH ACCESSED BANK LOANS
+Natural Farming,X,12.7,100,higher,1,% Villages with  regular market/mandies/weekly hat,Villages having regular market/ mandies/ Weekly Haat in village or within 5 kms. (percent),Land & Agri,Cropping system,AD,1,Paddy area (%),Area under paddy crops
+,,,,,,,,Land & Agri,Cropping system,AE,1,Fodder crop area (%),Area under fodder crops
+,,,,,,,,Land & Agri,Cropping system,AF,1,Horticulture area (%),Area under horticulture crops
+,,,,,,,,Land & Agri,Cropping system,AG,1,Crop Diversifcation Index,High values reflected greater diversity of crops
+,,,,,,,,Land & Agri,Cropping system,AH,1,Yield Gap (%),Average yield gap of all crops
+,,,,,,,,Land & Agri,Cropping system,AI,1,Organic Farming Coverage (%),% farmers practicing organic farming
+,,,,,,,,Soil,Health,AJ,1,Soil Testing Coverage (%),% Farmers receiving soil testing report
+,,,,,,,,Water,Irrigation,AK,1,Micro-irrigation coverage (%),"% area (of irrigated area) under micro-irrigation (Drip, Sprinkler)"
+,,,,,,,,Water,Groundwater,AL,1,Major Aquifer Type,Type of Aquifer
+,,,,,,,,Water,Groundwater,AM,1,Pre-monsoon groundwater levels,Pre monsoon Depth of groundwater below ground level (m)
+,,,,,,,,Water,Groundwater,AN,1,Post-monsoon groundwater levels,Post monsoon Depth of groundwater below ground level (m)
+,,,,,,,,Land & Agri,Land use,AO,1,Built up area (%), Urban areas percent
+,,,,,,,,Land & Agri,Land use,AP,1,Water Bodies *%), Water bodies
+,,,,,,,,Land & Agri,Land use,AQ,1,Trees/Forests + Shrubs (%),Trees/Forests + Shrubs
+,,,,,,,,Land & Agri,Land use,AR,1, Cropland (%),Area under cropland
+,,,,,,,,Land & Agri,Land use,AS,1, Grassland (%),Area under grassland
+,,,,,,,,Land & Agri,Land use,AT,1, Bare areas (%), Bare areas
+,,,,,,,,Climate,Rainfall,AU,1,Average annual Rainfall (mm),Average annual Rainfall (mm)
+,,,,,,,,Climate,Rainfall,AV,1,Annual Monsoon rainfall (%) ,Annual Monsoon rainfall (%) 
+,,,,,,,,Climate,Rainfall,AW,1,Average annual rainy days ,Average annual rainy days 
+,,,,,,,,Climate,Rainfall,AX,1,Average annual heavy/extreme rainfall days (%),Average annual heavy/extreme rainfall days (%)
+,,,,,,,,Climate,Temperature,AY,1,Kharif Average Temperature (C),Kharif  (Jun-Oct) Average Temperature (C)
+,,,,,,,,Climate,Temperature,AZ,1,Rabi Average Temperature (C),Rabi (Nov - Feb) Average Temperature (C)
+,,,,,,,,Climate,Temperature,BA,1,Zaid Average Temperature (C),Zaid (Mar - May) Average Temperature (C)
+,,,,,,,,Water,Groundwater,BC,1,Statge of Groundwater Development (%),Groundwater abstraction to recharge ratio
+,,,,,,,,Land & Agri,Topography,BD,1,Topography Class,Topography (Slope)
+,,,,,,,,Soil,Type,BE,1,Main Soil Type,Silty clay loam
+,,,,,,,,Livestock,Livestock density,BF,1,Cattle density (per 100 hectares),No. of cattle per 100 hectares 
+,,,,,,,,Livestock,Livestock density,BG,1,Bufallowdensity (per 100 hectares),No. of buffalo per 100 hectares
+,,,,,,,,Livestock,Livestock density,BH,1,Sheep density (per 100 hectares),No. of sheep per 100 hectares
+,,,,,,,,Livestock,Livestock density,BI,1,Goat density (per 100 hectares),No. of goat per 100 hectares
+,,,,,,,,Livestock,Livestock density,BN,1,Pig density (per 100 hectares),No. of pig per 100 hectares
+,,,,,,,,Livestock,Livestock density,BO,1,Poultry density (per 100 hectares),No. of total poultry per 100 hectares
+,,,,,,,,People,Socio-economic,BP,1,Literacy rate (%),Household Literacy rate
+,,,,,,,,People,Socio-economic,BQ,1,% marginal farmers,% Marginal farmers
+,,,,,,,,People,Socio-economic,BR,1,% small farmers,% Small farmers
+,,,,,,,,People,Socio-economic,BS,1,% Semi and medium farmers,% Semi and medium farmers
+,,,,,,,,People,Socio-economic,BT,1,% large farmers,% Large farmers
+,,,,,,,,People,Socio-economic,BU,1,% Households with Institutional loan ,HHs with Institutional loan (%)
+,,,,,,,,People,Socio-economic,BV,1,% Housheholds with Informal loan,HHs with Informal loan (%)
+,,,,,,,,Livestock,Logistics,BW,1,NUMBER OF VILLAGE,Number of villages in GP
+,,,,,,,,Livestock,Logistics,BX,1,Total households (number),Total number of households
+,,,,,,,,Livestock,Logistics,BY,1,Duckery_activity,How many members vote for Duckery activity
+,,,,,,,,Livestock,Logistics,BZ,1,Farming activity_activity,How many members vote for Farming activity
+,,,,,,,,Livestock,Logistics,CA,1,Fishery_activity,How many members vote for Fishery activity
+,,,,,,,,Livestock,Logistics,CB,1,Goatery_activity,How many members vote for Goatery activity
+,,,,,,,,Livestock,Logistics,CC,1,Non farming activity_activity,How many members vote for Non farming activity
+,,,,,,,,Livestock,Logistics,CD,1,Piggery_activity,How many members vote for Piggery activity
+,,,,,,,,Livestock,Logistics,CE,1,Poultry_activity,How many members vote for Poultry activity
+,,,,,,,,Livestock,Logistics,CF,1,Poultry; Duckery_activity,How many members vote for Poultry; Duckery activity

@@ -1,0 +1,29 @@
+# LEAF DSS - Flask Application Dependencies
+
+# Web Framework
+flask>=3.0.0
+flask-cors>=4.0.0
+gunicorn>=21.2.0
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+openpyxl>=3.1.0  # For reading Excel files
+
+# Geospatial
+geopandas>=0.14.0
+shapely>=2.0.0
+pyproj>=3.6.0
+fiona>=1.9.0
+
+# AI/RAG Dependencies
+openai>=1.0.0
+chromadb>=0.4.0
+langchain>=0.3.0
+langchain-core>=0.3.0
+langchain-openai>=0.2.0
+langchain-community>=0.3.0
+langchain-chroma>=0.1.0
+langchain-text-splitters>=0.3.0
+pypdf>=3.17.0
+python-dotenv>=1.0.0
