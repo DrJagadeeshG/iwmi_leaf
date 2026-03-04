@@ -33,7 +33,7 @@
                 </div>
             </a>
             <div class="logo-section">
-                <img src="{{ url_for('static', filename='giz_logo.jpg') }}" alt="GIZ Logo" class="logo giz-logo" onerror="this.style.display='none'">
+                <!-- <img src="{{ url_for('static', filename='giz_logo.jpg') }}" alt="GIZ Logo" class="logo giz-logo" onerror="this.style.display='none'"> -->
                 <img src="{{ url_for('static', filename='images/cgiar_logo.png') }}" alt="CGIAR Logo" class="logo" onerror="this.style.display='none'">
             </div>
         </div>
@@ -86,6 +86,14 @@
 
         <div class="filter-group">
             <button id="export-btn" class="btn-export"><i class="bi bi-download"></i> CSV</button>
+        </div>
+
+        <div class="filter-group">
+            <label class="overlay-toggle" title="Show/hide Protected Areas of India">
+                <input type="checkbox" id="protected-areas-toggle" onchange="toggleProtectedAreas(this.checked)">
+                <span class="overlay-swatch" style="background:#2e7d32;"></span>
+                Protected Areas
+            </label>
         </div>
     </div>
 

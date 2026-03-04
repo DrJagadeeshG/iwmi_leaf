@@ -1,0 +1,1 @@
+https://geo.ejatlas.org/geoserver/ows?access_token=None?service=WFS&version=1.0.0&request=GetFeature&typename=geonode%3AProtected_Area_India_Final&outputFormat=SHAPE-ZIP&srs=EPSG%3A4326&format_options=charset%3AUTF-8

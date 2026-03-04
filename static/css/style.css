@@ -303,6 +303,30 @@ body {
     height: 12px;
 }
 
+.overlay-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    color: var(--iwmi-dark-grey);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.overlay-toggle input[type="checkbox"] {
+    accent-color: #2e7d32;
+    cursor: pointer;
+}
+
+.overlay-swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    opacity: 0.7;
+}
+
 #map {
     height: calc(100vh - 280px);
     min-height: 400px;
@@ -322,6 +346,19 @@ body {
 
 .custom-tooltip strong {
     color: var(--iwmi-dark-blue);
+}
+
+/* District boundary labels */
+.district-label {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #333;
+    text-shadow: 1px 1px 2px white, -1px -1px 2px white, 1px -1px 2px white, -1px 1px 2px white;
+    pointer-events: none;
 }
 
 /* Distribution Chart */
@@ -2147,6 +2184,44 @@ body {
     height: 200px;
     border-radius: 8px;
     border: 1px solid var(--iwmi-light-grey);
+}
+
+/* Mini-map feasibility legend */
+.mini-map-legend {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(4px);
+    border-radius: 6px;
+    padding: 5px 8px;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.6rem;
+    line-height: 1;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 3px 6px;
+    max-width: 160px;
+}
+.mini-legend-title {
+    width: 100%;
+    font-weight: 600;
+    font-size: 0.6rem;
+    color: var(--iwmi-dark-blue);
+    margin-bottom: 1px;
+}
+.mini-legend-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    color: #444;
+    white-space: nowrap;
+}
+.mini-legend-item i {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    border: 1px solid rgba(0,0,0,0.15);
+    flex-shrink: 0;
 }
 
 /* GP Detail View */

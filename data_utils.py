@@ -14,6 +14,42 @@ DATA_DIR = Path(__file__).parent / "data"
 
 
 @lru_cache(maxsize=1)
+def load_district_boundaries():
+    """Load pre-computed district boundary GeoJSON."""
+    geojson_path = DATA_DIR / "districts.geojson"
+    if not geojson_path.exists():
+        return None
+    with open(geojson_path) as f:
+        return json.load(f)
+
+
+@lru_cache(maxsize=1)
+def load_protected_areas():
+    """Load Protected Areas of India shapefile and return as GeoJSON dict."""
+    shapefile_path = DATA_DIR / "protected_areas" / "Protected_Area_India_Final.shp"
+
+    if not shapefile_path.exists():
+        return None
+
+    gdf = gpd.read_file(shapefile_path)
+
+    # Ensure CRS is WGS84
+    if gdf.crs is None:
+        gdf = gdf.set_crs("EPSG:4326")
+    elif gdf.crs.to_epsg() != 4326:
+        gdf = gdf.to_crs("EPSG:4326")
+
+    # Keep only useful columns
+    keep_cols = ['name', 'Type', 'State', 'Area', 'Year', 'geometry']
+    gdf = gdf[[c for c in keep_cols if c in gdf.columns]]
+
+    # Simplify geometry for performance
+    gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.005, preserve_topology=True)
+
+    return json.loads(gdf.to_json())
+
+
+@lru_cache(maxsize=1)
 def load_district_mapping():
     """Load district ID to name mapping from Block_assam shapefile."""
     block_assam_path = DATA_DIR / "Block_assam.shp"

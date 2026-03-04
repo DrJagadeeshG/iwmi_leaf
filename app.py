@@ -7,12 +7,15 @@ import os
 import json
 from flask import Flask, render_template, jsonify, request, Response, send_from_directory
 from flask_cors import CORS
+from flasgger import Swagger
 import pandas as pd
 
 from config import COLORS, FEASIBILITY_COLORS, VARIABLE_GROUPS, MAP_CONFIG
 from data_utils import (
     load_shapefile,
     load_metadata,
+    load_district_boundaries,
+    load_protected_areas,
     get_interventions,
     get_intervention_config,
     get_variable_metadata,
@@ -50,6 +53,85 @@ def get_rag_utils():
 # Initialize Flask app
 app = Flask(__name__)
 CORS(app)
+
+# Swagger / OpenAPI configuration
+swagger_config = {
+    "headers": [],
+    "specs": [
+        {
+            "endpoint": "apispec",
+            "route": "/apispec.json",
+            "rule_filter": lambda rule: rule.rule.startswith('/api') or rule.rule == '/health',
+            "model_filter": lambda tag: True,
+        }
+    ],
+    "static_url_path": "/flasgger_static",
+    "swagger_ui": True,
+    "specs_route": "/docs"
+}
+
+swagger_template = {
+    "info": {
+        "title": "LEAF DSS API",
+        "version": "1.0.0",
+        "description": (
+            "Decision Support System for Agricultural Interventions in Assam, India. "
+            "Provides block-level and GP-level geospatial data, feasibility analysis, "
+            "and AI-powered recommendations."
+        ),
+    },
+    "tags": [
+        {"name": "Blocks", "description": "Block-level geospatial data and lookups"},
+        {"name": "Locations", "description": "Hierarchical location data (districts, blocks, GPs)"},
+        {"name": "GPs", "description": "Gram Panchayat level data and lookups"},
+        {"name": "Interventions", "description": "Agricultural intervention definitions and configurations"},
+        {"name": "Variables", "description": "Data variable metadata and statistics"},
+        {"name": "Feasibility", "description": "Feasibility score calculation endpoints"},
+        {"name": "AI", "description": "AI-powered recommendation engine (RAG-based)"},
+        {"name": "Export", "description": "Data export endpoints"},
+        {"name": "Config", "description": "Application configuration and metadata"},
+        {"name": "Deprecated", "description": "Deprecated endpoints - use newer alternatives"},
+    ],
+    "definitions": {
+        "Error": {
+            "type": "object",
+            "properties": {
+                "error": {"type": "string", "description": "Error message"}
+            }
+        },
+        "FilterCriteria": {
+            "type": "object",
+            "properties": {
+                "column": {"type": "string", "description": "Variable/column name"},
+                "min_val": {"type": "number", "description": "Minimum threshold"},
+                "max_val": {"type": "number", "description": "Maximum threshold"},
+                "weight": {"type": "number", "description": "Weight for scoring (0-1)", "default": 1.0}
+            }
+        },
+        "VariableMetadata": {
+            "type": "object",
+            "properties": {
+                "field": {"type": "string"},
+                "label": {"type": "string"},
+                "description": {"type": "string"},
+                "group": {"type": "string"},
+                "data_min": {"type": "number"},
+                "data_max": {"type": "number"},
+                "data_mean": {"type": "number"}
+            }
+        },
+        "FeasibilityResult": {
+            "type": "object",
+            "properties": {
+                "geojson": {"type": "object", "description": "GeoJSON FeatureCollection with feasibility scores"},
+                "statistics": {"type": "object", "description": "Distribution statistics"},
+                "filters_applied": {"type": "array", "items": {"$ref": "#/definitions/FilterCriteria"}}
+            }
+        }
+    }
+}
+
+Swagger(app, config=swagger_config, template=swagger_template)
 
 # Configuration
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'leaf-dss-secret-key')
@@ -109,7 +191,30 @@ def gp_detail_view(district, block, gp):
 @app.route('/api/blocks')
 @app.route('/api/blocks/geojson')
 def api_blocks():
-    """Return all blocks as GeoJSON."""
+    """Return all blocks as GeoJSON.
+    ---
+    tags:
+      - Blocks
+    summary: Get all blocks as GeoJSON
+    description: Returns all blocks as a GeoJSON FeatureCollection with all variable data as feature properties.
+    responses:
+      200:
+        description: GeoJSON FeatureCollection of all blocks
+        schema:
+          type: object
+          properties:
+            type:
+              type: string
+              example: FeatureCollection
+            features:
+              type: array
+              items:
+                type: object
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         gdf = load_shapefile()
         geojson = get_blocks_geojson(gdf)
@@ -120,7 +225,32 @@ def api_blocks():
 
 @app.route('/api/blocks/<block_id>')
 def api_block_detail(block_id):
-    """Return single block details by BLOCK_ID."""
+    """Return single block details by BLOCK_ID.
+    ---
+    tags:
+      - Blocks
+    summary: Get block by ID
+    description: Returns a single block's data including all variable properties.
+    parameters:
+      - name: block_id
+        in: path
+        type: string
+        required: true
+        description: The BLOCK_ID identifier
+    responses:
+      200:
+        description: Block data object
+        schema:
+          type: object
+      404:
+        description: Block not found
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         block = get_block_by_id(block_id)
         if block is None:
@@ -132,7 +262,32 @@ def api_block_detail(block_id):
 
 @app.route('/api/blocks/by-name/<block_name>')
 def api_block_by_name(block_name):
-    """Return single block details by name."""
+    """Return single block details by name.
+    ---
+    tags:
+      - Blocks
+    summary: Get block by name
+    description: Returns a single block's GeoJSON by its Block_name value.
+    parameters:
+      - name: block_name
+        in: path
+        type: string
+        required: true
+        description: The block name (e.g. "Digboi")
+    responses:
+      200:
+        description: GeoJSON of matching block
+        schema:
+          type: object
+      404:
+        description: Block not found
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         gdf = load_shapefile()
         block = gdf[gdf['Block_name'] == block_name]
@@ -149,7 +304,40 @@ def api_block_by_name(block_name):
 
 @app.route('/api/locations')
 def api_locations():
-    """Return hierarchical list of districts, blocks, and GPs for dropdowns."""
+    """Return hierarchical list of districts, blocks, and GPs for dropdowns.
+    ---
+    tags:
+      - Locations
+    summary: Get hierarchical location data
+    description: Returns districts with their blocks and GPs, plus a flat blocks list for backward compatibility.
+    responses:
+      200:
+        description: Location hierarchy
+        schema:
+          type: object
+          properties:
+            districts:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  blocks:
+                    type: array
+                    items:
+                      type: object
+                  has_gp_data:
+                    type: boolean
+            blocks:
+              type: array
+              items:
+                type: object
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         gdf = load_shapefile()
         gp_gdf = load_gp_shapefile()
@@ -232,7 +420,34 @@ def api_locations():
 
 @app.route('/api/districts')
 def api_districts():
-    """Return list of all districts with metadata."""
+    """Return list of all districts with metadata.
+    ---
+    tags:
+      - Locations
+    summary: Get all districts
+    description: Returns all districts with block counts and GP data availability.
+    responses:
+      200:
+        description: List of districts
+        schema:
+          type: object
+          properties:
+            districts:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  block_count:
+                    type: integer
+                  has_gp_data:
+                    type: boolean
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         gdf = load_shapefile()
         gp_gdf = load_gp_shapefile()
@@ -263,9 +478,108 @@ def api_districts():
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/districts/geojson')
+def api_districts_geojson():
+    """Return district boundaries as GeoJSON.
+    ---
+    tags:
+      - Locations
+    summary: Get district boundaries as GeoJSON
+    description: Returns district boundary polygons as GeoJSON for map display.
+    responses:
+      200:
+        description: GeoJSON FeatureCollection of district boundaries
+        schema:
+          type: object
+      404:
+        description: District boundaries not available
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
+    try:
+        geojson = load_district_boundaries()
+        if geojson is None:
+            return jsonify({'error': 'District boundaries not available'}), 404
+        return jsonify(geojson)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/protected-areas/geojson')
+def api_protected_areas_geojson():
+    """Return Protected Areas of India as GeoJSON.
+    ---
+    tags:
+      - Config
+    summary: Get protected areas as GeoJSON
+    description: Returns Protected Areas of India (national parks, wildlife sanctuaries, etc.) as a GeoJSON FeatureCollection for map overlay display.
+    responses:
+      200:
+        description: GeoJSON FeatureCollection of protected areas
+        schema:
+          type: object
+      404:
+        description: Protected areas data not available
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
+    try:
+        geojson = load_protected_areas()
+        if geojson is None:
+            return jsonify({'error': 'Protected areas data not available'}), 404
+        return jsonify(geojson)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 @app.route('/api/districts/<district>/blocks')
 def api_district_blocks(district):
-    """Return all blocks in a specific district."""
+    """Return all blocks in a specific district.
+    ---
+    tags:
+      - Locations
+    summary: Get blocks in a district
+    description: Returns all blocks belonging to the specified district.
+    parameters:
+      - name: district
+        in: path
+        type: string
+        required: true
+        description: District name (e.g. "Tinsukia")
+    responses:
+      200:
+        description: Blocks in district
+        schema:
+          type: object
+          properties:
+            district:
+              type: string
+            blocks:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  district:
+                    type: string
+      404:
+        description: District not found
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         gdf = load_shapefile()
         district_blocks = gdf[gdf['Dist_Name'] == district]
@@ -293,13 +607,50 @@ def api_district_blocks(district):
 # Backward compatibility aliases
 @app.route('/api/district/names')
 def api_district_names():
-    """Return list of all district names (deprecated - use /api/districts)."""
+    """Return list of all district names (deprecated - use /api/districts).
+    ---
+    tags:
+      - Deprecated
+    summary: Get district names (deprecated)
+    description: "Deprecated: use GET /api/districts instead."
+    deprecated: true
+    responses:
+      200:
+        description: List of districts
+        schema:
+          type: object
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     return api_districts()
 
 
 @app.route('/api/block/names')
 def api_block_names():
-    """Return list of all block names (deprecated - use /api/locations)."""
+    """Return list of all block names (deprecated - use /api/locations).
+    ---
+    tags:
+      - Deprecated
+    summary: Get block names (deprecated)
+    description: "Deprecated: use GET /api/locations instead."
+    deprecated: true
+    responses:
+      200:
+        description: List of block names
+        schema:
+          type: object
+          properties:
+            names:
+              type: array
+              items:
+                type: object
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         gdf = load_shapefile()
         names = []
@@ -318,7 +669,38 @@ def api_block_names():
 
 @app.route('/api/gp/names')
 def api_gp_names():
-    """Return list of all GP names."""
+    """Return list of all GP names.
+    ---
+    tags:
+      - GPs
+    summary: Get all GP names
+    description: Returns a list of all Gram Panchayat names with codes, blocks, and village counts.
+    responses:
+      200:
+        description: List of GP names
+        schema:
+          type: object
+          properties:
+            names:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  code:
+                    type: string
+                  block:
+                    type: string
+                  village_count:
+                    type: integer
+                  district:
+                    type: string
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         gdf = load_gp_shapefile()
         if gdf is None:
@@ -345,7 +727,34 @@ def api_gp_names():
 
 @app.route('/api/interventions')
 def api_interventions():
-    """List available interventions (auto-detected from CSV)."""
+    """List available interventions.
+    ---
+    tags:
+      - Interventions
+    summary: Get all interventions
+    description: Returns the list of available agricultural interventions auto-detected from the CSV configuration.
+    responses:
+      200:
+        description: List of interventions
+        schema:
+          type: object
+          properties:
+            interventions:
+              type: array
+              items:
+                type: object
+                properties:
+                  key:
+                    type: string
+                  name:
+                    type: string
+                  description:
+                    type: string
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         interventions = get_interventions()
         interventions_list = [
@@ -363,7 +772,24 @@ def api_interventions():
 
 @app.route('/api/variables')
 def api_variables():
-    """Get all available variables from the shapefile."""
+    """Get all available variables from the shapefile.
+    ---
+    tags:
+      - Variables
+    summary: Get all block-level variables
+    description: Returns metadata for all numeric variables available in the block-level shapefile, including min/max/mean statistics.
+    responses:
+      200:
+        description: Array of variable metadata
+        schema:
+          type: array
+          items:
+            $ref: '#/definitions/VariableMetadata'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         gdf = load_shapefile()
         metadata = get_variable_metadata()
@@ -404,7 +830,43 @@ def api_variables():
 
 @app.route('/api/intervention/<name>/config')
 def api_intervention_config(name):
-    """Get configuration for a specific intervention."""
+    """Get configuration for a specific intervention.
+    ---
+    tags:
+      - Interventions
+    summary: Get intervention configuration
+    description: Returns the variable filters and weights configured for the specified intervention.
+    parameters:
+      - name: name
+        in: path
+        type: string
+        required: true
+        description: Intervention key name (e.g. "Organic Farming")
+    responses:
+      200:
+        description: Intervention configuration
+        schema:
+          type: object
+          properties:
+            intervention:
+              type: string
+            name:
+              type: string
+            description:
+              type: string
+            variables:
+              type: array
+              items:
+                type: object
+      404:
+        description: Intervention not found
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         config = get_intervention_config()
 
@@ -427,7 +889,27 @@ def api_intervention_config(name):
 
 @app.route('/api/variable-groups')
 def api_variable_groups():
-    """List available variable groups."""
+    """List available variable groups.
+    ---
+    tags:
+      - Variables
+    summary: Get variable groups
+    description: Returns the list of variable group categories.
+    responses:
+      200:
+        description: Variable groups
+        schema:
+          type: object
+          properties:
+            groups:
+              type: array
+              items:
+                type: object
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         groups = get_variable_groups()
         return jsonify({'groups': groups})
@@ -437,7 +919,35 @@ def api_variable_groups():
 
 @app.route('/api/variable-stats/<variable>')
 def api_variable_stats(variable):
-    """Get min/max/mean for a variable."""
+    """Get min/max/mean for a variable.
+    ---
+    tags:
+      - Variables
+    summary: Get variable statistics
+    description: Returns min, max, and mean values for the specified variable column.
+    parameters:
+      - name: variable
+        in: path
+        type: string
+        required: true
+        description: Variable/column name
+    responses:
+      200:
+        description: Variable statistics
+        schema:
+          type: object
+          properties:
+            min:
+              type: number
+            max:
+              type: number
+            mean:
+              type: number
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         stats = get_column_stats(variable)
         return jsonify(stats)
@@ -451,18 +961,44 @@ def api_variable_stats(variable):
 
 @app.route('/api/calculate-feasibility', methods=['POST'])
 def api_calculate_feasibility():
-    """
-    Calculate feasibility scores with custom filters.
-
-    Request body:
-    {
-        "intervention": "Organic Farming",  // optional
-        "filters": [
-            { "column": "AD", "min_val": 20, "max_val": 60, "weight": 1.0 }
-        ],
-        "logic": "AND",  // or "OR"
-        "district": "134"  // optional district ID to filter statistics
-    }
+    """Calculate feasibility scores with custom filters.
+    ---
+    tags:
+      - Feasibility
+    summary: Calculate block-level feasibility
+    description: Calculates feasibility scores for all blocks based on the provided variable filters and weights. Returns GeoJSON with scores and distribution statistics.
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            intervention:
+              type: string
+              description: Intervention name (uses default config if no filters provided)
+            filters:
+              type: array
+              description: Custom filter criteria
+              items:
+                $ref: '#/definitions/FilterCriteria'
+            logic:
+              type: string
+              enum: [AND, OR]
+              default: AND
+              description: How to combine multiple filters
+            district:
+              type: string
+              description: Optional district ID to filter statistics
+    responses:
+      200:
+        description: Feasibility results
+        schema:
+          $ref: '#/definitions/FeasibilityResult'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
     """
     try:
         data = request.get_json()
@@ -498,21 +1034,72 @@ def api_calculate_feasibility():
 
 @app.route('/api/ai-recommendation', methods=['POST'])
 def api_ai_recommendation():
-    """
-    Generate AI-powered recommendations based on block data and policy documents.
-
-    Request body:
-    {
-        "block_name": "Digboi",
-        "district_name": "Tinsukia",
-        "intervention": "Organic Farming",
-        "feasibility_score": 65.5,
-        "metrics": [
-            {"label": "Agricultural Land %", "value": 45.2, "in_range": true, "min": 30, "max": 70},
-            {"label": "Water Availability", "value": 15.0, "in_range": false, "min": 20, "max": 50}
-        ],
-        "filters": [...]  // Active filter configurations
-    }
+    """Generate AI-powered recommendations based on block data and policy documents.
+    ---
+    tags:
+      - AI
+    summary: Get AI recommendation
+    description: Uses RAG (Retrieval-Augmented Generation) to generate context-aware recommendations based on block data, feasibility scores, and policy documents.
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            block_name:
+              type: string
+              description: Name of the block
+              example: Digboi
+            district_name:
+              type: string
+              description: Name of the district
+              example: Tinsukia
+            intervention:
+              type: string
+              description: Selected intervention name
+            feasibility_score:
+              type: number
+              description: Current feasibility score
+            metrics:
+              type: array
+              items:
+                type: object
+                properties:
+                  label:
+                    type: string
+                  value:
+                    type: number
+                  in_range:
+                    type: boolean
+                  min:
+                    type: number
+                  max:
+                    type: number
+            filters:
+              type: array
+              items:
+                $ref: '#/definitions/FilterCriteria'
+    responses:
+      200:
+        description: AI recommendation
+        schema:
+          type: object
+          properties:
+            recommendation:
+              type: string
+            sources:
+              type: array
+              items:
+                type: object
+      503:
+        description: RAG service unavailable
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
     """
     try:
         rag = get_rag_utils()
@@ -560,7 +1147,39 @@ def api_ai_recommendation():
 
 @app.route('/api/ai-recommendation/init', methods=['POST'])
 def api_init_vectorstore():
-    """Initialize/rebuild the vector store from PDF documents."""
+    """Initialize/rebuild the vector store from PDF documents.
+    ---
+    tags:
+      - AI
+    summary: Initialize AI vector store
+    description: Rebuilds the RAG vector store by processing PDF policy documents. Required before AI recommendations can be generated.
+    responses:
+      200:
+        description: Initialization result
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+      503:
+        description: RAG service unavailable
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+            error:
+              type: string
+      500:
+        description: Server error
+        schema:
+          type: object
+          properties:
+            success:
+              type: boolean
+            error:
+              type: string
+    """
     try:
         rag = get_rag_utils()
 
@@ -577,7 +1196,33 @@ def api_init_vectorstore():
 @app.route('/api/statistics')
 @app.route('/api/blocks/statistics')
 def api_statistics():
-    """Get distribution statistics for block data."""
+    """Get distribution statistics for block data.
+    ---
+    tags:
+      - Blocks
+    summary: Get block statistics
+    description: Returns aggregate statistics for block data including district distribution and column listings.
+    responses:
+      200:
+        description: Block statistics
+        schema:
+          type: object
+          properties:
+            total_blocks:
+              type: integer
+            districts:
+              type: object
+            district_count:
+              type: integer
+            columns:
+              type: array
+              items:
+                type: string
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         gdf = load_shapefile()
 
@@ -601,7 +1246,42 @@ def api_statistics():
 
 @app.route('/api/export/csv', methods=['POST'])
 def api_export_csv():
-    """Export filtered data as CSV."""
+    """Export filtered data as CSV.
+    ---
+    tags:
+      - Export
+    summary: Export data as CSV
+    description: Exports block data as a CSV file, optionally with feasibility scores calculated from the provided filters.
+    produces:
+      - text/csv
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            intervention:
+              type: string
+              description: Intervention name for default filters
+            filters:
+              type: array
+              items:
+                $ref: '#/definitions/FilterCriteria'
+            logic:
+              type: string
+              enum: [AND, OR]
+              default: AND
+    responses:
+      200:
+        description: CSV file download
+        schema:
+          type: file
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         data = request.get_json()
 
@@ -651,7 +1331,25 @@ def api_export_csv():
 
 @app.route('/api/config')
 def api_config():
-    """Get app configuration (colors, thresholds, etc.)."""
+    """Get app configuration (colors, thresholds, etc.).
+    ---
+    tags:
+      - Config
+    summary: Get application configuration
+    description: Returns color schemes, feasibility color thresholds, and map configuration.
+    responses:
+      200:
+        description: Application configuration
+        schema:
+          type: object
+          properties:
+            colors:
+              type: object
+            feasibility_colors:
+              type: object
+            map_config:
+              type: object
+    """
     return jsonify({
         'colors': COLORS,
         'feasibility_colors': FEASIBILITY_COLORS,
@@ -666,7 +1364,26 @@ def api_config():
 @app.route('/api/gp')
 @app.route('/api/gp/geojson')
 def api_gp_geojson():
-    """Return all GPs as GeoJSON."""
+    """Return all GPs as GeoJSON.
+    ---
+    tags:
+      - GPs
+    summary: Get all GPs as GeoJSON
+    description: Returns all Gram Panchayats as a GeoJSON FeatureCollection with variable data as properties.
+    responses:
+      200:
+        description: GeoJSON FeatureCollection of GPs
+        schema:
+          type: object
+      404:
+        description: GP data not available
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         gdf = load_gp_shapefile()
         if gdf is None:
@@ -679,7 +1396,29 @@ def api_gp_geojson():
 
 @app.route('/api/gp/locations')
 def api_gp_locations():
-    """Return list of GPs grouped by block for dropdowns."""
+    """Return list of GPs grouped by block for dropdowns.
+    ---
+    tags:
+      - GPs
+    summary: Get GP locations grouped by block
+    description: Returns GP locations as both a flat list and grouped by block for dropdown population.
+    responses:
+      200:
+        description: GP locations
+        schema:
+          type: object
+          properties:
+            gps:
+              type: array
+              items:
+                type: object
+            by_block:
+              type: object
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         locations = get_gp_locations()
 
@@ -701,7 +1440,32 @@ def api_gp_locations():
 
 @app.route('/api/gp/<gp_id>')
 def api_gp_detail(gp_id):
-    """Return single GP details by GP_CODE."""
+    """Return single GP details by GP_CODE.
+    ---
+    tags:
+      - GPs
+    summary: Get GP by ID
+    description: Returns a single Gram Panchayat's data by its GP_CODE identifier.
+    parameters:
+      - name: gp_id
+        in: path
+        type: string
+        required: true
+        description: The GP_CODE identifier
+    responses:
+      200:
+        description: GP data object
+        schema:
+          type: object
+      404:
+        description: GP not found
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         gp = get_gp_by_id(gp_id)
         if gp is None:
@@ -713,7 +1477,32 @@ def api_gp_detail(gp_id):
 
 @app.route('/api/gp/by-name/<gp_name>')
 def api_gp_by_name(gp_name):
-    """Return single GP details by name."""
+    """Return single GP details by name.
+    ---
+    tags:
+      - GPs
+    summary: Get GP by name
+    description: Returns a single Gram Panchayat's GeoJSON by its GP_NAME.
+    parameters:
+      - name: gp_name
+        in: path
+        type: string
+        required: true
+        description: The GP name
+    responses:
+      200:
+        description: GeoJSON of matching GP
+        schema:
+          type: object
+      404:
+        description: GP not found
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         gdf = load_gp_shapefile()
         if gdf is None:
@@ -729,7 +1518,48 @@ def api_gp_by_name(gp_name):
 
 @app.route('/api/gp/block/<block_name>')
 def api_gp_by_block(block_name):
-    """Return all GPs in a specific block."""
+    """Return all GPs in a specific block.
+    ---
+    tags:
+      - GPs
+    summary: Get GPs by block
+    description: Returns all Gram Panchayats belonging to the specified block.
+    parameters:
+      - name: block_name
+        in: path
+        type: string
+        required: true
+        description: Block name (e.g. "Digboi")
+    responses:
+      200:
+        description: GPs in block
+        schema:
+          type: object
+          properties:
+            block:
+              type: string
+            district:
+              type: string
+            gps:
+              type: array
+              items:
+                type: object
+                properties:
+                  name:
+                    type: string
+                  code:
+                    type: string
+                  village_count:
+                    type: integer
+      404:
+        description: No GPs found in block
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         gdf = load_gp_shapefile()
         if gdf is None:
@@ -758,7 +1588,28 @@ def api_gp_by_block(block_name):
 
 @app.route('/api/gp/variables')
 def api_gp_variables():
-    """Get all available GP-level variables."""
+    """Get all available GP-level variables.
+    ---
+    tags:
+      - GPs
+    summary: Get GP-level variables
+    description: Returns metadata for all numeric variables available in the GP-level shapefile.
+    responses:
+      200:
+        description: Array of GP variable metadata
+        schema:
+          type: array
+          items:
+            $ref: '#/definitions/VariableMetadata'
+      404:
+        description: GP data not available
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         gdf = load_gp_shapefile()
         if gdf is None:
@@ -791,7 +1642,44 @@ def api_gp_variables():
 
 @app.route('/api/gp/calculate-feasibility', methods=['POST'])
 def api_gp_calculate_feasibility():
-    """Calculate feasibility scores for GP level."""
+    """Calculate feasibility scores for GP level.
+    ---
+    tags:
+      - Feasibility
+    summary: Calculate GP-level feasibility
+    description: Calculates feasibility scores for Gram Panchayats based on the provided filters. Optionally filter by block.
+    parameters:
+      - in: body
+        name: body
+        required: true
+        schema:
+          type: object
+          properties:
+            filters:
+              type: array
+              items:
+                $ref: '#/definitions/FilterCriteria'
+            logic:
+              type: string
+              enum: [AND, OR]
+              default: AND
+            block:
+              type: string
+              description: Optional block name to filter GPs
+    responses:
+      200:
+        description: GP feasibility results
+        schema:
+          $ref: '#/definitions/FeasibilityResult'
+      404:
+        description: GP data not available
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         data = request.get_json()
 
@@ -817,7 +1705,37 @@ def api_gp_calculate_feasibility():
 
 @app.route('/api/gp/statistics')
 def api_gp_statistics():
-    """Get statistics for GP data."""
+    """Get statistics for GP data.
+    ---
+    tags:
+      - GPs
+    summary: Get GP statistics
+    description: Returns aggregate statistics for GP data including block distribution.
+    responses:
+      200:
+        description: GP statistics
+        schema:
+          type: object
+          properties:
+            total_gps:
+              type: integer
+            district:
+              type: string
+            blocks:
+              type: object
+            columns:
+              type: array
+              items:
+                type: string
+      404:
+        description: GP data not available
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
     try:
         gdf = load_gp_shapefile()
         if gdf is None:
@@ -839,7 +1757,34 @@ def api_gp_statistics():
 
 @app.route('/api/levels')
 def api_levels():
-    """Return available data levels and districts with GP support."""
+    """Return available data levels and districts with GP support.
+    ---
+    tags:
+      - Config
+    summary: Get available data levels
+    description: Returns the available data hierarchy levels (block, GP) and which districts support GP-level data.
+    responses:
+      200:
+        description: Data levels
+        schema:
+          type: object
+          properties:
+            levels:
+              type: array
+              items:
+                type: object
+                properties:
+                  id:
+                    type: string
+                  name:
+                    type: string
+                  available:
+                    type: boolean
+            gp_districts:
+              type: array
+              items:
+                type: string
+    """
     gdf = load_shapefile()
     gp_gdf = load_gp_shapefile()
     gp_available = gp_gdf is not None
@@ -864,7 +1809,22 @@ def api_levels():
 
 @app.route('/health')
 def health():
-    """Health check endpoint."""
+    """Health check endpoint.
+    ---
+    tags:
+      - Config
+    summary: Health check
+    description: Returns service health status.
+    responses:
+      200:
+        description: Service is healthy
+        schema:
+          type: object
+          properties:
+            status:
+              type: string
+              example: healthy
+    """
     return jsonify({'status': 'healthy'})
 
 
@@ -876,9 +1836,40 @@ def serve_ai_docs(filename):
     return send_from_directory(ai_docs_dir, filename)
 
 
+@app.route('/documentation/')
+@app.route('/documentation/<path:filename>')
+def serve_documentation(filename='index.html'):
+    """Serve the MkDocs documentation site."""
+    from pathlib import Path
+    site_dir = Path(__file__).parent.parent / "site"
+    # MkDocs uses directory-style URLs (e.g. quickstart/ → quickstart/index.html)
+    # Handle directory paths and trailing slashes
+    if filename.endswith('/') or '.' not in filename.split('/')[-1]:
+        candidate = site_dir / filename / 'index.html'
+        if candidate.exists():
+            filename = filename.rstrip('/') + '/index.html'
+    return send_from_directory(site_dir, filename)
+
+
 @app.route('/api')
 def api_info():
-    """API documentation endpoint - lists all available API routes."""
+    """API documentation endpoint - lists all available API routes.
+    ---
+    tags:
+      - Config
+    summary: API information
+    description: Returns a structured list of all available API endpoints and their descriptions.
+    responses:
+      200:
+        description: API endpoint listing
+        schema:
+          type: object
+          properties:
+            info:
+              type: string
+            endpoints:
+              type: object
+    """
     api_routes = {
         'info': 'LEAF DSS API v1.0',
         'endpoints': {
@@ -922,6 +1913,7 @@ def api_info():
             'config': {
                 'GET /api/config': 'Get app configuration',
                 'GET /api/levels': 'Get available data levels',
+                'GET /api/protected-areas/geojson': 'Get protected areas as GeoJSON',
             },
             'health': {
                 'GET /health': 'Health check',

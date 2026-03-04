@@ -33,6 +33,8 @@ const state = {
     gpMiniMap: null,  // Mini map for GP detail view
     gpVariables: [],  // Available GP variables for config
     blockGPFeatures: [],  // GP features for current block (used in block detail GP dropdown)
+    districtLayer: null,  // District boundary overlay layer
+    protectedAreasLayer: null,  // Protected areas overlay layer
     previousLevel: 'block',  // Track previous level for map reload
     // URL state
     applyingInitialState: false,  // Flag to prevent URL updates during init
@@ -72,7 +74,7 @@ const CHOROPLETH_NO_DATA = '#E0E0E0';
  */
 function buildInfotip(opts = {}) {
     const parts = [];
-    if (opts.field) parts.push(`Code: ${opts.field}`);
+    // Field code omitted from tooltip for cleaner display
     if (opts.description && opts.description !== opts.label && opts.description !== opts.field)
         parts.push(opts.description);
     if (opts.group && opts.group !== 'Other') parts.push(`Group: ${opts.group}`);
@@ -349,6 +351,81 @@ function initMap() {
         attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
         maxZoom: 18,
     }).addTo(state.map);
+
+    // Load district boundary layer
+    loadDistrictBoundaries();
+
+    // Pre-load protected areas (not added to map until toggled)
+    loadProtectedAreas();
+}
+
+async function loadDistrictBoundaries() {
+    try {
+        const response = await fetch('/api/districts/geojson');
+        if (!response.ok) return;
+        const geojson = await response.json();
+
+        state.districtLayer = L.geoJSON(geojson, {
+            style: {
+                fillColor: 'transparent',
+                fillOpacity: 0,
+                color: '#28537D',
+                weight: 1.5,
+                opacity: 0.8,
+                dashArray: '6, 4',
+            },
+            interactive: false,  // Don't capture mouse events — let block/GP layers handle clicks
+            pane: 'overlayPane',
+        });
+
+        state.districtLayer.addTo(state.map);
+    } catch (err) {
+        console.warn('Could not load district boundaries:', err);
+    }
+}
+
+async function loadProtectedAreas() {
+    try {
+        const response = await fetch('/api/protected-areas/geojson');
+        if (!response.ok) return;
+        const geojson = await response.json();
+
+        state.protectedAreasLayer = L.geoJSON(geojson, {
+            style: {
+                fillColor: '#2e7d32',
+                fillOpacity: 0.25,
+                color: '#1b5e20',
+                weight: 1.5,
+                opacity: 0.8,
+            },
+            onEachFeature: function(feature, layer) {
+                const p = feature.properties || {};
+                const lines = [];
+                if (p.name) lines.push(`<strong>${p.name}</strong>`);
+                if (p.Type) lines.push(`Type: ${p.Type}`);
+                if (p.State) lines.push(`State: ${p.State}`);
+                if (p.Area) lines.push(`Area: ${Number(p.Area).toFixed(1)} km²`);
+                if (p.Year) lines.push(`Year: ${p.Year}`);
+                if (lines.length) layer.bindTooltip(lines.join('<br>'));
+            },
+            interactive: true,
+            pane: 'overlayPane',
+        });
+        // Don't add to map — user toggles it via checkbox
+    } catch (err) {
+        console.warn('Could not load protected areas:', err);
+    }
+}
+
+function toggleProtectedAreas(show) {
+    if (!state.protectedAreasLayer) return;
+    if (show) {
+        state.protectedAreasLayer.addTo(state.map);
+        // Ensure district boundaries stay on top
+        if (state.districtLayer) state.districtLayer.bringToFront();
+    } else {
+        state.map.removeLayer(state.protectedAreasLayer);
+    }
 }
 
 function updateMap(geojsonData) {
@@ -362,6 +439,14 @@ function updateMap(geojsonData) {
         style: featureStyle,
         onEachFeature: onEachFeature,
     }).addTo(state.map);
+
+    // Bring overlay layers to front so they draw over data polygons
+    if (state.protectedAreasLayer && state.map.hasLayer(state.protectedAreasLayer)) {
+        state.protectedAreasLayer.bringToFront();
+    }
+    if (state.districtLayer) {
+        state.districtLayer.bringToFront();
+    }
 
     // Fit bounds only when no district is selected
     // (when a district IS selected, filterMapByLocation() handles zoom to that district)
@@ -911,6 +996,23 @@ async function handleInterventionChange() {
     try {
         const response = await fetch(`/api/intervention/${encodeURIComponent(intervention)}/config`);
         const data = await response.json();
+
+        // At GP level, filter to only variables available in GP data
+        if (state.currentLevel === 'gp' && state.gpVariables.length > 0) {
+            const gpFields = new Set(state.gpVariables.map(v => v.field));
+            data.variables = data.variables.filter(v => gpFields.has(v.field));
+
+            // Update GP-level stats (data_min/max/mean) from GP data
+            data.variables.forEach(v => {
+                const gpVar = state.gpVariables.find(gv => gv.field === v.field);
+                if (gpVar) {
+                    v.data_min = gpVar.data_min;
+                    v.data_max = gpVar.data_max;
+                    v.data_mean = gpVar.data_mean;
+                }
+            });
+        }
+
         state.interventionConfig = data;
 
         // Build default filters from config
@@ -956,7 +1058,7 @@ async function calculateFeasibility() {
             : '/api/calculate-feasibility';
 
         const payload = {
-            intervention: state.currentLevel === 'block' ? state.currentIntervention : null,
+            intervention: state.currentIntervention || null,
             filters: state.currentFilters,
             logic: state.logic,
             district: state.currentDistrict || null,
@@ -981,8 +1083,8 @@ async function calculateFeasibility() {
         // Update statistics (only for filtered district if selected)
         updateStatistics(data.statistics);
 
-        // Update active filters display
-        updateActiveFilters(state.currentFilters);
+        // Update active filters display with district-scoped variable stats
+        updateActiveFilters(state.currentFilters, data.statistics.variable_stats);
 
         // Render variable toggle buttons
         renderVariableToggles();
@@ -1000,12 +1102,6 @@ async function calculateFeasibility() {
 // =============================================================================
 
 async function openConfigModal() {
-    // For GP level, allow configuration without intervention
-    if (state.currentLevel === 'gp') {
-        await openGPConfigModal();
-        return;
-    }
-
     if (!state.interventionConfig) {
         alert('Please select an intervention first');
         return;
@@ -1587,36 +1683,27 @@ function applyConfig() {
         const maxInput = row.querySelector('.range-max');
         const prefSelect = row.querySelector('.preference-select');
 
-        // For GP mode, only include checked variables
-        if (state.currentLevel === 'gp') {
-            const checkbox = row.querySelector('.gp-var-check');
-            if (!checkbox || !checkbox.checked) return;
+        // For GP mode with checkbox-based config (legacy), only include checked
+        const checkbox = row.querySelector('.gp-var-check');
+        if (checkbox && !checkbox.checked) return;
 
-            const gpVar = state.gpVariables ? state.gpVariables.find(v => v.field === field) : null;
+        const configVar = state.interventionConfig
+            ? state.interventionConfig.variables.find(v => v.field === field)
+            : null;
+        const gpVar = state.gpVariables
+            ? state.gpVariables.find(v => v.field === field)
+            : null;
+        const labelSource = configVar || gpVar;
 
-            state.currentFilters.push({
-                column: field,
-                min_val: parseFloat(minInput.value),
-                max_val: parseFloat(maxInput.value),
-                weight: 1,
-                label: gpVar ? gpVar.label : field,
-                group: gpVar ? gpVar.group : 'Other',
-                preference: prefSelect ? prefSelect.value : 'moderate',
-            });
-        } else {
-            // Block mode - include all variables from intervention config
-            const configVar = state.interventionConfig.variables.find(v => v.field === field);
-
-            state.currentFilters.push({
-                column: field,
-                min_val: parseFloat(minInput.value),
-                max_val: parseFloat(maxInput.value),
-                weight: 1,
-                label: configVar ? configVar.label : field,
-                group: configVar ? configVar.group : 'Other',
-                preference: prefSelect ? prefSelect.value : 'moderate',
-            });
-        }
+        state.currentFilters.push({
+            column: field,
+            min_val: parseFloat(minInput.value),
+            max_val: parseFloat(maxInput.value),
+            weight: 1,
+            label: labelSource ? labelSource.label : field,
+            group: labelSource ? (labelSource.group || 'Other') : 'Other',
+            preference: prefSelect ? prefSelect.value : 'moderate',
+        });
     });
 
     closeConfigModal();
@@ -1869,7 +1956,7 @@ function restoreDefaultLegend() {
     }
 }
 
-function updateActiveFilters(filters) {
+function updateActiveFilters(filters, variableStats) {
     const container = document.getElementById('active-filters');
 
     if (!filters || filters.length === 0) {
@@ -1877,12 +1964,22 @@ function updateActiveFilters(filters) {
         return;
     }
 
-    // Get average values from intervention config if available
+    // variableStats: per-variable { min, max, mean } scoped to current district (from backend)
+    const varStats = variableStats || {};
+
+    // Get fallback values from intervention config
     const configVars = state.interventionConfig?.variables || [];
 
     const rows = filters.map(f => {
         const configVar = configVars.find(v => v.field === f.column);
-        const avg = configVar?.data_mean ?? f.data_mean ?? '-';
+        const vs = varStats[f.column];
+
+        // Show the configured filter range (range_min / range_max) and data average
+        const filterMin = f.min_val ?? configVar?.range_min ?? '-';
+        const filterMax = f.max_val ?? configVar?.range_max ?? '-';
+        const avg = vs?.mean ?? configVar?.data_mean ?? f.data_mean ?? '-';
+        const minDisplay = typeof filterMin === 'number' ? filterMin.toFixed(1) : filterMin;
+        const maxDisplay = typeof filterMax === 'number' ? filterMax.toFixed(1) : filterMax;
         const avgDisplay = typeof avg === 'number' ? avg.toFixed(1) : avg;
 
         const tip = escAttr(buildInfotip({
@@ -1890,9 +1987,9 @@ function updateActiveFilters(filters) {
             label: f.label,
             description: configVar?.description || f.description || '',
             group: f.group,
-            data_min: configVar?.data_min,
-            data_max: configVar?.data_max,
-            data_mean: configVar?.data_mean,
+            data_min: vs?.min ?? configVar?.data_min,
+            data_max: vs?.max ?? configVar?.data_max,
+            data_mean: vs?.mean ?? configVar?.data_mean,
             range_min: f.min_val,
             range_max: f.max_val,
         }));
@@ -1910,9 +2007,9 @@ function updateActiveFilters(filters) {
                     </button>
                 </td>
                 <td data-infotip="${tip}" data-infotip-pos="right">${f.label}</td>
-                <td class="text-right">${f.min_val.toFixed(1)}</td>
+                <td class="text-right">${minDisplay}</td>
                 <td class="text-right">${avgDisplay}</td>
-                <td class="text-right">${f.max_val.toFixed(1)}</td>
+                <td class="text-right">${maxDisplay}</td>
             </tr>
         `;
     }).join('');
@@ -2708,10 +2805,36 @@ function initBlockMiniMap(feature) {
     }
 }
 
+/**
+ * Get fill color for a GP feature.
+ * Uses feasibility color if calculated, otherwise falls back to default green.
+ */
+function gpFillColor(feature) {
+    const fc = feature.properties.feasibility_color;
+    return (fc && fc !== FEASIBILITY_COLORS.no_data) ? fc : '#22AD7A';
+}
+
 async function loadGPPolygonsInMiniMap(blockName) {
     try {
-        const response = await fetch('/api/gp/geojson');
-        const geojson = await response.json();
+        // If feasibility filters are active, fetch scored GP data; otherwise plain geojson
+        let geojson;
+        if (state.currentFilters.length > 0) {
+            const resp = await fetch('/api/gp/calculate-feasibility', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    intervention: state.currentIntervention || null,
+                    filters: state.currentFilters,
+                    logic: state.logic,
+                    block: blockName,
+                }),
+            });
+            const data = await resp.json();
+            geojson = data.geojson;
+        } else {
+            const resp = await fetch('/api/gp/geojson');
+            geojson = await resp.json();
+        }
 
         if (!geojson || !geojson.features || !state.blockMiniMap) return;
 
@@ -2729,17 +2852,19 @@ async function loadGPPolygonsInMiniMap(blockName) {
         // Store GP features for metric lookup when GP is selected
         state.blockGPFeatures = blockGPs.features;
 
-        // Add GP polygons to the mini map
+        // Add GP polygons to the mini map with feasibility colors
         const gpLayer = L.geoJSON(blockGPs, {
-            style: {
-                fillColor: '#22AD7A',
+            style: (feature) => ({
+                fillColor: gpFillColor(feature),
                 color: '#1b5e20',
                 weight: 1.5,
-                fillOpacity: 0.4,
-            },
+                fillOpacity: 0.6,
+            }),
             onEachFeature: (feat, layer) => {
                 const gpName = feat.properties.GP_NAME || 'Unknown GP';
-                layer.bindTooltip(gpName, { className: 'custom-tooltip' });
+                const feas = feat.properties.feasibility;
+                const feasLabel = feas != null ? ` (${feas.toFixed(1)}%)` : '';
+                layer.bindTooltip(gpName + feasLabel, { className: 'custom-tooltip' });
                 layer.on('click', () => {
                     // Update dropdown and trigger the same logic
                     const gpSelect = document.getElementById('block-gp-select');
@@ -2751,9 +2876,44 @@ async function loadGPPolygonsInMiniMap(blockName) {
 
         // Fit bounds to show GP polygons
         state.blockMiniMap.fitBounds(gpLayer.getBounds(), { padding: [20, 20] });
+
+        // Add feasibility legend if filters are active
+        if (state.currentFilters.length > 0) {
+            addMiniMapLegend(state.blockMiniMap);
+        }
     } catch (error) {
         console.error('Error loading GP polygons in mini map:', error);
     }
+}
+
+/**
+ * Add a compact feasibility legend to a mini-map as a Leaflet control.
+ */
+function addMiniMapLegend(map) {
+    // Remove existing legend if any
+    if (map._miniLegend) {
+        map.removeControl(map._miniLegend);
+    }
+
+    const legend = L.control({ position: 'bottomright' });
+    legend.onAdd = function () {
+        const div = L.DomUtil.create('div', 'mini-map-legend');
+        const items = [
+            { label: '100%', color: FEASIBILITY_COLORS.very_high },
+            { label: '75%+', color: FEASIBILITY_COLORS.high },
+            { label: '50%+', color: FEASIBILITY_COLORS.moderate_high },
+            { label: '25%+', color: FEASIBILITY_COLORS.moderate },
+            { label: '1%+',  color: FEASIBILITY_COLORS.low },
+            { label: '0%',   color: FEASIBILITY_COLORS.very_low },
+        ];
+        div.innerHTML = '<div class="mini-legend-title">Feasibility</div>' +
+            items.map(i =>
+                `<span class="mini-legend-item"><i style="background:${i.color}"></i>${i.label}</span>`
+            ).join('');
+        return div;
+    };
+    legend.addTo(map);
+    map._miniLegend = legend;
 }
 
 async function populateBlockGPDropdown(blockName) {
@@ -2799,7 +2959,7 @@ function handleBlockGPSelect() {
                 state.blockMiniMap.fitBounds(layer.getBounds(), { padding: [20, 20] });
                 layer.openTooltip();
             } else if (layer.feature.properties.GP_NAME) {
-                layer.setStyle({ fillColor: '#22AD7A', fillOpacity: 0.4, weight: 1.5, color: '#1b5e20' });
+                layer.setStyle({ fillColor: gpFillColor(layer.feature), fillOpacity: 0.6, weight: 1.5, color: '#1b5e20' });
             }
         });
     }
@@ -3004,13 +3164,13 @@ function initGPMiniMap(feature) {
         maxZoom: 18,
     }).addTo(state.gpMiniMap);
 
-    // Add GP boundary
+    // Add GP boundary with feasibility color if available
     const gpLayer = L.geoJSON(feature, {
         style: {
-            fillColor: '#22AD7A',
+            fillColor: gpFillColor(feature),
             color: '#1b5e20',
             weight: 2,
-            fillOpacity: 0.3,
+            fillOpacity: 0.5,
         }
     }).addTo(state.gpMiniMap);
 

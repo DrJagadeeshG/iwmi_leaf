@@ -217,10 +217,23 @@ def calculate_and_get_geojson(gdf, criteria, logic="AND", district=None):
             if pd.isna(value) if isinstance(value, float) else False:
                 props[key] = None
 
+    # Compute per-variable stats (scoped to district if selected)
+    variable_stats = {}
+    for c in criteria:
+        col = c.get('column') or c.get('field')
+        if col and col in gdf_for_stats.columns:
+            series = pd.to_numeric(gdf_for_stats[col], errors='coerce').dropna()
+            variable_stats[col] = {
+                'min': float(series.min()) if len(series) > 0 else 0,
+                'max': float(series.max()) if len(series) > 0 else 100,
+                'mean': float(series.mean()) if len(series) > 0 else 0,
+            }
+
     return {
         'geojson': geojson,
         'statistics': {
             **stats,
-            'distribution': distribution
+            'distribution': distribution,
+            'variable_stats': variable_stats,
         }
     }
