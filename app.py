@@ -163,12 +163,14 @@ def index():
 @app.route('/<district>')
 def district_view(district):
     """District level view (shows all blocks in district)."""
-    # Validate district exists
+    from flask import redirect, url_for
+    # Reserved paths — let their own routes handle them
+    if district in ('documentation', 'docs', 'api', 'static', 'health'):
+        return redirect(f'/{district}/')
     gdf = load_shapefile()
     valid_districts = gdf['Dist_Name'].dropna().unique().tolist()
     if district not in valid_districts:
-        if district in ['api', 'static', 'health']:
-            return jsonify({'error': 'Invalid route'}), 404
+        return jsonify({'error': 'Invalid route'}), 404
     return render_app(level='block', district=district)
 
 
