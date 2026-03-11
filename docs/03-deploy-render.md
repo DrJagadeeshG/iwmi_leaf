@@ -49,7 +49,7 @@ CMD gunicorn --bind 0.0.0.0:${PORT:-10000} --workers 2 --threads 4 --timeout 120
 ```yaml
 services:
   - type: web
-    name: leaf-dss
+    name: iwmi-leaf
     runtime: docker
     envVars:
       - key: PYTHON_VERSION
@@ -99,7 +99,7 @@ git push -u origin main
 
 | Setting | Value |
 |---------|-------|
-| Name | `leaf-dss` (or your preferred name) |
+| Name | `iwmi-leaf` (or your preferred name) |
 | Region | Oregon (US West) or nearest to users |
 | Branch | `main` |
 | Runtime | Docker |
@@ -109,7 +109,7 @@ git push -u origin main
 
 1. Click **Create Web Service**
 2. Wait for build to complete (5-10 minutes for first build)
-3. Access your app at `https://leaf-dss.onrender.com`
+3. Access your app at `https://iwmi-leaf.onrender.com`
 
 ## Build Time Considerations
 
@@ -135,7 +135,7 @@ Subsequent builds use cached layers and are faster.
 
 Render automatically monitors the `/health` endpoint:
 ```
-https://leaf-dss.onrender.com/health
+https://iwmi-leaf.onrender.com/health
 ```
 
 ### Logs

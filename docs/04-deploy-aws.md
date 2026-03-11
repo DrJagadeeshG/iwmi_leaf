@@ -30,12 +30,12 @@ Elastic Beanstalk provides managed infrastructure with auto-scaling.
 2. **Initialize Elastic Beanstalk**
    ```bash
    cd leaf_flask
-   eb init -p docker leaf-dss --region ap-south-1
+   eb init -p docker iwmi-leaf --region ap-south-1
    ```
 
 3. **Create Environment**
    ```bash
-   eb create leaf-dss-prod --instance-type t3.small
+   eb create iwmi-leaf-prod --instance-type t3.small
    ```
 
 4. **Deploy**
@@ -85,7 +85,7 @@ Serverless container deployment with automatic scaling.
 
 1. **Create ECR Repository**
    ```bash
-   aws ecr create-repository --repository-name leaf-dss
+   aws ecr create-repository --repository-name iwmi-leaf
    ```
 
 2. **Build and Push Docker Image**
@@ -94,30 +94,30 @@ Serverless container deployment with automatic scaling.
    aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin YOUR_ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com
 
    # Build image
-   docker build -t leaf-dss .
+   docker build -t iwmi-leaf .
 
    # Tag and push
-   docker tag leaf-dss:latest YOUR_ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com/leaf-dss:latest
-   docker push YOUR_ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com/leaf-dss:latest
+   docker tag iwmi-leaf:latest YOUR_ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com/iwmi-leaf:latest
+   docker push YOUR_ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com/iwmi-leaf:latest
    ```
 
 3. **Create ECS Cluster**
    ```bash
-   aws ecs create-cluster --cluster-name leaf-dss-cluster
+   aws ecs create-cluster --cluster-name iwmi-leaf-cluster
    ```
 
 4. **Create Task Definition**: `task-definition.json`
    ```json
    {
-     "family": "leaf-dss",
+     "family": "iwmi-leaf",
      "networkMode": "awsvpc",
      "requiresCompatibilities": ["FARGATE"],
      "cpu": "512",
      "memory": "1024",
      "containerDefinitions": [
        {
-         "name": "leaf-dss",
-         "image": "YOUR_ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com/leaf-dss:latest",
+         "name": "iwmi-leaf",
+         "image": "YOUR_ACCOUNT_ID.dkr.ecr.ap-south-1.amazonaws.com/iwmi-leaf:latest",
          "portMappings": [
            {
              "containerPort": 10000,
@@ -130,7 +130,7 @@ Serverless container deployment with automatic scaling.
          "logConfiguration": {
            "logDriver": "awslogs",
            "options": {
-             "awslogs-group": "/ecs/leaf-dss",
+             "awslogs-group": "/ecs/iwmi-leaf",
              "awslogs-region": "ap-south-1",
              "awslogs-stream-prefix": "ecs"
            }
@@ -143,9 +143,9 @@ Serverless container deployment with automatic scaling.
 5. **Create Service with ALB**
    ```bash
    aws ecs create-service \
-     --cluster leaf-dss-cluster \
-     --service-name leaf-dss-service \
-     --task-definition leaf-dss \
+     --cluster iwmi-leaf-cluster \
+     --service-name iwmi-leaf-service \
+     --task-definition iwmi-leaf \
      --desired-count 2 \
      --launch-type FARGATE \
      --network-configuration "awsvpcConfiguration={subnets=[subnet-xxx],securityGroups=[sg-xxx],assignPublicIp=ENABLED}"
@@ -175,8 +175,8 @@ Direct EC2 deployment for maximum control.
    ```bash
    git clone https://github.com/DrJagadeeshG/iwmi_leaf.git
    cd iwmi_leaf
-   docker build -t leaf-dss .
-   docker run -d -p 80:10000 --name leaf-dss leaf-dss
+   docker build -t iwmi-leaf .
+   docker run -d -p 80:10000 --name iwmi-leaf iwmi-leaf
    ```
 
 4. **Setup Nginx (Optional - for SSL)**
@@ -185,7 +185,7 @@ Direct EC2 deployment for maximum control.
    sudo systemctl start nginx
    ```
 
-   Nginx config (`/etc/nginx/conf.d/leaf-dss.conf`):
+   Nginx config (`/etc/nginx/conf.d/iwmi-leaf.conf`):
    ```nginx
    server {
        listen 80;
@@ -265,7 +265,7 @@ jobs:
       - name: Build, tag, and push image to Amazon ECR
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          ECR_REPOSITORY: leaf-dss
+          ECR_REPOSITORY: iwmi-leaf
           IMAGE_TAG: ${{ github.sha }}
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
@@ -273,7 +273,7 @@ jobs:
 
       - name: Update ECS service
         run: |
-          aws ecs update-service --cluster leaf-dss-cluster --service leaf-dss-service --force-new-deployment
+          aws ecs update-service --cluster iwmi-leaf-cluster --service iwmi-leaf-service --force-new-deployment
 ```
 
 ## Security Best Practices

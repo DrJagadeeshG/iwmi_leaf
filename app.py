@@ -134,7 +134,7 @@ swagger_template = {
 Swagger(app, config=swagger_config, template=swagger_template)
 
 # Configuration
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'leaf-dss-secret-key')
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'iwmi-leaf-secret-key')
 
 
 # =============================================================================
