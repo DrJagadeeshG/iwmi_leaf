@@ -2,7 +2,7 @@ services:
   - type: web
     name: iwmi-leaf
     runtime: python
-    buildCommand: pip install -r requirements.txt && pip install mkdocs-material && mkdocs build -f ../mkdocs.yml -d ./site
+    buildCommand: pip install -r requirements.txt
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION

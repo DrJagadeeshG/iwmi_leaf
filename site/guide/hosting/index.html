@@ -1,0 +1,2347 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Decision Support System for Agricultural Interventions in Assam, India">
+      
+      
+      
+        <link rel="canonical" href="https://iwmi-leaf.onrender.com/documentation/guide/hosting/">
+      
+      
+        <link rel="prev" href="../deployment/">
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/iwmi_logo.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.5">
+    
+    
+      
+        <title>Hosting & Handover - LEAF DSS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="light-green">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#hosting-handover-guide" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LEAF DSS" class="md-header__button md-logo" aria-label="LEAF DSS" data-md-component="logo">
+      
+  <img src="../../assets/iwmi_logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LEAF DSS
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Hosting & Handover
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="light-green"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="green" data-md-color-accent="light-green"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../quickstart/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/overview/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../architecture/" class="md-tabs__link">
+          
+  
+  
+  Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LEAF DSS" class="md-nav__button md-logo" aria-label="LEAF DSS" data-md-component="logo">
+      
+  <img src="../../assets/iwmi_logo.png" alt="logo">
+
+    </a>
+    LEAF DSS
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/blocks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Blocks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/locations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Locations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/gps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Gram Panchayats
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/interventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Interventions
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Variables
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/feasibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Feasibility
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/ai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Recommendations
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/export/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Export
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config & Health
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guides
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guides
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deployment
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hosting & Handover
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hosting & Handover
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-youre-hosting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What You're Hosting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What You&#39;re Hosting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#system-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#whats-included" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's Included
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hosting-options-costs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hosting Options &amp; Costs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hosting Options &amp; Costs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-render-current-setup-recommended-for-getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 1: Render (Current Setup) — Recommended for Getting Started
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Option 1: Render (Current Setup) — Recommended for Getting Started">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-aws-ec2-elastic-beanstalk-or-ecs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2: AWS (EC2 + Elastic Beanstalk or ECS)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Option 2: AWS (EC2 + Elastic Beanstalk or ECS)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-ec2-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick EC2 Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-google-cloud-platform-gcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 3: Google Cloud Platform (GCP)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Option 3: Google Cloud Platform (GCP)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cloud-run-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cloud Run Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-4-azure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 4: Azure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-5-digitalocean-hetzner-budget-vps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 5: DigitalOcean / Hetzner (Budget VPS)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-6-on-premises-government-data-center" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 6: On-Premises / Government Data Center
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cost-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cost Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handover-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Handover Checklist
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Handover Checklist">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-source-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Source Code
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-data-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Data Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Environment Variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-knowledge-transfer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Knowledge Transfer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#production-setup-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production Setup Details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Production Setup Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#systemd-service-linux" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Systemd Service (Linux)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nginx-reverse-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nginx Reverse Proxy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docker-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#updating-the-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Updating the Application
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Updating the Application">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#routine-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Routine Updates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#updating-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Updating Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-new-districts-gp-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New District's GP Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Considerations
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#what-youre-hosting" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What You're Hosting
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What You&#39;re Hosting">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#system-requirements" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        System Requirements
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#whats-included" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's Included
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hosting-options-costs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hosting Options &amp; Costs
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Hosting Options &amp; Costs">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#option-1-render-current-setup-recommended-for-getting-started" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 1: Render (Current Setup) — Recommended for Getting Started
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Option 1: Render (Current Setup) — Recommended for Getting Started">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#setup-steps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Setup Steps
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-2-aws-ec2-elastic-beanstalk-or-ecs" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 2: AWS (EC2 + Elastic Beanstalk or ECS)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Option 2: AWS (EC2 + Elastic Beanstalk or ECS)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#quick-ec2-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quick EC2 Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-3-google-cloud-platform-gcp" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 3: Google Cloud Platform (GCP)
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Option 3: Google Cloud Platform (GCP)">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#cloud-run-setup" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cloud Run Setup
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-4-azure" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 4: Azure
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-5-digitalocean-hetzner-budget-vps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 5: DigitalOcean / Hetzner (Budget VPS)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#option-6-on-premises-government-data-center" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Option 6: On-Premises / Government Data Center
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#cost-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cost Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#handover-checklist" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Handover Checklist
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Handover Checklist">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#1-source-code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Source Code
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#2-data-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Data Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#3-environment-variables" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Environment Variables
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#4-documentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Documentation
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5-knowledge-transfer" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Knowledge Transfer
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#production-setup-details" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Production Setup Details
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Production Setup Details">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#systemd-service-linux" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Systemd Service (Linux)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nginx-reverse-proxy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nginx Reverse Proxy
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#docker-optional" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Docker (Optional)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#updating-the-application" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Updating the Application
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Updating the Application">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#routine-updates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Routine Updates
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#updating-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Updating Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#adding-a-new-districts-gp-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adding a New District's GP Data
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#security-considerations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Security Considerations
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="hosting-handover-guide">Hosting &amp; Handover Guide<a class="headerlink" href="#hosting-handover-guide" title="Permanent link">&para;</a></h1>
+<p>This guide is for anyone who needs to host LEAF DSS independently — whether you're a government IT team, an NGO partner, a research institution, or a developer taking over the project. It covers what you need, your hosting options, estimated costs, and step-by-step instructions.</p>
+<hr />
+<h2 id="what-youre-hosting">What You're Hosting<a class="headerlink" href="#what-youre-hosting" title="Permanent link">&para;</a></h2>
+<p>LEAF DSS is a <strong>single Python web application</strong> that serves both the interactive map UI and the REST API. There is no separate frontend deployment — everything runs from one process.</p>
+<h3 id="system-requirements">System Requirements<a class="headerlink" href="#system-requirements" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>Minimum</th>
+<th>Recommended</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>CPU</strong></td>
+<td>1 vCPU</td>
+<td>2 vCPUs</td>
+</tr>
+<tr>
+<td><strong>RAM</strong></td>
+<td>512 MB</td>
+<td>1–2 GB</td>
+</tr>
+<tr>
+<td><strong>Disk</strong></td>
+<td>500 MB</td>
+<td>1 GB</td>
+</tr>
+<tr>
+<td><strong>Python</strong></td>
+<td>3.10+</td>
+<td>3.11 or 3.12</td>
+</tr>
+<tr>
+<td><strong>OS</strong></td>
+<td>Any Linux</td>
+<td>Ubuntu 22.04+</td>
+</tr>
+</tbody>
+</table>
+<p>RAM is the main constraint — the app loads shapefiles into memory (~10–15 MB cached). With the AI/RAG feature enabled, RAM usage increases to ~500 MB due to ChromaDB and embeddings.</p>
+<h3 id="whats-included">What's Included<a class="headerlink" href="#whats-included" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Component</th>
+<th>Description</th>
+<th>Required?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Flask web app</td>
+<td>Map UI + REST API + Swagger docs</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Shapefiles &amp; CSV</td>
+<td>Block/GP/district/protected area geodata</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>MkDocs site</td>
+<td>Written documentation (pre-built HTML)</td>
+<td>Optional</td>
+</tr>
+<tr>
+<td>AI/RAG pipeline</td>
+<td>Policy document recommendations</td>
+<td>Optional</td>
+</tr>
+<tr>
+<td>PDF policy docs</td>
+<td>Source documents for AI</td>
+<td>Only if AI enabled</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="hosting-options-costs">Hosting Options &amp; Costs<a class="headerlink" href="#hosting-options-costs" title="Permanent link">&para;</a></h2>
+<h3 id="option-1-render-current-setup-recommended-for-getting-started">Option 1: Render (Current Setup) — Recommended for Getting Started<a class="headerlink" href="#option-1-render-current-setup-recommended-for-getting-started" title="Permanent link">&para;</a></h3>
+<p><a href="https://render.com">Render</a> is a managed platform that auto-deploys from GitHub.</p>
+<table>
+<thead>
+<tr>
+<th>Plan</th>
+<th>Monthly Cost</th>
+<th>RAM</th>
+<th>CPU</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Free</strong></td>
+<td>$0</td>
+<td>512 MB</td>
+<td>Shared</td>
+<td>Sleeps after 15 min inactivity, cold starts ~30s</td>
+</tr>
+<tr>
+<td><strong>Starter</strong></td>
+<td>$7/month</td>
+<td>512 MB</td>
+<td>Shared</td>
+<td>Always on, no sleep</td>
+</tr>
+<tr>
+<td><strong>Standard</strong></td>
+<td>$25/month</td>
+<td>2 GB</td>
+<td>1 vCPU</td>
+<td>Recommended for production</td>
+</tr>
+<tr>
+<td><strong>Pro</strong></td>
+<td>$85/month</td>
+<td>4 GB</td>
+<td>2 vCPUs</td>
+<td>For heavy AI/RAG usage</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Pros:</strong> Zero server management, auto-deploy from Git, free SSL, health checks.
+<strong>Cons:</strong> Free tier has cold starts; US/EU regions only.</p>
+<h4 id="setup-steps">Setup Steps<a class="headerlink" href="#setup-steps" title="Permanent link">&para;</a></h4>
+<ol>
+<li>Push code to a GitHub repository</li>
+<li>Sign up at <a href="https://render.com">render.com</a></li>
+<li>Click <strong>New → Web Service</strong> → connect your GitHub repo</li>
+<li>Configure:<ul>
+<li><strong>Build Command:</strong> <code>pip install -r leaf_flask/requirements.txt &amp;&amp; pip install mkdocs-material &amp;&amp; mkdocs build</code></li>
+<li><strong>Start Command:</strong> <code>cd leaf_flask &amp;&amp; gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120</code></li>
+</ul>
+</li>
+<li>Add environment variables:<ul>
+<li><code>SECRET_KEY</code> = any random string</li>
+<li><code>OPENAI_API_KEY</code> = your OpenAI key (only if using AI features)</li>
+</ul>
+</li>
+<li>Click <strong>Deploy</strong></li>
+</ol>
+<hr />
+<h3 id="option-2-aws-ec2-elastic-beanstalk-or-ecs">Option 2: AWS (EC2 + Elastic Beanstalk or ECS)<a class="headerlink" href="#option-2-aws-ec2-elastic-beanstalk-or-ecs" title="Permanent link">&para;</a></h3>
+<p>Best for organizations already on AWS with IT teams.</p>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Monthly Cost (estimate)</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>EC2 t3.micro</strong></td>
+<td>~$8/month</td>
+<td>1 vCPU, 1 GB RAM, free tier eligible (1 year)</td>
+</tr>
+<tr>
+<td><strong>EC2 t3.small</strong></td>
+<td>~$15/month</td>
+<td>2 vCPU, 2 GB RAM — recommended</td>
+</tr>
+<tr>
+<td><strong>Elastic Beanstalk</strong></td>
+<td>EC2 cost + $0</td>
+<td>Managed deployment wrapper around EC2</td>
+</tr>
+<tr>
+<td><strong>ECS Fargate</strong></td>
+<td>~$15–30/month</td>
+<td>Serverless containers, no EC2 management</td>
+</tr>
+<tr>
+<td><strong>Application Load Balancer</strong></td>
+<td>~$16/month</td>
+<td>Add if you need custom domain + SSL</td>
+</tr>
+<tr>
+<td><strong>Route 53 (DNS)</strong></td>
+<td>~$0.50/month</td>
+<td>Custom domain routing</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total estimate:</strong> $15–50/month for a basic production setup.</p>
+<h4 id="quick-ec2-setup">Quick EC2 Setup<a class="headerlink" href="#quick-ec2-setup" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># On a fresh Ubuntu 22.04 EC2 instance</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>sudo<span class="w"> </span>apt<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>python3-pip<span class="w"> </span>python3-venv<span class="w"> </span>nginx
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Clone and setup</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>git<span class="w"> </span>clone<span class="w"> </span>&lt;repo-url&gt;<span class="w"> </span>/opt/iwmi-leaf
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="nb">cd</span><span class="w"> </span>/opt/iwmi-leaf/leaf_flask
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>python3<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>venv
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="nb">source</span><span class="w"> </span>venv/bin/activate
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>pip<span class="w"> </span>install<span class="w"> </span>mkdocs-material
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="nb">cd</span><span class="w"> </span>..<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mkdocs<span class="w"> </span>build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>leaf_flask
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="c1"># Run with Gunicorn</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>gunicorn<span class="w"> </span>app:app<span class="w"> </span>--bind<span class="w"> </span><span class="m">0</span>.0.0.0:5000<span class="w"> </span>--workers<span class="w"> </span><span class="m">2</span><span class="w"> </span>--timeout<span class="w"> </span><span class="m">120</span><span class="w"> </span>--daemon
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="c1"># (Optional) Set up Nginx reverse proxy for port 80/443</span>
+</code></pre></div>
+<div class="admonition tip">
+<p class="admonition-title">Use a process manager</p>
+<p>In production, use <strong>systemd</strong> or <strong>supervisord</strong> to keep Gunicorn running and auto-restart on crashes. See the systemd section below.</p>
+</div>
+<hr />
+<h3 id="option-3-google-cloud-platform-gcp">Option 3: Google Cloud Platform (GCP)<a class="headerlink" href="#option-3-google-cloud-platform-gcp" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Monthly Cost (estimate)</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cloud Run</strong></td>
+<td>~$5–15/month</td>
+<td>Serverless containers, pay per request, auto-scaling</td>
+</tr>
+<tr>
+<td><strong>Compute Engine e2-small</strong></td>
+<td>~$13/month</td>
+<td>2 vCPU, 2 GB RAM</td>
+</tr>
+<tr>
+<td><strong>App Engine (Standard)</strong></td>
+<td>~$0–25/month</td>
+<td>Managed platform, auto-scales to zero</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Cloud Run</strong> is the most cost-effective for low-to-moderate traffic.</p>
+<h4 id="cloud-run-setup">Cloud Run Setup<a class="headerlink" href="#cloud-run-setup" title="Permanent link">&para;</a></h4>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Build container</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>iwmi-leaf<span class="w"> </span>.
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>docker<span class="w"> </span>tag<span class="w"> </span>iwmi-leaf<span class="w"> </span>gcr.io/YOUR_PROJECT/iwmi-leaf
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>docker<span class="w"> </span>push<span class="w"> </span>gcr.io/YOUR_PROJECT/iwmi-leaf
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># Deploy</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>gcloud<span class="w"> </span>run<span class="w"> </span>deploy<span class="w"> </span>iwmi-leaf<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="w">  </span>--image<span class="w"> </span>gcr.io/YOUR_PROJECT/iwmi-leaf<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="w">  </span>--port<span class="w"> </span><span class="m">5000</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="w">  </span>--memory<span class="w"> </span>1Gi<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="w">  </span>--cpu<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="w">  </span>--allow-unauthenticated
+</code></pre></div>
+<hr />
+<h3 id="option-4-azure">Option 4: Azure<a class="headerlink" href="#option-4-azure" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Service</th>
+<th>Monthly Cost (estimate)</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>App Service B1</strong></td>
+<td>~$13/month</td>
+<td>1 vCPU, 1.75 GB RAM</td>
+</tr>
+<tr>
+<td><strong>App Service B2</strong></td>
+<td>~$26/month</td>
+<td>2 vCPU, 3.5 GB RAM</td>
+</tr>
+<tr>
+<td><strong>Container Instances</strong></td>
+<td>~$10–20/month</td>
+<td>Serverless containers</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="option-5-digitalocean-hetzner-budget-vps">Option 5: DigitalOcean / Hetzner (Budget VPS)<a class="headerlink" href="#option-5-digitalocean-hetzner-budget-vps" title="Permanent link">&para;</a></h3>
+<p>Best value for money if you're comfortable with basic Linux administration.</p>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>Plan</th>
+<th>Monthly Cost</th>
+<th>Specs</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>DigitalOcean</strong></td>
+<td>Basic Droplet</td>
+<td>$6/month</td>
+<td>1 vCPU, 1 GB RAM, 25 GB SSD</td>
+</tr>
+<tr>
+<td><strong>DigitalOcean</strong></td>
+<td>Regular Droplet</td>
+<td>$12/month</td>
+<td>2 vCPU, 2 GB RAM, 50 GB SSD</td>
+</tr>
+<tr>
+<td><strong>Hetzner</strong></td>
+<td>CX22</td>
+<td>€4/month (~$4.50)</td>
+<td>2 vCPU, 4 GB RAM, 40 GB — best value</td>
+</tr>
+<tr>
+<td><strong>DigitalOcean App Platform</strong></td>
+<td>Basic</td>
+<td>$5/month</td>
+<td>Managed platform (like Render)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3 id="option-6-on-premises-government-data-center">Option 6: On-Premises / Government Data Center<a class="headerlink" href="#option-6-on-premises-government-data-center" title="Permanent link">&para;</a></h3>
+<p>For government agencies or organizations with internal hosting infrastructure.</p>
+<table>
+<thead>
+<tr>
+<th>Requirement</th>
+<th>Details</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Server</strong></td>
+<td>Any Linux server with Python 3.10+, 2 GB RAM</td>
+</tr>
+<tr>
+<td><strong>Network</strong></td>
+<td>HTTP/HTTPS access on ports 80/443</td>
+</tr>
+<tr>
+<td><strong>SSL</strong></td>
+<td>Use Let's Encrypt (free) or organization's certificate</td>
+</tr>
+<tr>
+<td><strong>Backup</strong></td>
+<td>Only the <code>data/</code> directory and <code>ai-docs/</code> need backup</td>
+</tr>
+<tr>
+<td><strong>Updates</strong></td>
+<td>Pull from Git and restart the service</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="cost-summary">Cost Summary<a class="headerlink" href="#cost-summary" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Scenario</th>
+<th>Monthly Cost</th>
+<th>Best For</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Free / testing</strong></td>
+<td>$0</td>
+<td>Demos, evaluation (Render free tier)</td>
+</tr>
+<tr>
+<td><strong>Small production</strong></td>
+<td>$5–15/month</td>
+<td>Low traffic, internal use</td>
+</tr>
+<tr>
+<td><strong>Standard production</strong></td>
+<td>$15–30/month</td>
+<td>Public-facing, reliable uptime</td>
+</tr>
+<tr>
+<td><strong>With AI features</strong></td>
+<td>$30–50/month</td>
+<td>Includes OpenAI API usage (~$5–20/month extra)</td>
+</tr>
+<tr>
+<td><strong>On-premises</strong></td>
+<td>$0 (infra cost)</td>
+<td>Government/institutional hosting</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">OpenAI API Costs</p>
+<p>The AI recommendation feature calls the OpenAI API per request. Typical cost is $0.01–0.05 per recommendation. With 100 recommendations/month, expect ~$1–5/month in API fees on top of hosting costs. You can also use a self-hosted LLM to avoid this cost entirely.</p>
+</div>
+<hr />
+<h2 id="handover-checklist">Handover Checklist<a class="headerlink" href="#handover-checklist" title="Permanent link">&para;</a></h2>
+<p>If you're handing this project to another team, ensure they have:</p>
+<h3 id="1-source-code">1. Source Code<a class="headerlink" href="#1-source-code" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] Access to the Git repository (GitHub/GitLab)</li>
+<li>[ ] All branches up to date</li>
+</ul>
+<h3 id="2-data-files">2. Data Files<a class="headerlink" href="#2-data-files" title="Permanent link">&para;</a></h3>
+<p>These are NOT in Git (too large). Transfer them separately:</p>
+<ul>
+<li>[ ] <code>leaf_flask/data/4DSS_VAR_2.0.*</code> (block shapefile — .shp, .dbf, .shx, .prj, .qmd)</li>
+<li>[ ] <code>leaf_flask/data/Block_assam.*</code> (district mapping shapefile)</li>
+<li>[ ] <code>leaf_flask/data/grampanchayat.*</code> (GP shapefile)</li>
+<li>[ ] <code>leaf_flask/data/districts.geojson</code></li>
+<li>[ ] <code>leaf_flask/data/protected_areas/Protected_Area_India_Final.*</code></li>
+<li>[ ] <code>leaf_flask/data/DSS_input2.csv</code></li>
+<li>[ ] <code>leaf_flask/data/Tinsukia_GP_data.xlsx</code></li>
+<li>[ ] <code>leaf_flask/data/Block_GPs.xlsx</code></li>
+<li>[ ] <code>leaf_flask/data/Vill_Gp_join.csv</code></li>
+<li>[ ] <code>ai-docs/*.pdf</code> (policy documents for AI)</li>
+</ul>
+<h3 id="3-environment-variables">3. Environment Variables<a class="headerlink" href="#3-environment-variables" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] <code>SECRET_KEY</code> — any random string for Flask sessions</li>
+<li>[ ] <code>OPENAI_API_KEY</code> — only if using AI recommendation feature</li>
+</ul>
+<h3 id="4-documentation">4. Documentation<a class="headerlink" href="#4-documentation" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] This documentation site (auto-generated from <code>docs/</code>)</li>
+<li>[ ] Swagger API docs (auto-generated at <code>/docs</code>)</li>
+</ul>
+<h3 id="5-knowledge-transfer">5. Knowledge Transfer<a class="headerlink" href="#5-knowledge-transfer" title="Permanent link">&para;</a></h3>
+<ul>
+<li>[ ] How to add new interventions (edit <code>DSS_input2.csv</code>)</li>
+<li>[ ] How to update shapefiles (replace files in <code>data/</code>)</li>
+<li>[ ] How to add new AI documents (add PDFs to <code>ai-docs/</code>, call <code>/api/ai-recommendation/init</code>)</li>
+<li>[ ] How to add GP data for new districts (new shapefile + Excel + mapping)</li>
+</ul>
+<hr />
+<h2 id="production-setup-details">Production Setup Details<a class="headerlink" href="#production-setup-details" title="Permanent link">&para;</a></h2>
+<h3 id="systemd-service-linux">Systemd Service (Linux)<a class="headerlink" href="#systemd-service-linux" title="Permanent link">&para;</a></h3>
+<p>Create <code>/etc/systemd/system/iwmi-leaf.service</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="k">[Unit]</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="na">Description</span><span class="o">=</span><span class="s">LEAF DSS Flask Application</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="na">After</span><span class="o">=</span><span class="s">network.target</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="k">[Service]</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="na">User</span><span class="o">=</span><span class="s">www-data</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="na">WorkingDirectory</span><span class="o">=</span><span class="s">/opt/iwmi-leaf/leaf_flask</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="na">Environment</span><span class="o">=</span><span class="s">&quot;SECRET_KEY=your-secret-key-here&quot;</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="na">Environment</span><span class="o">=</span><span class="s">&quot;OPENAI_API_KEY=sk-...&quot;</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="na">ExecStart</span><span class="o">=</span><span class="s">/opt/iwmi-leaf/leaf_flask/venv/bin/gunicorn app:app </span>\
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="w">    </span><span class="s">--bind 127.0.0.1:5000 </span>\
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="w">    </span><span class="s">--workers 2 </span>\
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a><span class="w">    </span><span class="s">--timeout 120 </span>\
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="w">    </span><span class="s">--access-logfile /var/log/iwmi-leaf/access.log </span>\
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="w">    </span><span class="s">--error-logfile /var/log/iwmi-leaf/error.log</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a><span class="na">Restart</span><span class="o">=</span><span class="s">always</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="na">RestartSec</span><span class="o">=</span><span class="s">5</span>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="k">[Install]</span>
+<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="na">WantedBy</span><span class="o">=</span><span class="s">multi-user.target</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>sudo<span class="w"> </span>mkdir<span class="w"> </span>-p<span class="w"> </span>/var/log/iwmi-leaf
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span><span class="nb">enable</span><span class="w"> </span>iwmi-leaf
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span>start<span class="w"> </span>iwmi-leaf
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span>status<span class="w"> </span>iwmi-leaf
+</code></pre></div>
+<h3 id="nginx-reverse-proxy">Nginx Reverse Proxy<a class="headerlink" href="#nginx-reverse-proxy" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">server</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="kn">listen</span><span class="w"> </span><span class="mi">80</span><span class="p">;</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="w">    </span><span class="kn">server_name</span><span class="w"> </span><span class="s">iwmi-leaf.yourdomain.com</span><span class="p">;</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="s">/</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="w">        </span><span class="kn">proxy_pass</span><span class="w"> </span><span class="s">http://127.0.0.1:5000</span><span class="p">;</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">Host</span><span class="w"> </span><span class="nv">$host</span><span class="p">;</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a><span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">X-Real-IP</span><span class="w"> </span><span class="nv">$remote_addr</span><span class="p">;</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">X-Forwarded-For</span><span class="w"> </span><span class="nv">$proxy_add_x_forwarded_for</span><span class="p">;</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="w">        </span><span class="kn">proxy_set_header</span><span class="w"> </span><span class="s">X-Forwarded-Proto</span><span class="w"> </span><span class="nv">$scheme</span><span class="p">;</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="w">        </span><span class="kn">proxy_read_timeout</span><span class="w"> </span><span class="s">120s</span><span class="p">;</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="w">    </span><span class="c1"># Optional: serve static files directly for better performance</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="w">    </span><span class="kn">location</span><span class="w"> </span><span class="s">/static/</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="w">        </span><span class="kn">alias</span><span class="w"> </span><span class="s">/opt/iwmi-leaf/leaf_flask/static/</span><span class="p">;</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a><span class="w">        </span><span class="kn">expires</span><span class="w"> </span><span class="s">7d</span><span class="p">;</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a><span class="p">}</span>
+</code></pre></div>
+<p>Then enable HTTPS with Let's Encrypt:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>certbot<span class="w"> </span>python3-certbot-nginx
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>sudo<span class="w"> </span>certbot<span class="w"> </span>--nginx<span class="w"> </span>-d<span class="w"> </span>iwmi-leaf.yourdomain.com
+</code></pre></div>
+<h3 id="docker-optional">Docker (Optional)<a class="headerlink" href="#docker-optional" title="Permanent link">&para;</a></h3>
+<p>Create a <code>Dockerfile</code> in the project root:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="k">FROM</span><span class="w"> </span><span class="s">python:3.11-slim</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="k">WORKDIR</span><span class="w"> </span><span class="s">/app</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c"># Install system dependencies for GeoPandas</span>
+<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="k">RUN</span><span class="w"> </span>apt-get<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>apt-get<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="w">    </span>libgdal-dev<span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a><span class="w">    </span><span class="o">&amp;&amp;</span><span class="w"> </span>rm<span class="w"> </span>-rf<span class="w"> </span>/var/lib/apt/lists/*
+<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>
+<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a><span class="c"># Install Python dependencies</span>
+<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="k">COPY</span><span class="w"> </span>leaf_flask/requirements.txt<span class="w"> </span>.
+<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a><span class="k">RUN</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>--no-cache-dir<span class="w"> </span>-r<span class="w"> </span>requirements.txt<span class="w"> </span>gunicorn
+<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a>
+<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="c"># Copy application</span>
+<a id="__codelineno-6-15" name="__codelineno-6-15" href="#__codelineno-6-15"></a><span class="k">COPY</span><span class="w"> </span>leaf_flask/<span class="w"> </span>./leaf_flask/
+<a id="__codelineno-6-16" name="__codelineno-6-16" href="#__codelineno-6-16"></a><span class="k">COPY</span><span class="w"> </span>site/<span class="w"> </span>./site/
+<a id="__codelineno-6-17" name="__codelineno-6-17" href="#__codelineno-6-17"></a><span class="k">COPY</span><span class="w"> </span>ai-docs/<span class="w"> </span>./ai-docs/
+<a id="__codelineno-6-18" name="__codelineno-6-18" href="#__codelineno-6-18"></a>
+<a id="__codelineno-6-19" name="__codelineno-6-19" href="#__codelineno-6-19"></a><span class="k">WORKDIR</span><span class="w"> </span><span class="s">/app/leaf_flask</span>
+<a id="__codelineno-6-20" name="__codelineno-6-20" href="#__codelineno-6-20"></a>
+<a id="__codelineno-6-21" name="__codelineno-6-21" href="#__codelineno-6-21"></a><span class="k">EXPOSE</span><span class="w"> </span><span class="s">5000</span>
+<a id="__codelineno-6-22" name="__codelineno-6-22" href="#__codelineno-6-22"></a>
+<a id="__codelineno-6-23" name="__codelineno-6-23" href="#__codelineno-6-23"></a><span class="k">CMD</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;gunicorn&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;app:app&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--bind&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;0.0.0.0:5000&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--workers&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;2&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;--timeout&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;120&quot;</span><span class="p">]</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>docker<span class="w"> </span>build<span class="w"> </span>-t<span class="w"> </span>iwmi-leaf<span class="w"> </span>.
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>docker<span class="w"> </span>run<span class="w"> </span>-p<span class="w"> </span><span class="m">5000</span>:5000<span class="w"> </span>-e<span class="w"> </span><span class="nv">SECRET_KEY</span><span class="o">=</span>mysecret<span class="w"> </span>iwmi-leaf
+</code></pre></div>
+<hr />
+<h2 id="updating-the-application">Updating the Application<a class="headerlink" href="#updating-the-application" title="Permanent link">&para;</a></h2>
+<h3 id="routine-updates">Routine Updates<a class="headerlink" href="#routine-updates" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="nb">cd</span><span class="w"> </span>/opt/iwmi-leaf
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>git<span class="w"> </span>pull<span class="w"> </span>origin<span class="w"> </span>main
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="nb">cd</span><span class="w"> </span>leaf_flask
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="nb">source</span><span class="w"> </span>venv/bin/activate
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt<span class="w">   </span><span class="c1"># Only if dependencies changed</span>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="nb">cd</span><span class="w"> </span>..<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mkdocs<span class="w"> </span>build<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>leaf_flask<span class="w">  </span><span class="c1"># Only if docs changed</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>sudo<span class="w"> </span>systemctl<span class="w"> </span>restart<span class="w"> </span>iwmi-leaf
+</code></pre></div>
+<h3 id="updating-data">Updating Data<a class="headerlink" href="#updating-data" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Replace the relevant files in <code>leaf_flask/data/</code></li>
+<li>Restart the service — the LRU cache clears on restart</li>
+<li>No code changes needed</li>
+</ol>
+<h3 id="adding-a-new-districts-gp-data">Adding a New District's GP Data<a class="headerlink" href="#adding-a-new-districts-gp-data" title="Permanent link">&para;</a></h3>
+<ol>
+<li>Prepare a GP-level shapefile (<code>.shp</code> + sidecar files)</li>
+<li>Prepare a GP indicator Excel file (same column format as <code>Tinsukia_GP_data.xlsx</code>)</li>
+<li>Update <code>data_utils.py</code> to load the new files</li>
+<li>Update the <code>gp_districts</code> list in the <code>/api/levels</code> route</li>
+<li>Restart the service</li>
+</ol>
+<hr />
+<h2 id="security-considerations">Security Considerations<a class="headerlink" href="#security-considerations" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Current State</th>
+<th>Recommendation for Production</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Authentication</strong></td>
+<td>None (open API)</td>
+<td>Add API key or OAuth if needed</td>
+</tr>
+<tr>
+<td><strong>HTTPS</strong></td>
+<td>Handled by Render/Nginx</td>
+<td>Always use HTTPS in production</td>
+</tr>
+<tr>
+<td><strong>Secret key</strong></td>
+<td>Default in code</td>
+<td>Set via environment variable</td>
+</tr>
+<tr>
+<td><strong>CORS</strong></td>
+<td>Open to all origins</td>
+<td>Restrict to your domain if needed</td>
+</tr>
+<tr>
+<td><strong>Rate limiting</strong></td>
+<td>None</td>
+<td>Add Flask-Limiter if public-facing</td>
+</tr>
+<tr>
+<td><strong>Input validation</strong></td>
+<td>Basic</td>
+<td>Sufficient for current use</td>
+</tr>
+<tr>
+<td><strong>File uploads</strong></td>
+<td>None</td>
+<td>No risk</td>
+</tr>
+<tr>
+<td><strong>SQL injection</strong></td>
+<td>N/A (no database)</td>
+<td>No risk</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
