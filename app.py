@@ -1844,8 +1844,9 @@ def serve_documentation(filename='index.html'):
     """Serve the MkDocs documentation site."""
     from pathlib import Path
     site_dir = Path(__file__).parent.parent / "site"
+    if not site_dir.exists():
+        return jsonify({'error': 'Documentation not built', 'site_dir': str(site_dir)}), 404
     # MkDocs uses directory-style URLs (e.g. quickstart/ → quickstart/index.html)
-    # Handle directory paths and trailing slashes
     if filename.endswith('/') or '.' not in filename.split('/')[-1]:
         candidate = site_dir / filename / 'index.html'
         if candidate.exists():
