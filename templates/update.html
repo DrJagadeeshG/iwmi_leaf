@@ -80,10 +80,16 @@
 
         /* Main Content */
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 2rem auto;
             padding: 0 2rem;
         }
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        .two-col .card { margin-bottom: 0; }
 
         .page-title {
             color: white;
@@ -370,6 +376,9 @@
         }
 
         /* Responsive */
+        @media (max-width: 960px) {
+            .two-col { grid-template-columns: 1fr; }
+        }
         @media (max-width: 768px) {
             .container { padding: 0 1rem; }
             .card { padding: 1.5rem; }
@@ -397,6 +406,8 @@
     <div class="container">
         <h2 class="page-title"><i class="bi bi-cloud-arrow-down"></i> Data Update</h2>
         <p class="page-subtitle">Manage the Google Sheets that power the LEAF DSS. Edit the sheet, then refresh to see changes live.</p>
+
+        <div class="two-col">
 
         <!-- DSS Input Sheet Card -->
         <div class="card">
@@ -479,10 +490,18 @@
                 <button class="btn btn-primary" onclick="refreshData()">
                     <i class="bi bi-arrow-clockwise"></i> Refresh Now
                 </button>
+                <a href="https://docs.google.com/spreadsheets/d/1CzwxWsFYKfUN1WmYyfpDzatwedgpJR8tur1lmlWAvWU/edit"
+                   target="_blank" class="btn btn-outline">
+                    <i class="bi bi-pencil-square"></i> Edit Sheet
+                </a>
             </div>
+        </div>
 
-            <!-- Disclaimer -->
-            <div style="margin-top: 1.5rem; background: #fef3f2; border: 1px solid #fecaca; border-radius: 10px; padding: 1.25rem;">
+        </div><!-- /two-col -->
+
+        <!-- Disclaimer Card (full width) -->
+        <div class="card">
+            <div style="background: #fef3f2; border: 1px solid #fecaca; border-radius: 10px; padding: 1.25rem;">
                 <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
                     <i class="bi bi-exclamation-triangle-fill" style="color:#dc2626; font-size:1.1rem;"></i>
                     <strong style="color:#991b1b; font-size:0.95rem;">Important — Handle With Care</strong>
