@@ -13,7 +13,7 @@ DATA_DIR = Path(__file__).parent / "data"
 # Published Google Sheet CSV URLs
 SHEET_URLS = {
     "dss_input": "https://docs.google.com/spreadsheets/d/e/2PACX-1vS225C6-L0oWTuG1qqJfBrwcBE0yWSn9pH6VjybzgBZNXTb2S38k7KMJv-ZDkDY_hSW_a1IUnV5aKfw/pub?output=csv",
-    "block_values": "",  # TODO: Add published CSV URL after uploading block_values.csv
+    "block_values": "https://docs.google.com/spreadsheets/d/e/2PACX-1vSc0gk_Rbsi1n7Z9EY1qA532_lF_xe7y5GGPRxuyUXgawBdZVrF4RveIGiaMU9itNlmK7oLmuCffGlk/pub?output=csv",
 }
 
 # Cache: { key: (dataframe, timestamp) }
