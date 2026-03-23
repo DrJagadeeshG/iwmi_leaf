@@ -160,12 +160,23 @@ def index():
     return render_app()
 
 
+@app.route('/update')
+@app.route('/update/')
+def update_page():
+    """Data update page — shows Google Sheet links and refresh controls."""
+    from google_sheets import get_status, SHEET_URLS
+    return render_template('update.html',
+                           status=get_status(),
+                           sheet_urls=SHEET_URLS,
+                           colors=COLORS)
+
+
 @app.route('/<district>')
 def district_view(district):
     """District level view (shows all blocks in district)."""
     from flask import redirect, url_for
     # Reserved paths — let their own routes handle them
-    if district in ('documentation', 'docs', 'api', 'static', 'health'):
+    if district in ('documentation', 'docs', 'api', 'static', 'health', 'update'):
         return redirect(f'/{district}/')
     gdf = load_shapefile()
     valid_districts = gdf['Dist_Name'].dropna().unique().tolist()
@@ -1357,6 +1368,53 @@ def api_config():
         'feasibility_colors': FEASIBILITY_COLORS,
         'map_config': MAP_CONFIG,
     })
+
+
+@app.route('/api/config/refresh', methods=['POST'])
+def api_config_refresh():
+    """Force-refresh data from Google Sheets.
+    ---
+    tags:
+      - Config
+    summary: Refresh Google Sheets data
+    description: Forces a re-fetch of all data from published Google Sheets, bypassing the TTL cache.
+    responses:
+      200:
+        description: Refresh results
+        schema:
+          type: object
+          properties:
+            refreshed:
+              type: object
+              description: Map of sheet key to success boolean
+            status:
+              type: object
+              description: Current cache status after refresh
+    """
+    from google_sheets import refresh, get_status
+    results = refresh()
+    return jsonify({
+        'refreshed': results,
+        'status': get_status(),
+    })
+
+
+@app.route('/api/config/sheets-status')
+def api_sheets_status():
+    """Get Google Sheets cache status.
+    ---
+    tags:
+      - Config
+    summary: Get Google Sheets sync status
+    description: Returns the current cache status for all Google Sheet data sources.
+    responses:
+      200:
+        description: Cache status for each sheet
+        schema:
+          type: object
+    """
+    from google_sheets import get_status
+    return jsonify(get_status())
 
 
 # =============================================================================

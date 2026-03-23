@@ -91,19 +91,19 @@ def load_shapefile():
     return gdf
 
 
-@lru_cache(maxsize=1)
 def load_metadata():
-    """Load the variable metadata CSV."""
-    csv_path = DATA_DIR / "DSS_input2.csv"
+    """Load the variable metadata from Google Sheets (with fallback to local CSV)."""
+    from google_sheets import get_sheet
+    df = get_sheet("dss_input")
+    if df is not None:
+        return df
 
+    # Ultimate fallback: read local CSV directly
+    csv_path = DATA_DIR / "DSS_input2.csv"
     if not csv_path.exists():
         raise FileNotFoundError(f"Metadata CSV not found at {csv_path}")
-
     df = pd.read_csv(csv_path, encoding='utf-8-sig')
-
-    # Normalize column names
     df.columns = [col.strip() for col in df.columns]
-
     return df
 
 

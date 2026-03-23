@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LEAF DSS - Data Update</title>
+    <link rel="icon" href="https://www.iwmi.org/wp-content/uploads/2025/06/iwmi-favicon-512x512-1.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        :root {
+            --iwmi-dark-blue: #28537D;
+            --iwmi-light-blue: #5088C6;
+            --iwmi-sky-blue: #46BBD4;
+            --iwmi-teal: #0297A6;
+            --iwmi-green: #22AD7A;
+            --iwmi-orange: #E86933;
+            --iwmi-yellow: #DD9103;
+            --iwmi-light-grey: #E8E7E7;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #28537D 0%, #0297A6 35%, #22AD7A 70%, #46BBD4 100%);
+            color: #333;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        .header {
+            background: white;
+            height: 90px;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            border-bottom: 3px solid var(--iwmi-teal);
+        }
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .logo-section {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            text-decoration: none;
+            color: inherit;
+        }
+        .logo { height: 45px; width: auto; }
+        .title-section h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--iwmi-dark-blue);
+        }
+        .title-section p {
+            font-size: 0.75rem;
+            color: #666;
+            letter-spacing: 0.5px;
+        }
+        .back-link {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--iwmi-dark-blue);
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.9rem;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        .back-link:hover { background: var(--iwmi-light-grey); }
+
+        /* Main Content */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .page-title {
+            color: white;
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .page-subtitle {
+            color: rgba(255,255,255,0.85);
+            font-size: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--iwmi-dark-blue);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .card-title i { color: var(--iwmi-teal); }
+
+        /* Status Badge */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.35rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        .badge-ok {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+        .badge-stale {
+            background: #fff3e0;
+            color: #e65100;
+        }
+        .badge-none {
+            background: var(--iwmi-light-grey);
+            color: #666;
+        }
+
+        /* Sheet Info */
+        .sheet-info {
+            display: grid;
+            grid-template-columns: 140px 1fr;
+            gap: 0.75rem 1.5rem;
+            font-size: 0.9rem;
+        }
+        .sheet-info dt {
+            font-weight: 600;
+            color: #555;
+        }
+        .sheet-info dd {
+            color: #333;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.6rem 1.4rem;
+            border-radius: 8px;
+            border: none;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background: var(--iwmi-teal);
+            color: white;
+        }
+        .btn-primary:hover { background: #017d8a; }
+        .btn-primary:disabled {
+            background: #b0bec5;
+            cursor: not-allowed;
+        }
+        .btn-outline {
+            background: white;
+            color: var(--iwmi-dark-blue);
+            border: 2px solid var(--iwmi-dark-blue);
+        }
+        .btn-outline:hover { background: #f0f4f8; }
+
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        /* Sheet link */
+        .sheet-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--iwmi-light-blue);
+            text-decoration: none;
+            font-weight: 500;
+            word-break: break-all;
+        }
+        .sheet-link:hover { text-decoration: underline; }
+
+        /* Steps */
+        .steps {
+            margin-top: 1.5rem;
+            counter-reset: step;
+        }
+        .step {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.25rem;
+            align-items: flex-start;
+        }
+        .step-number {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: var(--iwmi-teal);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+        }
+        .step-content h4 {
+            font-size: 0.95rem;
+            color: var(--iwmi-dark-blue);
+            margin-bottom: 0.25rem;
+        }
+        .step-content p {
+            font-size: 0.85rem;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            font-weight: 500;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast-success { background: #e8f5e9; color: #2e7d32; border-left: 4px solid #2e7d32; }
+        .toast-error { background: #fce4ec; color: #c62828; border-left: 4px solid #c62828; }
+
+        /* Spinner */
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Column Reference Table */
+        .col-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.85rem;
+            margin-top: 1rem;
+        }
+        .col-table thead th {
+            background: var(--iwmi-dark-blue);
+            color: white;
+            padding: 0.65rem 1rem;
+            text-align: left;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+        .col-table thead th:first-child { border-radius: 8px 0 0 0; }
+        .col-table thead th:last-child { border-radius: 0 8px 0 0; }
+        .col-table tbody td {
+            padding: 0.6rem 1rem;
+            border-bottom: 1px solid #eee;
+            vertical-align: top;
+        }
+        .col-table tbody tr:hover { background: #f8fbff; }
+        .col-table code {
+            background: #f0f4f8;
+            padding: 0.15rem 0.45rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            color: var(--iwmi-dark-blue);
+            font-weight: 600;
+        }
+        .col-section {
+            background: var(--iwmi-light-grey);
+            font-weight: 600;
+            color: var(--iwmi-dark-blue);
+        }
+        .col-section td { padding: 0.5rem 1rem; }
+        .example-val {
+            color: #888;
+            font-size: 0.78rem;
+            display: block;
+            margin-top: 0.2rem;
+        }
+
+        /* Tabs */
+        .tab-bar {
+            display: flex;
+            gap: 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid #eee;
+        }
+        .tab-btn {
+            padding: 0.6rem 1.2rem;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            font-family: inherit;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #888;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: -2px;
+        }
+        .tab-btn:hover { color: var(--iwmi-dark-blue); }
+        .tab-btn.active {
+            color: var(--iwmi-teal);
+            border-bottom-color: var(--iwmi-teal);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Tips */
+        .tip {
+            background: #f0f9ff;
+            border-left: 4px solid var(--iwmi-sky-blue);
+            padding: 0.75rem 1rem;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.85rem;
+            color: #1a5276;
+            margin-top: 1rem;
+        }
+        .tip strong { color: var(--iwmi-dark-blue); }
+
+        .warning {
+            background: #fff8e1;
+            border-left: 4px solid var(--iwmi-yellow);
+            padding: 0.75rem 1rem;
+            border-radius: 0 8px 8px 0;
+            font-size: 0.85rem;
+            color: #7d6608;
+            margin-top: 0.75rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container { padding: 0 1rem; }
+            .card { padding: 1.5rem; }
+            .sheet-info { grid-template-columns: 1fr; }
+            .col-table { font-size: 0.78rem; }
+            .col-table thead th, .col-table tbody td { padding: 0.5rem 0.6rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <a href="/" class="logo-section">
+                <img src="{{ url_for('static', filename='images/iwmi_logo.png') }}" alt="IWMI Logo" class="logo" onerror="this.style.display='none'">
+                <div class="title-section">
+                    <h1>LEAF DSS</h1>
+                    <p>Landscape Evaluation & Assessment Framework</p>
+                </div>
+            </a>
+            <a href="/" class="back-link"><i class="bi bi-arrow-left"></i> Back to Dashboard</a>
+        </div>
+    </header>
+
+    <div class="container">
+        <h2 class="page-title"><i class="bi bi-cloud-arrow-down"></i> Data Update</h2>
+        <p class="page-subtitle">Manage the Google Sheets that power the LEAF DSS. Edit the sheet, then refresh to see changes live.</p>
+
+        <!-- DSS Input Sheet Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="bi bi-table"></i> Intervention & Variable Configuration
+                </div>
+                <span id="status-badge" class="badge badge-none">
+                    <i class="bi bi-hourglass"></i> Checking...
+                </span>
+            </div>
+
+            <dl class="sheet-info">
+                <dt>Description</dt>
+                <dd>Intervention definitions (clusters), variable ranges, weights, labels, and preference directions used for feasibility scoring.</dd>
+
+                <dt>Google Sheet</dt>
+                <dd>
+                    <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vS225C6-L0oWTuG1qqJfBrwcBE0yWSn9pH6VjybzgBZNXTb2S38k7KMJv-ZDkDY_hSW_a1IUnV5aKfw/pubhtml"
+                       target="_blank" class="sheet-link">
+                        <i class="bi bi-box-arrow-up-right"></i> Open in Google Sheets
+                    </a>
+                </dd>
+
+                <dt>Rows</dt>
+                <dd id="info-rows">—</dd>
+
+                <dt>Columns</dt>
+                <dd id="info-cols">—</dd>
+
+                <dt>Cache Age</dt>
+                <dd id="info-age">—</dd>
+            </dl>
+
+            <div class="btn-group" style="margin-top: 1.5rem;">
+                <button id="refresh-btn" class="btn btn-primary" onclick="refreshData()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh Now
+                </button>
+                <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vS225C6-L0oWTuG1qqJfBrwcBE0yWSn9pH6VjybzgBZNXTb2S38k7KMJv-ZDkDY_hSW_a1IUnV5aKfw/pubhtml"
+                   target="_blank" class="btn btn-outline">
+                    <i class="bi bi-pencil-square"></i> Edit Sheet
+                </a>
+            </div>
+        </div>
+
+        <!-- What You Can Update Card -->
+        <div class="card">
+            <div class="card-title" style="margin-bottom: 0.5rem;">
+                <i class="bi bi-pencil-square"></i> What You Can Update
+            </div>
+            <p style="color:#666; font-size:0.88rem; margin-bottom:1rem;">The Google Sheet has two sections side by side. The <strong>left side</strong> (columns A–H) controls interventions. The <strong>right side</strong> (columns I–N) defines the variable catalog.</p>
+
+            <!-- Tabs -->
+            <div class="tab-bar">
+                <button class="tab-btn active" onclick="switchTab('interventions')">Intervention Config (Left)</button>
+                <button class="tab-btn" onclick="switchTab('variables')">Variable Catalog (Right)</button>
+            </div>
+
+            <!-- Interventions Tab -->
+            <div id="tab-interventions" class="tab-content active">
+                <table class="col-table">
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>What it controls</th>
+                            <th>How to fill</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>Cluster</code></td>
+                            <td>Intervention name — each unique value becomes a selectable intervention in the dashboard</td>
+                            <td>Type the intervention name. Repeat the same name on every row belonging to that intervention.
+                                <span class="example-val">e.g. Organic Farming, Solar Irrigation</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>I_variable</code></td>
+                            <td>Which data variable this row uses for feasibility scoring</td>
+                            <td>Use the variable code from the Variable Catalog (right side, column J).
+                                <span class="example-val">e.g. AD, C, BF</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>range_min</code></td>
+                            <td>Minimum acceptable value — below this, the block scores 0% for this variable</td>
+                            <td>A number. Check the dashboard for the data range of the variable.
+                                <span class="example-val">e.g. 20</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>range_max</code></td>
+                            <td>Maximum acceptable value — above this, the block scores 100% for this variable</td>
+                            <td>A number, must be greater than range_min.
+                                <span class="example-val">e.g. 60</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>Preference</code></td>
+                            <td>Whether higher or lower values are better for feasibility</td>
+                            <td>One of: <code>higher</code>, <code>lower</code>, or <code>moderate</code>
+                                <span class="example-val">higher = more is better, lower = less is better</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>I_weight</code></td>
+                            <td>Importance weight — how much this variable matters relative to others in the intervention</td>
+                            <td>A number, typically 1. Use higher values (2, 3) for more important variables.
+                                <span class="example-val">e.g. 1</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>I_label</code></td>
+                            <td>Display label shown in the dashboard filter panel</td>
+                            <td>Short human-readable name.
+                                <span class="example-val">e.g. % Paddy Area, Cattle density</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>I_description</code></td>
+                            <td>Tooltip description explaining why this variable matters for the intervention</td>
+                            <td>One sentence explanation.
+                                <span class="example-val">e.g. Moderate paddy area allows diversification.</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="tip">
+                    <strong>To add a new intervention:</strong> Add new rows at the bottom. Put the intervention name in <code>Cluster</code> (e.g. "Solar Irrigation"), then fill one row per variable with I_variable, ranges, weight, label, and description. It will appear automatically in the dashboard dropdown.
+                </div>
+                <div class="tip">
+                    <strong>To remove an intervention:</strong> Delete all rows with that Cluster name. The intervention disappears from the dashboard.
+                </div>
+                <div class="warning">
+                    <strong>Do not</strong> leave the <code>Cluster</code> column empty in intervention rows — rows without a Cluster name are treated as variable-only metadata (right side).
+                </div>
+            </div>
+
+            <!-- Variables Tab -->
+            <div id="tab-variables" class="tab-content">
+                <table class="col-table">
+                    <thead>
+                        <tr>
+                            <th>Column</th>
+                            <th>What it controls</th>
+                            <th>How to fill</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>group</code></td>
+                            <td>Category grouping in the dashboard (e.g., the expandable sections in the filter panel)</td>
+                            <td>One of: Land & Agri, Water, Infrastructure, Livestock, People, Soil, Climate
+                                <span class="example-val">Must match exactly (case-sensitive)</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>subgroup</code></td>
+                            <td>Sub-category within the group</td>
+                            <td>Free text sub-heading.
+                                <span class="example-val">e.g. Cropping system, Irrigation, Livestock density</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>variable</code></td>
+                            <td>Variable code — the column name in the shapefile data. This is what <code>I_variable</code> references.</td>
+                            <td>Use the existing code. New codes must match a column in the block shapefile.
+                                <span class="example-val">e.g. A, B, C, AD, BF</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>Weight</code></td>
+                            <td>Default weight for this variable (used when no intervention-specific weight is set)</td>
+                            <td>A number, typically 1.
+                                <span class="example-val">e.g. 1</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>label</code></td>
+                            <td>Display name shown on the map and in variable selectors</td>
+                            <td>Short descriptive name.
+                                <span class="example-val">e.g. Farming Households (%), Cattle density (per 100 hectares)</span>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td><code>Description</code></td>
+                            <td>Full description shown in tooltips and variable detail panels</td>
+                            <td>One-line explanation of the variable.
+                                <span class="example-val">e.g. Share of households with farming as major activity</span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="tip">
+                    <strong>Variable codes are fixed:</strong> The codes (A, B, C, AD, etc.) correspond to columns in the underlying shapefile. You can change labels and descriptions freely, but adding a completely new variable code requires updating the shapefile data too.
+                </div>
+                <div class="warning">
+                    <strong>Do not</strong> change existing variable codes — this will break the link between the data and the dashboard. Only change labels, descriptions, groups, and subgroups.
+                </div>
+            </div>
+        </div>
+
+        <!-- How It Works Card -->
+        <div class="card">
+            <div class="card-title" style="margin-bottom: 1rem;">
+                <i class="bi bi-info-circle"></i> How It Works
+            </div>
+
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Edit the Google Sheet</h4>
+                        <p>Open the sheet and make your changes — add interventions, adjust ranges, update weights or labels. Changes are saved automatically in Google Sheets.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Wait ~1 minute</h4>
+                        <p>Google takes up to a minute to propagate changes to the published CSV. No action needed on your part.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Click "Refresh Now"</h4>
+                        <p>Hit the refresh button above to pull the latest data into the LEAF system. The dashboard will reflect your changes immediately.</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">4</div>
+                    <div class="step-content">
+                        <h4>Auto-sync every 5 minutes</h4>
+                        <p>Even without manual refresh, the system automatically picks up changes from the Google Sheet every 5 minutes.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- What Cannot Be Changed Card -->
+        <div class="card">
+            <div class="card-title" style="margin-bottom: 1rem;">
+                <i class="bi bi-lock"></i> Data Not Editable via Google Sheets
+            </div>
+            <p style="color:#666; font-size:0.88rem; margin-bottom:1rem;">The following data is stored in geospatial files (shapefiles) and cannot be edited through Google Sheets. Contact the development team to update these.</p>
+
+            <table class="col-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>What it contains</th>
+                        <th>Why it can't be in Sheets</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Block variable values</td>
+                        <td>The actual numeric data for all 100+ blocks (irrigation %, cattle density, rainfall, etc.)</td>
+                        <td>Stored in shapefile with map geometry — needs GIS tools to update</td>
+                    </tr>
+                    <tr>
+                        <td>Block boundaries</td>
+                        <td>Geographic boundaries of each block shown on the map</td>
+                        <td>Geospatial polygon data</td>
+                    </tr>
+                    <tr>
+                        <td>GP boundaries & data</td>
+                        <td>Gram Panchayat level geometries and variable values</td>
+                        <td>Geospatial polygon data</td>
+                    </tr>
+                    <tr>
+                        <td>District boundaries</td>
+                        <td>District outlines shown on the map</td>
+                        <td>Geospatial polygon data</td>
+                    </tr>
+                    <tr>
+                        <td>Protected areas</td>
+                        <td>National parks, wildlife sanctuaries overlay</td>
+                        <td>Geospatial polygon data</td>
+                    </tr>
+                    <tr>
+                        <td>AI knowledge base</td>
+                        <td>PDFs and documents used by the AI recommendation engine</td>
+                        <td>Stored in vector database (ChromaDB)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // Load status on page load
+        document.addEventListener('DOMContentLoaded', loadStatus);
+
+        async function loadStatus() {
+            try {
+                const resp = await fetch('/api/config/sheets-status');
+                const data = await resp.json();
+                updateStatusUI(data);
+            } catch (e) {
+                setBadge('Error', 'none');
+            }
+        }
+
+        function updateStatusUI(data) {
+            const info = data.dss_input;
+            if (!info) return;
+
+            if (info.cached) {
+                document.getElementById('info-rows').textContent = info.rows;
+                document.getElementById('info-cols').textContent = info.columns;
+
+                const mins = Math.floor(info.age_seconds / 60);
+                const secs = info.age_seconds % 60;
+                document.getElementById('info-age').textContent =
+                    mins > 0 ? `${mins}m ${secs}s ago` : `${secs}s ago`;
+
+                if (info.stale) {
+                    setBadge('Stale', 'stale');
+                } else {
+                    setBadge('Synced', 'ok');
+                }
+            } else {
+                setBadge('Not loaded', 'none');
+            }
+        }
+
+        function setBadge(text, type) {
+            const badge = document.getElementById('status-badge');
+            const icons = { ok: 'bi-check-circle-fill', stale: 'bi-exclamation-triangle-fill', none: 'bi-dash-circle' };
+            badge.className = `badge badge-${type}`;
+            badge.innerHTML = `<i class="bi ${icons[type]}"></i> ${text}`;
+        }
+
+        async function refreshData() {
+            const btn = document.getElementById('refresh-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Refreshing...';
+
+            try {
+                const resp = await fetch('/api/config/refresh', { method: 'POST' });
+                const data = await resp.json();
+
+                if (data.refreshed && data.refreshed.dss_input) {
+                    showToast('Data refreshed successfully from Google Sheets!', 'success');
+                    updateStatusUI(data.status);
+                } else {
+                    showToast('Refresh failed — using cached data. Check that the sheet is published.', 'error');
+                }
+            } catch (e) {
+                showToast('Network error — could not reach the server.', 'error');
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Refresh Now';
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            document.getElementById('tab-' + tab).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        function showToast(msg, type) {
+            const toast = document.getElementById('toast');
+            toast.textContent = msg;
+            toast.className = `toast toast-${type} show`;
+            setTimeout(() => { toast.className = 'toast'; }, 4000);
+        }
+    </script>
+</body>
+</html>
