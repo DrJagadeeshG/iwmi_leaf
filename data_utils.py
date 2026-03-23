@@ -62,8 +62,8 @@ def load_district_mapping():
 
 
 @lru_cache(maxsize=1)
-def load_shapefile():
-    """Load the shapefile with block geometries and data."""
+def _load_shapefile_geometry():
+    """Load block geometries from shapefile (cached permanently)."""
     shapefile_path = DATA_DIR / "4DSS_VAR_2.0.shp"
 
     if not shapefile_path.exists():
@@ -80,13 +80,45 @@ def load_shapefile():
     # Normalize column names (strip whitespace)
     gdf.columns = [col.strip() for col in gdf.columns]
 
-    # Add district names by mapping DISTRICT_I to Dist_Name
+    # Simplify geometries for better performance
+    gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.001, preserve_topology=True)
+
+    # Keep only ID columns + geometry
+    id_cols = ['BLOCK_ID', 'STATE_ID', 'DISTRICT_I', 'id', 'Block_name', 'geometry']
+    return gdf[[c for c in id_cols if c in gdf.columns]]
+
+
+def load_shapefile():
+    """Load block data: geometry from shapefile + values from Google Sheets."""
+    from google_sheets import get_sheet
+
+    geom_gdf = _load_shapefile_geometry()
+
+    # Try to get values from Google Sheets
+    values_df = get_sheet("block_values")
+
+    if values_df is not None and 'BLOCK_ID' in values_df.columns:
+        # Drop ID/geometry cols from values to avoid duplicates on merge
+        drop_cols = ['STATE_ID', 'DISTRICT_I', 'id', 'Block_name', 'Dist_Name']
+        values_df = values_df.drop(columns=[c for c in drop_cols if c in values_df.columns], errors='ignore')
+
+        # Merge geometry with sheet values on BLOCK_ID
+        gdf = geom_gdf.merge(values_df, on='BLOCK_ID', how='left')
+    else:
+        # Fallback: load full shapefile the old way
+        shapefile_path = DATA_DIR / "4DSS_VAR_2.0.shp"
+        gdf = gpd.read_file(shapefile_path)
+        gdf.columns = [col.strip() for col in gdf.columns]
+        if gdf.crs is None:
+            gdf = gdf.set_crs("EPSG:4326")
+        elif gdf.crs.to_epsg() != 4326:
+            gdf = gdf.to_crs("EPSG:4326")
+        gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.001, preserve_topology=True)
+
+    # Add district names
     district_mapping = load_district_mapping()
     if district_mapping and 'DISTRICT_I' in gdf.columns:
         gdf['Dist_Name'] = gdf['DISTRICT_I'].map(district_mapping)
-
-    # Simplify geometries for better performance
-    gdf['geometry'] = gdf['geometry'].simplify(tolerance=0.001, preserve_topology=True)
 
     return gdf
 

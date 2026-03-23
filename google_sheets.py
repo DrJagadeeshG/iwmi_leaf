@@ -13,6 +13,7 @@ DATA_DIR = Path(__file__).parent / "data"
 # Published Google Sheet CSV URLs
 SHEET_URLS = {
     "dss_input": "https://docs.google.com/spreadsheets/d/e/2PACX-1vS225C6-L0oWTuG1qqJfBrwcBE0yWSn9pH6VjybzgBZNXTb2S38k7KMJv-ZDkDY_hSW_a1IUnV5aKfw/pub?output=csv",
+    "block_values": "",  # TODO: Add published CSV URL after uploading block_values.csv
 }
 
 # Cache: { key: (dataframe, timestamp) }
@@ -38,6 +39,7 @@ def _load_local_csv(key):
     """Fallback: load from local CSV file."""
     local_files = {
         "dss_input": DATA_DIR / "DSS_input2.csv",
+        "block_values": DATA_DIR / "block_values.csv",
     }
     path = local_files.get(key)
     if path and path.exists():

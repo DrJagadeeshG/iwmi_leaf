@@ -442,6 +442,106 @@
             </div>
         </div>
 
+        <!-- Block Variable Values Card -->
+        <div class="card">
+            <div class="card-header">
+                <div class="card-title">
+                    <i class="bi bi-grid-3x3"></i> Block Variable Values
+                </div>
+                <span id="status-badge-blocks" class="badge badge-none">
+                    <i class="bi bi-hourglass"></i> Checking...
+                </span>
+            </div>
+
+            <dl class="sheet-info">
+                <dt>Description</dt>
+                <dd>The actual numeric data behind the map — irrigation %, cattle density, rainfall, etc. for all 219 blocks across Assam. <strong>219 rows x 77 columns.</strong></dd>
+
+                <dt>Google Sheet</dt>
+                <dd id="block-sheet-link">
+                    <span style="color:#999;">Pending upload — see file path below</span>
+                </dd>
+
+                <dt>Upload File</dt>
+                <dd><code>D:\Consultancy\IWMI_LEAF\leaf_flask\data\block_values.csv</code></dd>
+
+                <dt>Rows</dt>
+                <dd id="info-rows-blocks">—</dd>
+
+                <dt>Columns</dt>
+                <dd id="info-cols-blocks">—</dd>
+
+                <dt>Cache Age</dt>
+                <dd id="info-age-blocks">—</dd>
+            </dl>
+
+            <div class="btn-group" style="margin-top: 1.5rem;">
+                <button class="btn btn-primary" onclick="refreshData()">
+                    <i class="bi bi-arrow-clockwise"></i> Refresh Now
+                </button>
+            </div>
+
+            <!-- Disclaimer -->
+            <div style="margin-top: 1.5rem; background: #fef3f2; border: 1px solid #fecaca; border-radius: 10px; padding: 1.25rem;">
+                <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.75rem;">
+                    <i class="bi bi-exclamation-triangle-fill" style="color:#dc2626; font-size:1.1rem;"></i>
+                    <strong style="color:#991b1b; font-size:0.95rem;">Important — Handle With Care</strong>
+                </div>
+                <p style="font-size:0.85rem; color:#7f1d1d; line-height:1.6; margin-bottom:0.75rem;">
+                    This sheet contains the <strong>raw data that powers the entire dashboard</strong>. Incorrect edits will directly affect feasibility scores, map visualizations, and all analysis outputs. Please review the risks below before making changes.
+                </p>
+                <table class="col-table" style="margin-top:0.5rem;">
+                    <thead>
+                        <tr style="background:#991b1b;">
+                            <th style="background:#991b1b;">Mistake</th>
+                            <th style="background:#991b1b;">What happens</th>
+                            <th style="background:#991b1b;">How to avoid</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Deleting or changing a BLOCK_ID</strong></td>
+                            <td>Block disappears from the map or gets wrong data — no error shown</td>
+                            <td>Never edit columns A–E (BLOCK_ID, STATE_ID, DISTRICT_I, id, Block_name)</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Deleting a row</strong></td>
+                            <td>That block vanishes completely from the dashboard</td>
+                            <td>Only add rows, never delete existing ones</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Entering text in a numeric column</strong></td>
+                            <td>Variable shows as "No data" for that block; feasibility scores break</td>
+                            <td>All variable columns (F onwards) must be numbers only</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Renaming a column header</strong></td>
+                            <td>Variable stops working everywhere — map, filters, feasibility</td>
+                            <td>Never rename column headers; add new columns at the end instead</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Leaving cells empty</strong></td>
+                            <td>Block shows "No data" for that variable; may lower feasibility scores</td>
+                            <td>Use 0 instead of leaving blank if the value is zero</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Duplicating a BLOCK_ID</strong></td>
+                            <td>Duplicate rows cause unpredictable results for that block</td>
+                            <td>Each BLOCK_ID must appear exactly once</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Adding a new variable column</strong></td>
+                            <td>Column appears in data but won't show in dashboard until added to the Intervention Config sheet too</td>
+                            <td>After adding a new column here, add a matching row in the Variable Catalog (right side of Sheet 1)</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="tip" style="margin-top:1rem; background:#fef9c3; border-left-color:#eab308;">
+                    <strong>Recommended:</strong> Before making bulk edits, download the current sheet as a backup (File > Download > CSV). If something breaks, you can restore from that backup.
+                </div>
+            </div>
+        </div>
+
         <!-- What You Can Update Card -->
         <div class="card">
             <div class="card-title" style="margin-bottom: 0.5rem;">
@@ -656,11 +756,6 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td>Block variable values</td>
-                        <td>The actual numeric data for all 100+ blocks (irrigation %, cattle density, rainfall, etc.)</td>
-                        <td>Stored in shapefile with map geometry — needs GIS tools to update</td>
-                    </tr>
-                    <tr>
                         <td>Block boundaries</td>
                         <td>Geographic boundaries of each block shown on the map</td>
                         <td>Geospatial polygon data</td>
@@ -708,30 +803,36 @@
         }
 
         function updateStatusUI(data) {
-            const info = data.dss_input;
-            if (!info) return;
+            // DSS Input sheet
+            updateSheetStatus(data.dss_input, 'status-badge', 'info-rows', 'info-cols', 'info-age');
+            // Block values sheet
+            updateSheetStatus(data.block_values, 'status-badge-blocks', 'info-rows-blocks', 'info-cols-blocks', 'info-age-blocks');
+        }
+
+        function updateSheetStatus(info, badgeId, rowsId, colsId, ageId) {
+            if (!info) { setBadge('Not configured', 'none', badgeId); return; }
 
             if (info.cached) {
-                document.getElementById('info-rows').textContent = info.rows;
-                document.getElementById('info-cols').textContent = info.columns;
+                document.getElementById(rowsId).textContent = info.rows;
+                document.getElementById(colsId).textContent = info.columns;
 
                 const mins = Math.floor(info.age_seconds / 60);
                 const secs = info.age_seconds % 60;
-                document.getElementById('info-age').textContent =
+                document.getElementById(ageId).textContent =
                     mins > 0 ? `${mins}m ${secs}s ago` : `${secs}s ago`;
 
                 if (info.stale) {
-                    setBadge('Stale', 'stale');
+                    setBadge('Stale', 'stale', badgeId);
                 } else {
-                    setBadge('Synced', 'ok');
+                    setBadge('Synced', 'ok', badgeId);
                 }
             } else {
-                setBadge('Not loaded', 'none');
+                setBadge('Not loaded', 'none', badgeId);
             }
         }
 
-        function setBadge(text, type) {
-            const badge = document.getElementById('status-badge');
+        function setBadge(text, type, badgeId) {
+            const badge = document.getElementById(badgeId || 'status-badge');
             const icons = { ok: 'bi-check-circle-fill', stale: 'bi-exclamation-triangle-fill', none: 'bi-dash-circle' };
             badge.className = `badge badge-${type}`;
             badge.innerHTML = `<i class="bi ${icons[type]}"></i> ${text}`;
