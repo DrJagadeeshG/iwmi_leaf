@@ -193,6 +193,19 @@ def get_intervention_config():
 
     interventions = {}
 
+    # Build a lookup from variable code -> label/description using general definitions
+    # so we can fall back when I_label is missing for new interventions
+    var_label_lookup = {}
+    for _, r in df.iterrows():
+        v = r.get('variable')
+        if pd.notna(v):
+            v = str(v).strip()
+            if v not in var_label_lookup:
+                var_label_lookup[v] = {
+                    'label': str(r['label']).strip() if pd.notna(r.get('label')) else v,
+                    'description': str(r['Description']).strip() if pd.notna(r.get('Description')) else '',
+                }
+
     for cluster in df['Cluster'].dropna().unique():
         if not _is_valid_cluster(cluster):
             continue
@@ -224,13 +237,29 @@ def get_intervention_config():
                 else:
                     preference = 'moderate'
 
+                # Resolve label: I_label > general variable label > field code
+                if pd.notna(row.get('I_label')):
+                    label = row['I_label']
+                elif field in var_label_lookup:
+                    label = var_label_lookup[field]['label']
+                else:
+                    label = field
+
+                # Resolve description: I_description > general variable description > empty
+                if pd.notna(row.get('I_description')):
+                    description = row['I_description']
+                elif field in var_label_lookup:
+                    description = var_label_lookup[field]['description']
+                else:
+                    description = ''
+
                 variables.append({
                     'field': field,
                     'range_min': float(row.get('range_min')) if pd.notna(row.get('range_min')) else data_min,
                     'range_max': float(row.get('range_max')) if pd.notna(row.get('range_max')) else data_max,
                     'weight': float(row.get('I_weight', 1)) if pd.notna(row.get('I_weight')) else 1.0,
-                    'label': row.get('I_label', field) if pd.notna(row.get('I_label')) else field,
-                    'description': row.get('I_description', '') if pd.notna(row.get('I_description')) else '',
+                    'label': label,
+                    'description': description,
                     'group': var_group,
                     'preference': preference,
                     'data_min': data_min,
