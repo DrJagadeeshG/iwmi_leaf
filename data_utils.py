@@ -358,7 +358,16 @@ def get_column_stats(column, level='block'):
 
 @lru_cache(maxsize=1)
 def load_gp_block_mapping():
-    """Load GP to Block mapping from Block_GPs.xlsx."""
+    """Load GP to Block mapping from Block_GPs.xlsx.
+
+    Only returns mappings for blocks belonging to Tinsukia district.
+    Block_GPs.xlsx contains blocks from ALL Assam districts, so without
+    filtering, GPs with names that coincidentally match entries in other
+    districts (e.g. AMBIKAPUR->Silchar, KAKOJAN->Jorhat Central) would
+    be assigned incorrect block names. Tinsukia_GP_data.xlsx also has
+    ~11 GP spelling mismatches vs Block_GPs.xlsx — those remain unmapped
+    until the source data is corrected.
+    """
     excel_path = DATA_DIR / "Block_GPs.xlsx"
 
     if not excel_path.exists():
@@ -366,6 +375,17 @@ def load_gp_block_mapping():
 
     df = pd.read_excel(excel_path)
     df.columns = [col.strip() for col in df.columns]
+
+    # Load valid Tinsukia block names from block_values.csv
+    block_csv = DATA_DIR / "block_values.csv"
+    valid_blocks = set()
+    if block_csv.exists():
+        bv = pd.read_csv(block_csv)
+        bv.columns = [col.strip() for col in bv.columns]
+        valid_blocks = set(
+            bv[bv['Dist_Name'] == 'Tinsukia']['Block_name']
+            .str.strip().str.upper()
+        )
 
     # The file has columns including: BLOCK NAME, GP NAME
     # Use column names for reliable access (avoid index-based access with unnamed columns)
@@ -379,6 +399,9 @@ def load_gp_block_mapping():
             gp_name = row[gp_col]
 
             if pd.notna(gp_name) and pd.notna(block_name):
+                # Skip blocks that don't belong to Tinsukia
+                if valid_blocks and str(block_name).strip().upper() not in valid_blocks:
+                    continue
                 mapping[str(gp_name).strip().upper()] = str(block_name).strip()
 
     return mapping
