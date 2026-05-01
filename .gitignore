@@ -23,3 +23,7 @@ Thumbs.db
 
 # Claude
 .claude/
+
+# Runtime data artifacts (regenerated/uploaded at runtime, not source-of-truth)
+data/clusters.json
+data/infrastructure.csv

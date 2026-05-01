@@ -90,6 +90,10 @@ swagger_template = {
         {"name": "AI", "description": "AI-powered recommendation engine (RAG-based)"},
         {"name": "Export", "description": "Data export endpoints"},
         {"name": "Config", "description": "Application configuration and metadata"},
+        {"name": "Villages", "description": "Village-level point data (ODK / MMUA seed) for cluster generation"},
+        {"name": "Clusters", "description": "Per-commodity village clusters: generation, retrieval, CSV edit cycle"},
+        {"name": "Infrastructure", "description": "Vet centres, pharmacies, input shops — POI database with nearest-to-cluster query"},
+        {"name": "ProductionTool", "description": "Outbound feed of finalised clusters and inbound dashboard data exchange with the external production tool"},
         {"name": "Deprecated", "description": "Deprecated endpoints - use newer alternatives"},
     ],
     "definitions": {
@@ -1912,6 +1916,828 @@ def serve_documentation(filename='index.html'):
     return send_from_directory(site_dir, filename)
 
 
+# =============================================================================
+# Villages & Clusters APIs
+# =============================================================================
+
+from clustering import COMMODITIES, DEFAULT_PARAMS
+from villages import (
+    list_blocks_with_villages,
+    villages_for_block,
+    villages_geojson,
+    aggregate_villages,
+    get_clusters,
+    get_cluster,
+    regenerate_clusters,
+    replace_clusters_from_records,
+    clusters_to_csv,
+    csv_text_to_records,
+    set_cluster_finalized,
+    set_cluster_dashboard,
+)
+from infrastructure import (
+    list_infrastructure,
+    import_infrastructure_csv,
+    nearest_to_point,
+)
+
+
+def _cluster_params_from_request():
+    """Pull tunable clustering params from query string or JSON body, applying defaults."""
+    src = {}
+    src.update({k: request.args.get(k) for k in DEFAULT_PARAMS if request.args.get(k) is not None})
+    if request.is_json:
+        body = request.get_json(silent=True) or {}
+        for k in DEFAULT_PARAMS:
+            if k in body and body[k] is not None:
+                src[k] = body[k]
+    out = {}
+    for k, default in DEFAULT_PARAMS.items():
+        if k in src:
+            out[k] = float(src[k]) if isinstance(default, float) else int(src[k])
+    return out
+
+
+@app.route('/api/villages')
+def api_villages():
+    """List villages with commodity member counts.
+    ---
+    tags:
+      - Villages
+    summary: List villages
+    description: |
+      Returns village-level rows (district, block, GP, name, lat/long, and member
+      counts for each commodity) seeded from the MMUA `Random_pointshapefile` sheet.
+      Filter by `block` to scope to one block (the level at which clustering runs).
+    parameters:
+      - name: block
+        in: query
+        type: string
+        required: false
+        description: Filter to villages within a single block (case-sensitive match on `block_name`).
+    responses:
+      200:
+        description: Array of village records
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              district_name: {type: string}
+              block_name: {type: string}
+              gp_name: {type: string}
+              vill_name: {type: string}
+              lat: {type: number}
+              long: {type: number}
+              Dairy: {type: integer}
+              Goatery: {type: integer}
+              Piggery: {type: integer}
+              Backyard_Poultry: {type: integer}
+              Duckery: {type: integer}
+              Fishery_Activity: {type: integer}
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
+    try:
+        block = request.args.get('block')
+        df = villages_for_block(block) if block else __import__('villages').load_villages()
+        return jsonify(df.to_dict(orient='records'))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/villages/geojson')
+def api_villages_geojson():
+    """Return villages as a GeoJSON FeatureCollection of points.
+    ---
+    tags:
+      - Villages
+    summary: Villages as GeoJSON points
+    description: Each feature is a Point with all village properties (commodity member counts, GP, block, district).
+    parameters:
+      - name: block
+        in: query
+        type: string
+        required: false
+        description: Filter to villages within a single block.
+    responses:
+      200:
+        description: GeoJSON FeatureCollection
+        schema:
+          type: object
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
+    try:
+        block = request.args.get('block')
+        return jsonify(villages_geojson(block_name=block))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/villages/aggregate')
+def api_villages_aggregate():
+    """Aggregated village/member counts for state- or district-scale map overlays.
+    ---
+    tags:
+      - Villages
+    summary: Aggregated village counts
+    description: |
+      Drives the state and district map levels per the IWMI requirements call
+      (2026-04-23): rendering 25k points at state scale is meaningless, so
+      the map shows aggregated numbers per district at state scale and per
+      block at district scale. Village points are reserved for block scale.
+      Each row sums villages and members per commodity within the group.
+    parameters:
+      - name: level
+        in: query
+        type: string
+        required: true
+        enum: [district, block]
+        description: Aggregation grain
+      - name: district
+        in: query
+        type: string
+        required: false
+        description: When level=block, restrict to one district
+    responses:
+      200:
+        description: Array of aggregated rows
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              district_name: {type: string}
+              block_name: {type: string, description: Present only when level=block}
+              village_count: {type: integer}
+              Dairy: {type: integer}
+              Goatery: {type: integer}
+              Piggery: {type: integer}
+              Backyard_Poultry: {type: integer}
+              Duckery: {type: integer}
+              Fishery_Activity: {type: integer}
+      400:
+        description: Bad request
+        schema: {$ref: '#/definitions/Error'}
+    """
+    level = request.args.get('level')
+    if level not in ('district', 'block'):
+        return jsonify({'error': "Query parameter `level` must be 'district' or 'block'"}), 400
+    try:
+        return jsonify(aggregate_villages(level=level, district=request.args.get('district')))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/villages/blocks')
+def api_villages_blocks():
+    """List blocks that have village-level data available.
+    ---
+    tags:
+      - Villages
+    summary: Blocks with village data
+    description: Returns one record per (district, block) with village count, useful for the block-scale map drill-down.
+    responses:
+      200:
+        description: Array of block summaries
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              district_name: {type: string}
+              block_name: {type: string}
+              village_count: {type: integer}
+    """
+    try:
+        return jsonify(list_blocks_with_villages())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/clusters/params')
+def api_cluster_params():
+    """Get the default clustering parameters.
+    ---
+    tags:
+      - Clusters
+    summary: Default clustering parameters
+    description: |
+      Returns the tunable parameters used by the clustering engine. All four can be
+      overridden per-request on `/api/clusters` (POST) and `/api/clusters/regenerate`.
+      The 30/50 member range and 5 km radius reflect government criteria (per IWMI
+      requirements call, 2026-04-23) and may be adjusted before final freeze.
+    responses:
+      200:
+        description: Parameter map
+        schema:
+          type: object
+          properties:
+            min_members_per_village: {type: integer}
+            min_cluster_members: {type: integer}
+            max_cluster_members: {type: integer}
+            min_villages_per_cluster: {type: integer}
+            max_villages_per_cluster: {type: integer}
+            max_radius_km: {type: number}
+            commodities:
+              type: array
+              items: {type: string}
+    """
+    return jsonify({**DEFAULT_PARAMS, "commodities": COMMODITIES})
+
+
+@app.route('/api/clusters')
+def api_clusters_list():
+    """List stored clusters, optionally filtered.
+    ---
+    tags:
+      - Clusters
+    summary: List clusters
+    description: |
+      Returns clusters previously generated and stored on the server. Use the
+      filters to scope to a block, district, or commodity. If no clusters exist
+      yet, call `POST /api/clusters/regenerate` to run the algorithm.
+    parameters:
+      - name: block
+        in: query
+        type: string
+        required: false
+        description: Filter by block_name
+      - name: district
+        in: query
+        type: string
+        required: false
+        description: Filter by district_name
+      - name: commodity
+        in: query
+        type: string
+        required: false
+        enum: [Dairy, Goatery, Piggery, Backyard_Poultry, Duckery, Fishery_Activity]
+    responses:
+      200:
+        description: Array of cluster records
+    """
+    try:
+        clusters = get_clusters(
+            block_name=request.args.get('block'),
+            commodity=request.args.get('commodity'),
+            district_name=request.args.get('district'),
+        )
+        return jsonify(clusters)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/clusters/<cluster_id>')
+def api_cluster_detail(cluster_id):
+    """Get a single cluster by its ID.
+    ---
+    tags:
+      - Clusters
+    summary: Get cluster by ID
+    parameters:
+      - name: cluster_id
+        in: path
+        type: string
+        required: true
+    responses:
+      200: {description: Cluster record}
+      404:
+        description: Not found
+        schema: {$ref: '#/definitions/Error'}
+    """
+    c = get_cluster(cluster_id)
+    if c is None:
+        return jsonify({'error': f'Cluster {cluster_id} not found'}), 404
+    return jsonify(c)
+
+
+@app.route('/api/clusters/<cluster_id>/report')
+def api_cluster_report(cluster_id):
+    """Cluster dashboard / report card.
+    ---
+    tags:
+      - Clusters
+    summary: Cluster report card
+    description: |
+      Returns the cluster's villages, total members, max span, plus the existing
+      block-level LEAF variables (soil, water, climate, infrastructure, people,
+      livestock, land/agri) for the parent block. Mirrors the mock on slide 7
+      of the LEAF DSS Clustering Workflow deck.
+    parameters:
+      - name: cluster_id
+        in: path
+        type: string
+        required: true
+    responses:
+      200:
+        description: Cluster + block-level context
+        schema:
+          type: object
+          properties:
+            cluster: {type: object}
+            block: {type: object, description: Properties from the parent block (LEAF variables)}
+      404:
+        description: Cluster or block not found
+        schema: {$ref: '#/definitions/Error'}
+    """
+    c = get_cluster(cluster_id)
+    if c is None:
+        return jsonify({'error': f'Cluster {cluster_id} not found'}), 404
+    try:
+        gdf = load_shapefile()
+        block_match = gdf[gdf['Block_name'].astype(str).str.upper() == str(c.get('block_name', '')).upper()]
+        block_props = {}
+        if not block_match.empty:
+            row = block_match.iloc[0].drop(labels=['geometry'], errors='ignore').to_dict()
+            block_props = {k: (None if pd.isna(v) else v) for k, v in row.items()}
+        return jsonify({'cluster': c, 'block': block_props})
+    except Exception as e:
+        return jsonify({'cluster': c, 'block': {}, 'warning': str(e)}), 200
+
+
+@app.route('/api/clusters/regenerate', methods=['POST'])
+def api_clusters_regenerate():
+    """Run the clustering algorithm and replace stored clusters in scope.
+    ---
+    tags:
+      - Clusters
+    summary: Regenerate clusters
+    description: |
+      Runs the greedy spatial clustering algorithm on the village seed data and
+      stores the resulting clusters. Scope precedence: (block + commodity) >
+      (block) > (all blocks, all commodities). Tunable parameters can be passed
+      in the body and override defaults from `/api/clusters/params`.
+    parameters:
+      - in: body
+        name: body
+        required: false
+        schema:
+          type: object
+          properties:
+            block:
+              type: string
+              description: Restrict to one block (recommended)
+            commodity:
+              type: string
+              enum: [Dairy, Goatery, Piggery, Backyard_Poultry, Duckery, Fishery_Activity]
+            min_members_per_village: {type: integer}
+            min_cluster_members: {type: integer}
+            max_cluster_members: {type: integer}
+            min_villages_per_cluster: {type: integer}
+            max_villages_per_cluster: {type: integer}
+            max_radius_km: {type: number}
+    responses:
+      200:
+        description: Newly generated clusters
+        schema:
+          type: object
+          properties:
+            count: {type: integer}
+            clusters:
+              type: array
+              items: {type: object}
+      500:
+        description: Server error
+        schema: {$ref: '#/definitions/Error'}
+    """
+    try:
+        body = request.get_json(silent=True) or {}
+        block = body.get('block')
+        commodity = body.get('commodity')
+        params = _cluster_params_from_request()
+        clusters = regenerate_clusters(block_name=block, commodity=commodity, params=params)
+        return jsonify({'count': len(clusters), 'clusters': clusters})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/clusters/export.csv')
+def api_clusters_export_csv():
+    """Export stored clusters as a row-per-village CSV.
+    ---
+    tags:
+      - Clusters
+    summary: Export clusters CSV
+    description: |
+      Produces a CSV with one row per (cluster, village). Editors can change
+      villages, member counts, or fill in `pashu_sakhi` / `block_coordinator`,
+      then re-upload via `POST /api/clusters/import` to update the stored
+      clusters. Same edit-via-CSV pattern as the existing LEAF data update flow.
+    parameters:
+      - name: block
+        in: query
+        type: string
+        required: false
+      - name: district
+        in: query
+        type: string
+        required: false
+      - name: commodity
+        in: query
+        type: string
+        required: false
+        enum: [Dairy, Goatery, Piggery, Backyard_Poultry, Duckery, Fishery_Activity]
+    responses:
+      200:
+        description: CSV file
+        schema: {type: string}
+    """
+    try:
+        clusters = get_clusters(
+            block_name=request.args.get('block'),
+            commodity=request.args.get('commodity'),
+            district_name=request.args.get('district'),
+        )
+        csv_text = clusters_to_csv(clusters)
+        scope = request.args.get('block') or request.args.get('district') or 'all'
+        return Response(
+            csv_text,
+            mimetype='text/csv',
+            headers={'Content-Disposition': f'attachment; filename=clusters_{scope}.csv'},
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/clusters/import', methods=['POST'])
+def api_clusters_import():
+    """Replace stored clusters in scope from an uploaded CSV.
+    ---
+    tags:
+      - Clusters
+    summary: Import clusters CSV
+    description: |
+      Accepts the same row-per-village CSV format produced by
+      `/api/clusters/export.csv`. Required scope: `block` (and optionally
+      `commodity`). All existing clusters within scope are replaced by the
+      uploaded rows; derived fields (total_members, max_span_km, centroid) are
+      recomputed. Re-upload as many times as needed.
+    consumes:
+      - multipart/form-data
+      - text/csv
+    parameters:
+      - in: formData
+        name: file
+        type: file
+        required: false
+        description: Multipart CSV file. Alternatively POST raw CSV as the request body.
+      - in: query
+        name: block
+        type: string
+        required: true
+      - in: query
+        name: commodity
+        type: string
+        required: false
+        enum: [Dairy, Goatery, Piggery, Backyard_Poultry, Duckery, Fishery_Activity]
+    responses:
+      200:
+        description: Import summary
+        schema:
+          type: object
+          properties:
+            imported: {type: integer, description: Number of clusters stored}
+      400:
+        description: Bad request
+        schema: {$ref: '#/definitions/Error'}
+    """
+    try:
+        block = request.args.get('block')
+        commodity = request.args.get('commodity')
+        if not block:
+            return jsonify({'error': 'Query parameter `block` is required'}), 400
+
+        csv_text = ''
+        if 'file' in request.files:
+            csv_text = request.files['file'].read().decode('utf-8-sig')
+        else:
+            csv_text = request.get_data(as_text=True)
+        if not csv_text.strip():
+            return jsonify({'error': 'No CSV content received'}), 400
+
+        records = csv_text_to_records(csv_text)
+        n = replace_clusters_from_records(records, scope={'block_name': block, 'commodity': commodity})
+        return jsonify({'imported': n})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# =============================================================================
+# Infrastructure POI APIs
+# =============================================================================
+
+@app.route('/api/infrastructure')
+def api_infrastructure_list():
+    """List infrastructure POIs (vet centres, pharmacies, input shops, etc.).
+    ---
+    tags:
+      - Infrastructure
+    summary: List POIs
+    description: |
+      Returns infrastructure points-of-interest ingested via
+      `POST /api/infrastructure/import`. Filterable by type, district, block.
+    parameters:
+      - name: type
+        in: query
+        type: string
+        required: false
+        description: Filter by POI type (case-insensitive), e.g. 'vet_centre', 'pharmacy', 'input_shop'.
+      - name: block
+        in: query
+        type: string
+        required: false
+      - name: district
+        in: query
+        type: string
+        required: false
+    responses:
+      200:
+        description: Array of POI records
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              type: {type: string}
+              name: {type: string}
+              lat: {type: number}
+              long: {type: number}
+              district_name: {type: string}
+              block_name: {type: string}
+              gp_name: {type: string}
+              vill_name: {type: string}
+    """
+    try:
+        return jsonify(list_infrastructure(
+            type_=request.args.get('type'),
+            block=request.args.get('block'),
+            district=request.args.get('district'),
+        ))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/infrastructure/import', methods=['POST'])
+def api_infrastructure_import():
+    """Replace the infrastructure POI dataset from an uploaded CSV.
+    ---
+    tags:
+      - Infrastructure
+    summary: Import POIs CSV
+    description: |
+      Replaces the entire infrastructure dataset. Required columns:
+      `type, name, lat, long`. Optional: `district_name, block_name, gp_name,
+      vill_name`. Same backend-CSV-upload pattern as the existing LEAF data
+      update flow.
+    consumes:
+      - multipart/form-data
+      - text/csv
+    parameters:
+      - in: formData
+        name: file
+        type: file
+        required: false
+        description: Multipart CSV file. Alternatively POST raw CSV as the request body.
+    responses:
+      200:
+        description: Import summary
+        schema:
+          type: object
+          properties:
+            imported: {type: integer}
+      400:
+        description: Bad request (missing required columns or empty body)
+        schema: {$ref: '#/definitions/Error'}
+    """
+    try:
+        csv_text = ''
+        if 'file' in request.files:
+            csv_text = request.files['file'].read().decode('utf-8-sig')
+        else:
+            csv_text = request.get_data(as_text=True)
+        if not csv_text.strip():
+            return jsonify({'error': 'No CSV content received'}), 400
+        n = import_infrastructure_csv(csv_text)
+        return jsonify({'imported': n})
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/infrastructure/nearest')
+def api_infrastructure_nearest():
+    """Nearest infrastructure POIs to a cluster centroid or arbitrary point.
+    ---
+    tags:
+      - Infrastructure
+    summary: Nearest POIs
+    description: |
+      Provide either `cluster_id` (uses the cluster centroid) or `lat`+`long`.
+      Returns up to `n` nearest POIs with `distance_km` attached, optionally
+      filtered by `type` and capped at `max_km`.
+    parameters:
+      - name: cluster_id
+        in: query
+        type: string
+        required: false
+      - name: lat
+        in: query
+        type: number
+        required: false
+      - name: long
+        in: query
+        type: number
+        required: false
+      - name: type
+        in: query
+        type: string
+        required: false
+      - name: n
+        in: query
+        type: integer
+        required: false
+        default: 5
+      - name: max_km
+        in: query
+        type: number
+        required: false
+    responses:
+      200:
+        description: Array of POIs sorted by distance
+        schema:
+          type: array
+          items: {type: object}
+      400:
+        description: Bad request
+        schema: {$ref: '#/definitions/Error'}
+      404:
+        description: Cluster not found
+        schema: {$ref: '#/definitions/Error'}
+    """
+    cluster_id = request.args.get('cluster_id')
+    if cluster_id:
+        c = get_cluster(cluster_id)
+        if c is None:
+            return jsonify({'error': f'Cluster {cluster_id} not found'}), 404
+        lat = float(c['centroid_lat'])
+        lon = float(c['centroid_lon'])
+    else:
+        lat_raw = request.args.get('lat')
+        lon_raw = request.args.get('long')
+        if lat_raw is None or lon_raw is None:
+            return jsonify({'error': 'Provide cluster_id or both lat and long'}), 400
+        try:
+            lat = float(lat_raw)
+            lon = float(lon_raw)
+        except ValueError:
+            return jsonify({'error': 'lat/long must be numbers'}), 400
+
+    try:
+        n = int(request.args.get('n', 5))
+        max_km = request.args.get('max_km')
+        max_km = float(max_km) if max_km is not None else None
+        return jsonify(nearest_to_point(lat, lon, type_=request.args.get('type'), n=n, max_km=max_km))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+# =============================================================================
+# Production Tool API surface
+# =============================================================================
+
+@app.route('/api/clusters/<cluster_id>/finalize', methods=['POST'])
+def api_cluster_finalize(cluster_id):
+    """Mark a cluster as finalised (or unfinalize it).
+    ---
+    tags:
+      - ProductionTool
+    summary: Finalize cluster
+    description: |
+      Once a cluster has been reviewed and edited via the CSV cycle, flipping
+      `finalized=true` includes it in the outbound feed at
+      `/api/production-tool/clusters`. Pass `{"finalized": false}` to revert.
+    parameters:
+      - name: cluster_id
+        in: path
+        type: string
+        required: true
+      - in: body
+        name: body
+        required: false
+        schema:
+          type: object
+          properties:
+            finalized: {type: boolean, default: true}
+    responses:
+      200:
+        description: Updated cluster record
+        schema: {type: object}
+      404:
+        description: Cluster not found
+        schema: {$ref: '#/definitions/Error'}
+    """
+    body = request.get_json(silent=True) or {}
+    finalized = bool(body.get('finalized', True))
+    rec = set_cluster_finalized(cluster_id, finalized)
+    if rec is None:
+        return jsonify({'error': f'Cluster {cluster_id} not found'}), 404
+    return jsonify(rec)
+
+
+@app.route('/api/production-tool/clusters')
+def api_production_tool_clusters():
+    """Outbound feed of finalised clusters for the external production tool.
+    ---
+    tags:
+      - ProductionTool
+    summary: Outbound clusters feed
+    description: |
+      Read-only. Returns clusters with `finalized=true`, scoped to the requested
+      district / block / commodity. This is the contract the external
+      production tool consumes once a cluster is locked down.
+    parameters:
+      - name: block
+        in: query
+        type: string
+        required: false
+      - name: district
+        in: query
+        type: string
+        required: false
+      - name: commodity
+        in: query
+        type: string
+        required: false
+        enum: [Dairy, Goatery, Piggery, Backyard_Poultry, Duckery, Fishery_Activity]
+    responses:
+      200:
+        description: Array of finalised clusters
+        schema:
+          type: array
+          items: {type: object}
+    """
+    clusters = get_clusters(
+        block_name=request.args.get('block'),
+        commodity=request.args.get('commodity'),
+        district_name=request.args.get('district'),
+    )
+    return jsonify([c for c in clusters if c.get('finalized')])
+
+
+@app.route('/api/production-tool/dashboard/<cluster_id>', methods=['GET', 'POST'])
+def api_production_tool_dashboard(cluster_id):
+    """Inbound aggregated dashboard data from the production tool, per cluster.
+    ---
+    tags:
+      - ProductionTool
+    summary: Cluster production dashboard
+    description: |
+      The external production tool POSTs aggregate output (e.g. duckery cluster:
+      eggs produced, meat output) keyed by cluster_id; we store the JSON as-is
+      and surface it on the cluster report card. GET returns the last stored
+      payload. Authentication and per-user filtering live in the production
+      tool — we only exchange aggregates.
+    parameters:
+      - name: cluster_id
+        in: path
+        type: string
+        required: true
+      - in: body
+        name: body
+        required: false
+        schema:
+          type: object
+          description: Arbitrary JSON dashboard payload (POST only)
+    responses:
+      200:
+        description: Stored payload (or empty object if not yet posted)
+        schema: {type: object}
+      404:
+        description: Cluster not found
+        schema: {$ref: '#/definitions/Error'}
+    """
+    if request.method == 'POST':
+        payload = request.get_json(silent=True)
+        if payload is None:
+            return jsonify({'error': 'JSON body required'}), 400
+        rec = set_cluster_dashboard(cluster_id, payload)
+        if rec is None:
+            return jsonify({'error': f'Cluster {cluster_id} not found'}), 404
+        return jsonify(rec.get('dashboard', {}))
+
+    rec = get_cluster(cluster_id)
+    if rec is None:
+        return jsonify({'error': f'Cluster {cluster_id} not found'}), 404
+    return jsonify(rec.get('dashboard') or {})
+
+
 @app.route('/api')
 def api_info():
     """API documentation endpoint - lists all available API routes.
@@ -1975,6 +2801,32 @@ def api_info():
                 'GET /api/config': 'Get app configuration',
                 'GET /api/levels': 'Get available data levels',
                 'GET /api/protected-areas/geojson': 'Get protected areas as GeoJSON',
+            },
+            'villages': {
+                'GET /api/villages': 'List villages (optionally filtered by block)',
+                'GET /api/villages/geojson': 'Villages as GeoJSON points',
+                'GET /api/villages/aggregate': 'Aggregated counts by district or block (state/district map levels)',
+                'GET /api/villages/blocks': 'Blocks with village data available',
+            },
+            'clusters': {
+                'GET /api/clusters/params': 'Default clustering parameters',
+                'GET /api/clusters': 'List stored clusters (filter by block/district/commodity)',
+                'GET /api/clusters/<cluster_id>': 'Get a cluster by ID',
+                'GET /api/clusters/<cluster_id>/report': 'Cluster report card with block-level LEAF variables',
+                'POST /api/clusters/regenerate': 'Run clustering algorithm and replace stored clusters in scope',
+                'GET /api/clusters/export.csv': 'Export clusters as row-per-village CSV',
+                'POST /api/clusters/import': 'Replace stored clusters in scope from uploaded CSV',
+                'POST /api/clusters/<cluster_id>/finalize': 'Mark a cluster as finalised',
+            },
+            'infrastructure': {
+                'GET /api/infrastructure': 'List POIs (filter by type/block/district)',
+                'POST /api/infrastructure/import': 'Replace POI dataset from CSV',
+                'GET /api/infrastructure/nearest': 'Nearest POIs to cluster centroid or arbitrary point',
+            },
+            'production_tool': {
+                'GET /api/production-tool/clusters': 'Outbound feed of finalised clusters',
+                'GET /api/production-tool/dashboard/<cluster_id>': 'Get stored dashboard payload',
+                'POST /api/production-tool/dashboard/<cluster_id>': 'Receive aggregated dashboard data per cluster',
             },
             'health': {
                 'GET /health': 'Health check',

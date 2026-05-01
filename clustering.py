@@ -1,0 +1,206 @@
+"""
+Village Clustering Engine
+Per-commodity spatial cluster generator for LEAF DSS.
+
+Forms contiguous clusters of villages within a block, honouring:
+  - per-village minimum interest in the commodity
+  - cluster total member range (min/max)
+  - cluster village count range (min/max)
+  - maximum pairwise radius across the cluster
+Algorithm: greedy seed-and-grow. Largest unassigned village seeds a cluster;
+nearest unassigned candidates are added while constraints hold. Discards
+under-size clusters at the end.
+"""
+
+import math
+import uuid
+from dataclasses import dataclass, field, asdict
+from typing import List, Dict, Optional
+
+import pandas as pd
+
+COMMODITIES = [
+    "Dairy",
+    "Goatery",
+    "Piggery",
+    "Backyard_Poultry",
+    "Duckery",
+    "Fishery_Activity",
+]
+
+DEFAULT_PARAMS = {
+    "min_members_per_village": 1,
+    "min_cluster_members": 30,
+    "max_cluster_members": 50,
+    "min_villages_per_cluster": 2,
+    "max_villages_per_cluster": 4,
+    "max_radius_km": 5.0,
+}
+
+
+def haversine_km(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    """Great-circle distance between two lat/lon points in kilometres."""
+    r = 6371.0
+    p1, p2 = math.radians(lat1), math.radians(lat2)
+    dp = math.radians(lat2 - lat1)
+    dl = math.radians(lon2 - lon1)
+    a = math.sin(dp / 2) ** 2 + math.cos(p1) * math.cos(p2) * math.sin(dl / 2) ** 2
+    return 2 * r * math.asin(math.sqrt(a))
+
+
+@dataclass
+class Cluster:
+    cluster_id: str
+    commodity: str
+    block_name: str
+    district_name: str
+    village_indices: List[int] = field(default_factory=list)
+    villages: List[Dict] = field(default_factory=list)
+    total_members: int = 0
+    max_span_km: float = 0.0
+    centroid_lat: float = 0.0
+    centroid_lon: float = 0.0
+    pashu_sakhi: Optional[str] = None
+    block_coordinator: Optional[str] = None
+
+    def to_dict(self) -> Dict:
+        return asdict(self)
+
+
+def _params(overrides: Optional[Dict]) -> Dict:
+    p = dict(DEFAULT_PARAMS)
+    if overrides:
+        for k, v in overrides.items():
+            if k in p and v is not None:
+                p[k] = v
+    return p
+
+
+def _max_pairwise_km(coords: List[tuple]) -> float:
+    n = len(coords)
+    if n < 2:
+        return 0.0
+    m = 0.0
+    for i in range(n):
+        for j in range(i + 1, n):
+            d = haversine_km(coords[i][0], coords[i][1], coords[j][0], coords[j][1])
+            if d > m:
+                m = d
+    return m
+
+
+def cluster_block_commodity(
+    df: pd.DataFrame,
+    block_name: str,
+    commodity: str,
+    params: Optional[Dict] = None,
+) -> List[Cluster]:
+    """Generate clusters for one (block, commodity) pair.
+
+    `df` must contain rows for a single block; columns: district_name, block_name,
+    gp_name, vill_name, lat, long, and the commodity column.
+    """
+    if commodity not in COMMODITIES:
+        raise ValueError(f"Unknown commodity '{commodity}'. Expected one of {COMMODITIES}.")
+
+    p = _params(params)
+
+    block_df = df[df["block_name"] == block_name].copy()
+    if block_df.empty or commodity not in block_df.columns:
+        return []
+
+    candidates = (
+        block_df[block_df[commodity] >= p["min_members_per_village"]]
+        .reset_index(drop=True)
+    )
+    if candidates.empty:
+        return []
+
+    district_name = str(candidates["district_name"].iloc[0])
+    coords = list(zip(candidates["lat"].astype(float), candidates["long"].astype(float)))
+    members = candidates[commodity].astype(int).tolist()
+    seed_order = sorted(range(len(candidates)), key=lambda i: members[i], reverse=True)
+
+    assigned = [False] * len(candidates)
+    clusters: List[Cluster] = []
+
+    for seed in seed_order:
+        if assigned[seed]:
+            continue
+
+        idxs = [seed]
+        total = members[seed]
+        assigned[seed] = True
+
+        while (
+            len(idxs) < p["max_villages_per_cluster"]
+            and total < p["max_cluster_members"]
+        ):
+            seed_lat, seed_lon = coords[idxs[0]]
+            best_i, best_d = None, float("inf")
+            for j in range(len(candidates)):
+                if assigned[j] or j in idxs:
+                    continue
+                d_seed = haversine_km(seed_lat, seed_lon, coords[j][0], coords[j][1])
+                if d_seed > p["max_radius_km"]:
+                    continue
+                trial_coords = [coords[k] for k in idxs] + [coords[j]]
+                if _max_pairwise_km(trial_coords) > p["max_radius_km"]:
+                    continue
+                if total + members[j] > p["max_cluster_members"]:
+                    continue
+                if d_seed < best_d:
+                    best_d = d_seed
+                    best_i = j
+            if best_i is None:
+                break
+            idxs.append(best_i)
+            total += members[best_i]
+            assigned[best_i] = True
+
+        if (
+            total < p["min_cluster_members"]
+            or len(idxs) < p["min_villages_per_cluster"]
+        ):
+            for k in idxs:
+                assigned[k] = False
+            continue
+
+        cluster_coords = [coords[k] for k in idxs]
+        c_lat = sum(c[0] for c in cluster_coords) / len(cluster_coords)
+        c_lon = sum(c[1] for c in cluster_coords) / len(cluster_coords)
+        villages = []
+        for k in idxs:
+            row = candidates.iloc[k]
+            villages.append({
+                "vill_name": str(row["vill_name"]),
+                "gp_name": str(row["gp_name"]),
+                "lat": float(row["lat"]),
+                "long": float(row["long"]),
+                "members": int(row[commodity]),
+            })
+        clusters.append(Cluster(
+            cluster_id=f"{block_name}-{commodity}-{uuid.uuid4().hex[:8]}",
+            commodity=commodity,
+            block_name=block_name,
+            district_name=district_name,
+            village_indices=[int(candidates.index[k]) for k in idxs],
+            villages=villages,
+            total_members=int(total),
+            max_span_km=round(_max_pairwise_km(cluster_coords), 3),
+            centroid_lat=round(c_lat, 6),
+            centroid_lon=round(c_lon, 6),
+        ))
+
+    return clusters
+
+
+def cluster_block_all(
+    df: pd.DataFrame,
+    block_name: str,
+    params: Optional[Dict] = None,
+    commodities: Optional[List[str]] = None,
+) -> Dict[str, List[Cluster]]:
+    """Generate clusters for all commodities in one block. Returns {commodity: [Cluster, ...]}."""
+    cs = commodities or COMMODITIES
+    return {c: cluster_block_commodity(df, block_name, c, params) for c in cs}
