@@ -1,19 +1,20 @@
 """
 Village data loader and cluster persistence for LEAF DSS.
 
-- Loads village-level pilot data (lat/long + commodity member counts) from
-  leaf_flask/data/villages.csv (seed: MMUA Random_pointshapefile sheet).
-- Maintains an in-memory cluster store keyed by cluster_id, persisted to
-  leaf_flask/data/clusters.json so backend CSV upload edits survive restarts.
+- Village seed data (lat/long + commodity member counts) is read from
+  leaf_flask/data/villages.csv. This is the algorithm input; replaced by ODK
+  feed in production.
+- Cluster persistence is backed by Postgres (Supabase). Public function
+  signatures are unchanged from the prior file-store implementation, so app.py
+  routes do not need to change.
 """
 
-import json
-from pathlib import Path
 from functools import lru_cache
-from threading import Lock
+from pathlib import Path
 from typing import Dict, List, Optional
 
 import pandas as pd
+from psycopg2.extras import Json, execute_values
 
 from clustering import (
     Cluster,
@@ -22,12 +23,10 @@ from clustering import (
     cluster_block_all,
     cluster_block_commodity,
 )
+from db import get_cursor
 
 DATA_DIR = Path(__file__).parent / "data"
 VILLAGES_CSV = DATA_DIR / "villages.csv"
-CLUSTERS_JSON = DATA_DIR / "clusters.json"
-
-_store_lock = Lock()
 
 
 @lru_cache(maxsize=1)
@@ -71,13 +70,6 @@ def villages_geojson(block_name: Optional[str] = None) -> Dict:
 
 
 def aggregate_villages(level: str, district: Optional[str] = None) -> List[Dict]:
-    """Aggregate village member counts by district or block.
-
-    `level` is one of:
-      - "district": one row per district (use for state-scale map)
-      - "block":    one row per (district, block) (use for district-scale map);
-                    pass `district` to scope to one.
-    """
     df = load_villages()
     if level not in ("district", "block"):
         raise ValueError("level must be 'district' or 'block'")
@@ -95,22 +87,55 @@ def aggregate_villages(level: str, district: Optional[str] = None) -> List[Dict]
     return agg.to_dict(orient="records")
 
 
-# ---- Cluster store ----
+# =============================================================================
+# Cluster store (Postgres-backed)
+# =============================================================================
 
-def _load_store() -> Dict[str, Dict]:
-    if not CLUSTERS_JSON.exists():
+CLUSTER_COLS = (
+    "cluster_id, commodity, block_name, district_name, total_members, max_span_km, "
+    "centroid_lat, centroid_lon, pashu_sakhi, block_coordinator, finalized, dashboard"
+)
+
+
+def _row_to_cluster(row: Dict, villages: List[Dict]) -> Dict:
+    return {
+        "cluster_id": row["cluster_id"],
+        "commodity": row["commodity"],
+        "block_name": row["block_name"],
+        "district_name": row["district_name"],
+        "total_members": int(row["total_members"]) if row["total_members"] is not None else 0,
+        "max_span_km": float(row["max_span_km"]) if row["max_span_km"] is not None else 0.0,
+        "centroid_lat": float(row["centroid_lat"]) if row["centroid_lat"] is not None else 0.0,
+        "centroid_lon": float(row["centroid_lon"]) if row["centroid_lon"] is not None else 0.0,
+        "pashu_sakhi": row["pashu_sakhi"],
+        "block_coordinator": row["block_coordinator"],
+        "finalized": bool(row["finalized"]),
+        "dashboard": row["dashboard"],
+        "villages": villages,
+        "village_indices": [v["village_index"] for v in villages if v.get("village_index") is not None],
+    }
+
+
+def _fetch_villages(cluster_ids: List[str]) -> Dict[str, List[Dict]]:
+    if not cluster_ids:
         return {}
-    try:
-        with open(CLUSTERS_JSON, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except (json.JSONDecodeError, OSError):
-        return {}
-
-
-def _save_store(store: Dict[str, Dict]) -> None:
-    CLUSTERS_JSON.parent.mkdir(parents=True, exist_ok=True)
-    with open(CLUSTERS_JSON, "w", encoding="utf-8") as f:
-        json.dump(store, f, indent=2)
+    with get_cursor(commit=False) as cur:
+        cur.execute(
+            'SELECT cluster_id, vill_name, gp_name, lat, "long", members, village_index, position '
+            'FROM cluster_villages WHERE cluster_id = ANY(%s) ORDER BY cluster_id, position',
+            (cluster_ids,),
+        )
+        out: Dict[str, List[Dict]] = {cid: [] for cid in cluster_ids}
+        for r in cur.fetchall():
+            out[r["cluster_id"]].append({
+                "vill_name": r["vill_name"],
+                "gp_name": r["gp_name"],
+                "lat": float(r["lat"]) if r["lat"] is not None else None,
+                "long": float(r["long"]) if r["long"] is not None else None,
+                "members": int(r["members"]) if r["members"] is not None else 0,
+                "village_index": r["village_index"],
+            })
+        return out
 
 
 def get_clusters(
@@ -118,22 +143,88 @@ def get_clusters(
     commodity: Optional[str] = None,
     district_name: Optional[str] = None,
 ) -> List[Dict]:
-    with _store_lock:
-        store = _load_store()
-    out = list(store.values())
+    where, params = [], []
     if block_name:
-        out = [c for c in out if c.get("block_name") == block_name]
+        where.append("block_name = %s")
+        params.append(block_name)
     if commodity:
-        out = [c for c in out if c.get("commodity") == commodity]
+        where.append("commodity = %s")
+        params.append(commodity)
     if district_name:
-        out = [c for c in out if c.get("district_name") == district_name]
-    return out
+        where.append("district_name = %s")
+        params.append(district_name)
+    sql = f"SELECT {CLUSTER_COLS} FROM clusters"
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+    sql += " ORDER BY block_name, commodity, cluster_id"
+
+    with get_cursor(commit=False) as cur:
+        cur.execute(sql, params)
+        rows = cur.fetchall()
+    villages_map = _fetch_villages([r["cluster_id"] for r in rows])
+    return [_row_to_cluster(r, villages_map.get(r["cluster_id"], [])) for r in rows]
 
 
 def get_cluster(cluster_id: str) -> Optional[Dict]:
-    with _store_lock:
-        store = _load_store()
-    return store.get(cluster_id)
+    with get_cursor(commit=False) as cur:
+        cur.execute(f"SELECT {CLUSTER_COLS} FROM clusters WHERE cluster_id = %s", (cluster_id,))
+        row = cur.fetchone()
+    if row is None:
+        return None
+    villages_map = _fetch_villages([cluster_id])
+    return _row_to_cluster(row, villages_map.get(cluster_id, []))
+
+
+def _delete_clusters(cur, block_name: Optional[str] = None, commodity: Optional[str] = None) -> None:
+    """Delete clusters in scope. cluster_villages cascades."""
+    if block_name and commodity:
+        cur.execute("DELETE FROM clusters WHERE block_name = %s AND commodity = %s", (block_name, commodity))
+    elif block_name:
+        cur.execute("DELETE FROM clusters WHERE block_name = %s", (block_name,))
+    else:
+        cur.execute("DELETE FROM clusters")
+
+
+def _insert_clusters(cur, clusters: List[Dict]) -> None:
+    if not clusters:
+        return
+    cluster_rows = [
+        (
+            c["cluster_id"], c["commodity"], c["block_name"], c.get("district_name"),
+            c.get("total_members", 0), c.get("max_span_km", 0.0),
+            c.get("centroid_lat", 0.0), c.get("centroid_lon", 0.0),
+            c.get("pashu_sakhi"), c.get("block_coordinator"),
+            bool(c.get("finalized", False)),
+            Json(c["dashboard"]) if c.get("dashboard") is not None else None,
+        )
+        for c in clusters
+    ]
+    execute_values(
+        cur,
+        f"INSERT INTO clusters ({CLUSTER_COLS}) VALUES %s",
+        cluster_rows,
+    )
+
+    village_rows = []
+    for c in clusters:
+        for pos, v in enumerate(c.get("villages", [])):
+            village_rows.append((
+                c["cluster_id"],
+                v.get("vill_name"),
+                v.get("gp_name"),
+                v.get("lat"),
+                v.get("long"),
+                int(v.get("members", 0)),
+                v.get("village_index"),
+                pos,
+            ))
+    if village_rows:
+        execute_values(
+            cur,
+            'INSERT INTO cluster_villages '
+            '(cluster_id, vill_name, gp_name, lat, "long", members, village_index, position) VALUES %s',
+            village_rows,
+        )
 
 
 def regenerate_clusters(
@@ -141,10 +232,7 @@ def regenerate_clusters(
     commodity: Optional[str] = None,
     params: Optional[Dict] = None,
 ) -> List[Dict]:
-    """Run the algorithm and replace stored clusters for the given scope.
-
-    Scope precedence: (block_name, commodity) > (block_name) > all blocks/all commodities.
-    """
+    """Run the algorithm and replace stored clusters for the given scope."""
     df = load_villages()
     blocks = [block_name] if block_name else sorted(df["block_name"].dropna().unique().tolist())
     new_clusters: List[Cluster] = []
@@ -155,20 +243,11 @@ def regenerate_clusters(
             for cs in cluster_block_all(df, b, params).values():
                 new_clusters.extend(cs)
 
-    with _store_lock:
-        store = _load_store()
-        if block_name and commodity:
-            keep = {k: v for k, v in store.items()
-                    if not (v.get("block_name") == block_name and v.get("commodity") == commodity)}
-        elif block_name:
-            keep = {k: v for k, v in store.items() if v.get("block_name") != block_name}
-        else:
-            keep = {}
-        for c in new_clusters:
-            d = c.to_dict()
-            keep[d["cluster_id"]] = d
-        _save_store(keep)
-    return [c.to_dict() for c in new_clusters]
+    payload = [c.to_dict() for c in new_clusters]
+    with get_cursor(commit=True) as cur:
+        _delete_clusters(cur, block_name=block_name, commodity=commodity)
+        _insert_clusters(cur, payload)
+    return payload
 
 
 def replace_clusters_from_records(records: List[Dict], scope: Dict) -> int:
@@ -185,7 +264,7 @@ def replace_clusters_from_records(records: List[Dict], scope: Dict) -> int:
     if not block_name:
         raise ValueError("scope.block_name is required")
 
-    cleaned: Dict[str, Dict] = {}
+    cleaned: List[Dict] = []
     for r in records:
         if r.get("block_name") != block_name:
             continue
@@ -197,12 +276,11 @@ def replace_clusters_from_records(records: List[Dict], scope: Dict) -> int:
         c_lat = sum(c[0] for c in coords) / len(coords) if coords else 0.0
         c_lon = sum(c[1] for c in coords) / len(coords) if coords else 0.0
         cid = r.get("cluster_id") or f"{block_name}-{r.get('commodity','X')}-manual"
-        cleaned[cid] = {
+        cleaned.append({
             "cluster_id": cid,
             "commodity": r.get("commodity"),
             "block_name": block_name,
             "district_name": r.get("district_name"),
-            "village_indices": r.get("village_indices", []),
             "villages": villages,
             "total_members": total,
             "max_span_km": round(_max_pairwise_km(coords), 3),
@@ -210,45 +288,35 @@ def replace_clusters_from_records(records: List[Dict], scope: Dict) -> int:
             "centroid_lon": round(c_lon, 6),
             "pashu_sakhi": r.get("pashu_sakhi"),
             "block_coordinator": r.get("block_coordinator"),
-        }
+            "finalized": False,
+        })
 
-    with _store_lock:
-        store = _load_store()
-        if commodity:
-            keep = {k: v for k, v in store.items()
-                    if not (v.get("block_name") == block_name and v.get("commodity") == commodity)}
-        else:
-            keep = {k: v for k, v in store.items() if v.get("block_name") != block_name}
-        keep.update(cleaned)
-        _save_store(keep)
+    with get_cursor(commit=True) as cur:
+        _delete_clusters(cur, block_name=block_name, commodity=commodity)
+        _insert_clusters(cur, cleaned)
     return len(cleaned)
 
 
 def set_cluster_finalized(cluster_id: str, finalized: bool) -> Optional[Dict]:
-    """Flip the `finalized` flag on a stored cluster. Returns updated record or None."""
-    with _store_lock:
-        store = _load_store()
-        rec = store.get(cluster_id)
-        if rec is None:
+    with get_cursor(commit=True) as cur:
+        cur.execute(
+            "UPDATE clusters SET finalized = %s, updated_at = now() WHERE cluster_id = %s",
+            (bool(finalized), cluster_id),
+        )
+        if cur.rowcount == 0:
             return None
-        rec["finalized"] = bool(finalized)
-        store[cluster_id] = rec
-        _save_store(store)
-        return rec
+    return get_cluster(cluster_id)
 
 
 def set_cluster_dashboard(cluster_id: str, payload: Dict) -> Optional[Dict]:
-    """Attach an arbitrary dashboard JSON blob (from the external production tool)
-    to a cluster. Stored under `dashboard`. Returns updated record or None."""
-    with _store_lock:
-        store = _load_store()
-        rec = store.get(cluster_id)
-        if rec is None:
+    with get_cursor(commit=True) as cur:
+        cur.execute(
+            "UPDATE clusters SET dashboard = %s, updated_at = now() WHERE cluster_id = %s",
+            (Json(payload), cluster_id),
+        )
+        if cur.rowcount == 0:
             return None
-        rec["dashboard"] = payload
-        store[cluster_id] = rec
-        _save_store(store)
-        return rec
+    return get_cluster(cluster_id)
 
 
 def clusters_to_csv(clusters: List[Dict]) -> str:

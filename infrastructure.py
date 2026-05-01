@@ -1,44 +1,39 @@
 """
 Infrastructure POI store: vet centres, pharmacies, input shops, etc.
 
-Loaded from leaf_flask/data/infrastructure.csv. Schema (case-insensitive headers):
-  type, name, lat, long, district_name, block_name, gp_name, vill_name
-
-Supports CSV upload (replace) and a nearest-N-to-cluster-centroid query.
+Backed by Postgres (table `infrastructure`). CSV upload replaces the entire
+dataset; nearest-N queries compute haversine in-memory after a scoped fetch.
+Public function signatures are unchanged from the prior file-store version.
 """
 
-import math
-from pathlib import Path
-from threading import Lock
+from io import StringIO
 from typing import Dict, List, Optional
 
 import pandas as pd
+from psycopg2.extras import execute_values
 
 from clustering import haversine_km
-
-DATA_DIR = Path(__file__).parent / "data"
-INFRA_CSV = DATA_DIR / "infrastructure.csv"
+from db import get_cursor
 
 REQUIRED_COLS = ("type", "name", "lat", "long")
 OPTIONAL_COLS = ("district_name", "block_name", "gp_name", "vill_name")
 ALL_COLS = REQUIRED_COLS + OPTIONAL_COLS
 
-_lock = Lock()
 
-
-def _empty_df() -> pd.DataFrame:
-    return pd.DataFrame(columns=list(ALL_COLS))
-
-
-def load_infrastructure() -> pd.DataFrame:
-    if not INFRA_CSV.exists():
-        return _empty_df()
-    df = pd.read_csv(INFRA_CSV)
-    df.columns = [c.strip() for c in df.columns]
-    for col in OPTIONAL_COLS:
-        if col not in df.columns:
-            df[col] = None
-    return df
+def _row_to_dict(row: Dict, with_distance: Optional[float] = None) -> Dict:
+    out = {
+        "type": row["type"],
+        "name": row["name"],
+        "lat": float(row["lat"]),
+        "long": float(row["long"]),
+        "district_name": row.get("district_name"),
+        "block_name": row.get("block_name"),
+        "gp_name": row.get("gp_name"),
+        "vill_name": row.get("vill_name"),
+    }
+    if with_distance is not None:
+        out["distance_km"] = with_distance
+    return out
 
 
 def list_infrastructure(
@@ -46,21 +41,30 @@ def list_infrastructure(
     block: Optional[str] = None,
     district: Optional[str] = None,
 ) -> List[Dict]:
-    df = load_infrastructure()
-    if df.empty:
-        return []
+    where, params = [], []
     if type_:
-        df = df[df["type"].astype(str).str.lower() == type_.lower()]
+        where.append("LOWER(type) = LOWER(%s)")
+        params.append(type_)
     if block:
-        df = df[df["block_name"] == block]
+        where.append("block_name = %s")
+        params.append(block)
     if district:
-        df = df[df["district_name"] == district]
-    return df.where(df.notna(), None).to_dict(orient="records")
+        where.append("district_name = %s")
+        params.append(district)
+    sql = (
+        'SELECT type, name, lat, "long", district_name, block_name, gp_name, vill_name '
+        'FROM infrastructure'
+    )
+    if where:
+        sql += " WHERE " + " AND ".join(where)
+    sql += " ORDER BY type, name"
+    with get_cursor(commit=False) as cur:
+        cur.execute(sql, params)
+        return [_row_to_dict(r) for r in cur.fetchall()]
 
 
 def import_infrastructure_csv(csv_text: str) -> int:
     """Replace the entire infrastructure dataset. Returns row count."""
-    from io import StringIO
     df = pd.read_csv(StringIO(csv_text))
     df.columns = [c.strip() for c in df.columns]
     missing = [c for c in REQUIRED_COLS if c not in df.columns]
@@ -72,10 +76,28 @@ def import_infrastructure_csv(csv_text: str) -> int:
     df = df[list(ALL_COLS)]
     df["lat"] = df["lat"].astype(float)
     df["long"] = df["long"].astype(float)
-    with _lock:
-        INFRA_CSV.parent.mkdir(parents=True, exist_ok=True)
-        df.to_csv(INFRA_CSV, index=False)
-    return len(df)
+
+    rows = [
+        (
+            r["type"], r["name"], r["lat"], r["long"],
+            r["district_name"] if pd.notna(r["district_name"]) else None,
+            r["block_name"] if pd.notna(r["block_name"]) else None,
+            r["gp_name"] if pd.notna(r["gp_name"]) else None,
+            r["vill_name"] if pd.notna(r["vill_name"]) else None,
+        )
+        for _, r in df.iterrows()
+    ]
+
+    with get_cursor(commit=True) as cur:
+        cur.execute("DELETE FROM infrastructure")
+        if rows:
+            execute_values(
+                cur,
+                'INSERT INTO infrastructure '
+                '(type, name, lat, "long", district_name, block_name, gp_name, vill_name) VALUES %s',
+                rows,
+            )
+    return len(rows)
 
 
 def nearest_to_point(
@@ -85,20 +107,15 @@ def nearest_to_point(
     n: int = 5,
     max_km: Optional[float] = None,
 ) -> List[Dict]:
-    """Return up to `n` nearest POIs to (lat, lon), optionally filtered by type
-    and a maximum distance. Adds a `distance_km` field to each row."""
-    df = load_infrastructure()
-    if df.empty:
+    """Return up to `n` nearest POIs to (lat, lon). Distance computed in Python
+    after a type-filtered fetch. Acceptable for current dataset size; for very
+    large POI sets, switch to PostGIS or earthdistance."""
+    rows = list_infrastructure(type_=type_)
+    if not rows:
         return []
-    if type_:
-        df = df[df["type"].astype(str).str.lower() == type_.lower()]
-    if df.empty:
-        return []
-    df = df.copy()
-    df["distance_km"] = df.apply(
-        lambda r: haversine_km(lat, lon, float(r["lat"]), float(r["long"])), axis=1
-    )
+    for r in rows:
+        r["distance_km"] = haversine_km(lat, lon, r["lat"], r["long"])
     if max_km is not None:
-        df = df[df["distance_km"] <= float(max_km)]
-    df = df.sort_values("distance_km").head(int(n))
-    return df.where(df.notna(), None).to_dict(orient="records")
+        rows = [r for r in rows if r["distance_km"] <= float(max_km)]
+    rows.sort(key=lambda r: r["distance_km"])
+    return rows[: int(n)]

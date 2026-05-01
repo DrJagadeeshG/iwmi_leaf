@@ -5,6 +5,14 @@ Decision Support System for Agricultural Interventions
 
 import os
 import json
+
+# Load .env early so DATABASE_URL is available before any module imports it.
+try:
+    from dotenv import load_dotenv
+    load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
+except ImportError:
+    pass
+
 from flask import Flask, render_template, jsonify, request, Response, send_from_directory
 from flask_cors import CORS
 from flasgger import Swagger
