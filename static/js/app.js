@@ -80,10 +80,10 @@ function buildInfotip(opts = {}) {
     if (opts.group && opts.group !== 'Other') parts.push(`Group: ${opts.group}`);
     if (opts.data_min !== undefined && opts.data_max !== undefined) {
         const mean = opts.data_mean !== undefined ? ` | Avg: ${Number(opts.data_mean).toFixed(1)}` : '';
-        parts.push(`Range: ${Number(opts.data_min).toFixed(1)} – ${Number(opts.data_max).toFixed(1)}${mean}`);
+        parts.push(`Range: ${Number(opts.data_min).toFixed(1)} - ${Number(opts.data_max).toFixed(1)}${mean}`);
     }
     if (opts.range_min !== undefined && opts.range_max !== undefined) {
-        parts.push(`Filter: ${Number(opts.range_min).toFixed(1)} – ${Number(opts.range_max).toFixed(1)}`);
+        parts.push(`Filter: ${Number(opts.range_min).toFixed(1)} - ${Number(opts.range_max).toFixed(1)}`);
     }
     return parts.join('\n');
 }
@@ -374,7 +374,7 @@ async function loadDistrictBoundaries() {
                 opacity: 0.8,
                 dashArray: '6, 4',
             },
-            interactive: false,  // Don't capture mouse events — let block/GP layers handle clicks
+            interactive: false,  // Don't capture mouse events - let block/GP layers handle clicks
             pane: 'overlayPane',
         });
 
@@ -411,7 +411,7 @@ async function loadProtectedAreas() {
             interactive: true,
             pane: 'overlayPane',
         });
-        // Don't add to map — user toggles it via checkbox
+        // Don't add to map - user toggles it via checkbox
     } catch (err) {
         console.warn('Could not load protected areas:', err);
     }
@@ -849,7 +849,7 @@ async function handleDistrictChange() {
         if (state.map) setTimeout(() => state.map.invalidateSize(), 50);
     }
 
-    // Always start at block level — GP drill-down happens when a block is selected
+    // Always start at block level - GP drill-down happens when a block is selected
     state.currentLevel = 'block';
 
     // Hide GP dropdown initially (shown when a block is selected in GP-enabled district)
@@ -1855,7 +1855,7 @@ function getChoroplethColor(feature) {
 }
 
 /**
- * No-op stub — toggle icons are now inline in the filters table.
+ * No-op stub - toggle icons are now inline in the filters table.
  */
 function renderVariableToggles() {}
 
@@ -1922,7 +1922,7 @@ function updateChoroplethLegend(label, min, max) {
         return `
             <div class="legend-item">
                 <span class="legend-color" style="background: ${c.color};"></span>
-                <span>${lo}–${hi}</span>
+                <span>${lo}-${hi}</span>
             </div>
         `;
     }).join('');
@@ -2708,7 +2708,7 @@ function formatAIRecommendationWithCitations(text, sources) {
             continue;
         }
 
-        // Regular text — continuation of current item or standalone paragraph
+        // Regular text - continuation of current item or standalone paragraph
         if (inItem) {
             htmlParts.push(' ' + line);
         } else {
@@ -2941,7 +2941,7 @@ function handleBlockGPSelect() {
     const selectedGP = document.getElementById('block-gp-select').value;
 
     if (!selectedGP) {
-        // "Select GP" chosen — restore block-level metrics
+        // "Select GP" chosen - restore block-level metrics
         if (state.blockFeature) {
             renderBlockDetail(state.blockFeature);
             initBlockMiniMap(state.blockFeature);

@@ -810,6 +810,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../clustering-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Clustering Workflow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../deployment/" class="md-nav__link">
         
   
@@ -928,11 +951,11 @@
           <li class="md-nav__item">
   <a href="#option-1-render-current-setup-recommended-for-getting-started" class="md-nav__link">
     <span class="md-ellipsis">
-      Option 1: Render (Current Setup) — Recommended for Getting Started
+      Option 1: Render (Current Setup) - Recommended for Getting Started
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Option 1: Render (Current Setup) — Recommended for Getting Started">
+    <nav class="md-nav" aria-label="Option 1: Render (Current Setup) - Recommended for Getting Started">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1279,11 +1302,11 @@
           <li class="md-nav__item">
   <a href="#option-1-render-current-setup-recommended-for-getting-started" class="md-nav__link">
     <span class="md-ellipsis">
-      Option 1: Render (Current Setup) — Recommended for Getting Started
+      Option 1: Render (Current Setup) - Recommended for Getting Started
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Option 1: Render (Current Setup) — Recommended for Getting Started">
+    <nav class="md-nav" aria-label="Option 1: Render (Current Setup) - Recommended for Getting Started">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1559,10 +1582,10 @@
 
 
 <h1 id="hosting-handover-guide">Hosting &amp; Handover Guide<a class="headerlink" href="#hosting-handover-guide" title="Permanent link">&para;</a></h1>
-<p>This guide is for anyone who needs to host LEAF DSS independently — whether you're a government IT team, an NGO partner, a research institution, or a developer taking over the project. It covers what you need, your hosting options, estimated costs, and step-by-step instructions.</p>
+<p>This guide is for anyone who needs to host LEAF DSS independently - whether you're a government IT team, an NGO partner, a research institution, or a developer taking over the project. It covers what you need, your hosting options, estimated costs, and step-by-step instructions.</p>
 <hr />
 <h2 id="what-youre-hosting">What You're Hosting<a class="headerlink" href="#what-youre-hosting" title="Permanent link">&para;</a></h2>
-<p>LEAF DSS is a <strong>single Python web application</strong> that serves both the interactive map UI and the REST API. There is no separate frontend deployment — everything runs from one process.</p>
+<p>LEAF DSS is a <strong>single Python web application</strong> that serves both the interactive map UI and the REST API. There is no separate frontend deployment - everything runs from one process.</p>
 <h3 id="system-requirements">System Requirements<a class="headerlink" href="#system-requirements" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -1581,7 +1604,7 @@
 <tr>
 <td><strong>RAM</strong></td>
 <td>512 MB</td>
-<td>1–2 GB</td>
+<td>1-2 GB</td>
 </tr>
 <tr>
 <td><strong>Disk</strong></td>
@@ -1600,7 +1623,7 @@
 </tr>
 </tbody>
 </table>
-<p>RAM is the main constraint — the app loads shapefiles into memory (~10–15 MB cached). With the AI/RAG feature enabled, RAM usage increases to ~500 MB due to ChromaDB and embeddings.</p>
+<p>RAM is the main constraint - the app loads shapefiles into memory (~10-15 MB cached). With the AI/RAG feature enabled, RAM usage increases to ~500 MB due to ChromaDB and embeddings.</p>
 <h3 id="whats-included">What's Included<a class="headerlink" href="#whats-included" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -1640,7 +1663,7 @@
 </table>
 <hr />
 <h2 id="hosting-options-costs">Hosting Options &amp; Costs<a class="headerlink" href="#hosting-options-costs" title="Permanent link">&para;</a></h2>
-<h3 id="option-1-render-current-setup-recommended-for-getting-started">Option 1: Render (Current Setup) — Recommended for Getting Started<a class="headerlink" href="#option-1-render-current-setup-recommended-for-getting-started" title="Permanent link">&para;</a></h3>
+<h3 id="option-1-render-current-setup-recommended-for-getting-started">Option 1: Render (Current Setup) - Recommended for Getting Started<a class="headerlink" href="#option-1-render-current-setup-recommended-for-getting-started" title="Permanent link">&para;</a></h3>
 <p><a href="https://render.com">Render</a> is a managed platform that auto-deploys from GitHub.</p>
 <table>
 <thead>
@@ -1722,7 +1745,7 @@
 <tr>
 <td><strong>EC2 t3.small</strong></td>
 <td>~$15/month</td>
-<td>2 vCPU, 2 GB RAM — recommended</td>
+<td>2 vCPU, 2 GB RAM - recommended</td>
 </tr>
 <tr>
 <td><strong>Elastic Beanstalk</strong></td>
@@ -1731,7 +1754,7 @@
 </tr>
 <tr>
 <td><strong>ECS Fargate</strong></td>
-<td>~$15–30/month</td>
+<td>~$15-30/month</td>
 <td>Serverless containers, no EC2 management</td>
 </tr>
 <tr>
@@ -1746,7 +1769,7 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Total estimate:</strong> $15–50/month for a basic production setup.</p>
+<p><strong>Total estimate:</strong> $15-50/month for a basic production setup.</p>
 <h4 id="quick-ec2-setup">Quick EC2 Setup<a class="headerlink" href="#quick-ec2-setup" title="Permanent link">&para;</a></h4>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="c1"># On a fresh Ubuntu 22.04 EC2 instance</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>sudo<span class="w"> </span>apt<span class="w"> </span>update<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>sudo<span class="w"> </span>apt<span class="w"> </span>install<span class="w"> </span>-y<span class="w"> </span>python3-pip<span class="w"> </span>python3-venv<span class="w"> </span>nginx
@@ -1782,7 +1805,7 @@
 <tbody>
 <tr>
 <td><strong>Cloud Run</strong></td>
-<td>~$5–15/month</td>
+<td>~$5-15/month</td>
 <td>Serverless containers, pay per request, auto-scaling</td>
 </tr>
 <tr>
@@ -1792,7 +1815,7 @@
 </tr>
 <tr>
 <td><strong>App Engine (Standard)</strong></td>
-<td>~$0–25/month</td>
+<td>~$0-25/month</td>
 <td>Managed platform, auto-scales to zero</td>
 </tr>
 </tbody>
@@ -1835,7 +1858,7 @@
 </tr>
 <tr>
 <td><strong>Container Instances</strong></td>
-<td>~$10–20/month</td>
+<td>~$10-20/month</td>
 <td>Serverless containers</td>
 </tr>
 </tbody>
@@ -1869,7 +1892,7 @@
 <td><strong>Hetzner</strong></td>
 <td>CX22</td>
 <td>€4/month (~$4.50)</td>
-<td>2 vCPU, 4 GB RAM, 40 GB — best value</td>
+<td>2 vCPU, 4 GB RAM, 40 GB - best value</td>
 </tr>
 <tr>
 <td><strong>DigitalOcean App Platform</strong></td>
@@ -1930,18 +1953,18 @@
 </tr>
 <tr>
 <td><strong>Small production</strong></td>
-<td>$5–15/month</td>
+<td>$5-15/month</td>
 <td>Low traffic, internal use</td>
 </tr>
 <tr>
 <td><strong>Standard production</strong></td>
-<td>$15–30/month</td>
+<td>$15-30/month</td>
 <td>Public-facing, reliable uptime</td>
 </tr>
 <tr>
 <td><strong>With AI features</strong></td>
-<td>$30–50/month</td>
-<td>Includes OpenAI API usage (~$5–20/month extra)</td>
+<td>$30-50/month</td>
+<td>Includes OpenAI API usage (~$5-20/month extra)</td>
 </tr>
 <tr>
 <td><strong>On-premises</strong></td>
@@ -1952,7 +1975,7 @@
 </table>
 <div class="admonition note">
 <p class="admonition-title">OpenAI API Costs</p>
-<p>The AI recommendation feature calls the OpenAI API per request. Typical cost is $0.01–0.05 per recommendation. With 100 recommendations/month, expect ~$1–5/month in API fees on top of hosting costs. You can also use a self-hosted LLM to avoid this cost entirely.</p>
+<p>The AI recommendation feature calls the OpenAI API per request. Typical cost is $0.01-0.05 per recommendation. With 100 recommendations/month, expect ~$1-5/month in API fees on top of hosting costs. You can also use a self-hosted LLM to avoid this cost entirely.</p>
 </div>
 <hr />
 <h2 id="handover-checklist">Handover Checklist<a class="headerlink" href="#handover-checklist" title="Permanent link">&para;</a></h2>
@@ -1965,7 +1988,7 @@
 <h3 id="2-data-files">2. Data Files<a class="headerlink" href="#2-data-files" title="Permanent link">&para;</a></h3>
 <p>These are NOT in Git (too large). Transfer them separately:</p>
 <ul>
-<li>[ ] <code>leaf_flask/data/4DSS_VAR_2.0.*</code> (block shapefile — .shp, .dbf, .shx, .prj, .qmd)</li>
+<li>[ ] <code>leaf_flask/data/4DSS_VAR_2.0.*</code> (block shapefile - .shp, .dbf, .shx, .prj, .qmd)</li>
 <li>[ ] <code>leaf_flask/data/Block_assam.*</code> (district mapping shapefile)</li>
 <li>[ ] <code>leaf_flask/data/grampanchayat.*</code> (GP shapefile)</li>
 <li>[ ] <code>leaf_flask/data/districts.geojson</code></li>
@@ -1978,8 +2001,8 @@
 </ul>
 <h3 id="3-environment-variables">3. Environment Variables<a class="headerlink" href="#3-environment-variables" title="Permanent link">&para;</a></h3>
 <ul>
-<li>[ ] <code>SECRET_KEY</code> — any random string for Flask sessions</li>
-<li>[ ] <code>OPENAI_API_KEY</code> — only if using AI recommendation feature</li>
+<li>[ ] <code>SECRET_KEY</code> - any random string for Flask sessions</li>
+<li>[ ] <code>OPENAI_API_KEY</code> - only if using AI recommendation feature</li>
 </ul>
 <h3 id="4-documentation">4. Documentation<a class="headerlink" href="#4-documentation" title="Permanent link">&para;</a></h3>
 <ul>
@@ -2091,7 +2114,7 @@
 <h3 id="updating-data">Updating Data<a class="headerlink" href="#updating-data" title="Permanent link">&para;</a></h3>
 <ol>
 <li>Replace the relevant files in <code>leaf_flask/data/</code></li>
-<li>Restart the service — the LRU cache clears on restart</li>
+<li>Restart the service - the LRU cache clears on restart</li>
 <li>No code changes needed</li>
 </ol>
 <h3 id="adding-a-new-districts-gp-data">Adding a New District's GP Data<a class="headerlink" href="#adding-a-new-districts-gp-data" title="Permanent link">&para;</a></h3>

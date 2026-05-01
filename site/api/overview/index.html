@@ -1010,6 +1010,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guide/clustering-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Clustering Workflow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guide/deployment/" class="md-nav__link">
         
   
@@ -1263,7 +1286,7 @@
 </code></pre></div>
 <hr />
 <h2 id="authentication">Authentication<a class="headerlink" href="#authentication" title="Permanent link">&para;</a></h2>
-<p>The API is <strong>open and unauthenticated</strong> — no API keys or tokens are required. All endpoints are publicly accessible. The only exception is the AI recommendation endpoint, which requires an <code>OPENAI_API_KEY</code> to be set on the server side (not passed by the client).</p>
+<p>The API is <strong>open and unauthenticated</strong> - no API keys or tokens are required. All endpoints are publicly accessible. The only exception is the AI recommendation endpoint, which requires an <code>OPENAI_API_KEY</code> to be set on the server side (not passed by the client).</p>
 <hr />
 <h2 id="response-format">Response Format<a class="headerlink" href="#response-format" title="Permanent link">&para;</a></h2>
 <p>All endpoints return <strong>JSON</strong> (<code>Content-Type: application/json</code>) except the CSV export endpoint which returns <code>text/csv</code>.</p>
@@ -1437,7 +1460,7 @@
 <td><code>weight</code></td>
 <td>number</td>
 <td>No</td>
-<td>Importance weight (0–1), default <code>1.0</code></td>
+<td>Importance weight (0-1), default <code>1.0</code></td>
 </tr>
 </tbody>
 </table>
@@ -1455,12 +1478,12 @@
 <tr>
 <td><code>AND</code> (default)</td>
 <td>Block must meet <strong>all</strong> criteria to score highly</td>
-<td>Strict screening — only blocks meeting every requirement</td>
+<td>Strict screening - only blocks meeting every requirement</td>
 </tr>
 <tr>
 <td><code>OR</code></td>
 <td>Block scores based on <strong>any</strong> criteria met</td>
-<td>Lenient screening — blocks meeting at least one requirement</td>
+<td>Lenient screening - blocks meeting at least one requirement</td>
 </tr>
 </tbody>
 </table>
@@ -1498,7 +1521,7 @@
 </table>
 <hr />
 <h2 id="rate-limiting">Rate Limiting<a class="headerlink" href="#rate-limiting" title="Permanent link">&para;</a></h2>
-<p>There are <strong>no rate limits</strong> on the API. However, some endpoints (particularly <code>GET /api/blocks</code> and <code>POST /api/calculate-feasibility</code>) return large GeoJSON payloads (1–5 MB). Consider caching responses client-side when building frontend applications.</p>
+<p>There are <strong>no rate limits</strong> on the API. However, some endpoints (particularly <code>GET /api/blocks</code> and <code>POST /api/calculate-feasibility</code>) return large GeoJSON payloads (1-5 MB). Consider caching responses client-side when building frontend applications.</p>
 <hr />
 <h2 id="interactive-docs">Interactive Docs<a class="headerlink" href="#interactive-docs" title="Permanent link">&para;</a></h2>
 <p>Two documentation interfaces are available:</p>
@@ -1514,7 +1537,7 @@
 <tr>
 <td><strong>Swagger UI</strong></td>
 <td><a href="https://iwmi-leaf.onrender.com/docs"><code>/docs</code></a></td>
-<td>Interactive API explorer — try endpoints live with "Try it out"</td>
+<td>Interactive API explorer - try endpoints live with "Try it out"</td>
 </tr>
 <tr>
 <td><strong>MkDocs</strong></td>

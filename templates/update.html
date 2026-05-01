@@ -435,10 +435,10 @@
                     </dd>
 
                     <dt>Rows / Cols</dt>
-                    <dd><span id="info-rows">—</span> rows, <span id="info-cols">—</span> columns</dd>
+                    <dd><span id="info-rows">-</span> rows, <span id="info-cols">-</span> columns</dd>
 
                     <dt>Cache Age</dt>
-                    <dd id="info-age">—</dd>
+                    <dd id="info-age">-</dd>
                 </dl>
 
                 <div class="btn-group" style="margin-top: 1.25rem;">
@@ -457,7 +457,7 @@
                 <div class="card-title" style="margin-bottom: 0.5rem;">
                     <i class="bi bi-pencil-square"></i> Column Reference
                 </div>
-                <p style="color:#666; font-size:0.85rem; margin-bottom:1rem;"><strong>Left side</strong> (A–H) = interventions. <strong>Right side</strong> (I–N) = variable catalog.</p>
+                <p style="color:#666; font-size:0.85rem; margin-bottom:1rem;"><strong>Left side</strong> (A-H) = interventions. <strong>Right side</strong> (I-N) = variable catalog.</p>
 
                 <div class="tab-bar">
                     <button class="tab-btn active" onclick="switchTab('interventions')">Interventions</button>
@@ -470,7 +470,7 @@
                         <tbody>
                             <tr>
                                 <td><code>Cluster</code></td>
-                                <td>Intervention name — each unique value becomes a dropdown option</td>
+                                <td>Intervention name - each unique value becomes a dropdown option</td>
                                 <td>Repeat same name for all rows of that intervention<span class="example-val">e.g. Organic Farming</span></td>
                             </tr>
                             <tr>
@@ -496,7 +496,7 @@
                             <tr>
                                 <td><code>I_weight</code></td>
                                 <td>Importance weight</td>
-                                <td>Number, typically 1<span class="example-val">Use 2–3 for critical variables</span></td>
+                                <td>Number, typically 1<span class="example-val">Use 2-3 for critical variables</span></td>
                             </tr>
                             <tr>
                                 <td><code>I_label</code></td>
@@ -512,7 +512,7 @@
                     </table>
 
                     <div class="tip">
-                        <strong>Add intervention:</strong> New rows at bottom with a new <code>Cluster</code> name — it auto-appears in the dashboard.
+                        <strong>Add intervention:</strong> New rows at bottom with a new <code>Cluster</code> name - it auto-appears in the dashboard.
                     </div>
                     <div class="tip">
                         <strong>Remove intervention:</strong> Delete all rows with that Cluster name.
@@ -557,7 +557,7 @@
                     </table>
 
                     <div class="warning">
-                        <strong>Do not</strong> change existing variable codes — only edit labels, descriptions, groups.
+                        <strong>Do not</strong> change existing variable codes - only edit labels, descriptions, groups.
                     </div>
                 </div>
             </div>
@@ -588,10 +588,10 @@
                     </dd>
 
                     <dt>Rows / Cols</dt>
-                    <dd><span id="info-rows-blocks">—</span> rows, <span id="info-cols-blocks">—</span> columns</dd>
+                    <dd><span id="info-rows-blocks">-</span> rows, <span id="info-cols-blocks">-</span> columns</dd>
 
                     <dt>Cache Age</dt>
-                    <dd id="info-age-blocks">—</dd>
+                    <dd id="info-age-blocks">-</dd>
                 </dl>
 
                 <div class="btn-group" style="margin-top: 1.25rem;">
@@ -654,7 +654,7 @@
                 </table>
 
                 <div class="tip" style="margin-top:1rem;">
-                    <strong>Safe columns to edit:</strong> Column F onwards (variable values). Never touch columns A–E (BLOCK_ID, STATE_ID, DISTRICT_I, id, Block_name).
+                    <strong>Safe columns to edit:</strong> Column F onwards (variable values). Never touch columns A-E (BLOCK_ID, STATE_ID, DISTRICT_I, id, Block_name).
                 </div>
                 <div class="tip" style="background:#fef9c3; border-left-color:#eab308;">
                     <strong>Backup first:</strong> File > Download > CSV before bulk edits.
@@ -786,10 +786,10 @@
                     showToast('Data refreshed successfully from Google Sheets!', 'success');
                     updateStatusUI(data.status);
                 } else {
-                    showToast('Refresh failed — using cached data. Check that the sheet is published.', 'error');
+                    showToast('Refresh failed - using cached data. Check that the sheet is published.', 'error');
                 }
             } catch (e) {
-                showToast('Network error — could not reach the server.', 'error');
+                showToast('Network error - could not reach the server.', 'error');
             }
 
             btn.disabled = false;

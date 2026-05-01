@@ -365,7 +365,7 @@ def load_gp_block_mapping():
     filtering, GPs with names that coincidentally match entries in other
     districts (e.g. AMBIKAPUR->Silchar, KAKOJAN->Jorhat Central) would
     be assigned incorrect block names. Tinsukia_GP_data.xlsx also has
-    ~11 GP spelling mismatches vs Block_GPs.xlsx — those remain unmapped
+    ~11 GP spelling mismatches vs Block_GPs.xlsx - those remain unmapped
     until the source data is corrected.
     """
     excel_path = DATA_DIR / "Block_GPs.xlsx"
@@ -425,7 +425,7 @@ def load_gp_data():
     # Strip whitespace from column names
     df.columns = [str(col).strip() for col in df.columns]
 
-    # Row 0 is labels, drop it — actual GP data starts from row 1
+    # Row 0 is labels, drop it - actual GP data starts from row 1
     df = df.iloc[1:].reset_index(drop=True)
 
     # Rename unnamed first column to GP_NAME

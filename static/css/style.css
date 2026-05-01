@@ -2517,3 +2517,483 @@ body {
         width: 100px;
     }
 }
+
+/* =========================================================================
+   Cluster Planning Modal
+   ========================================================================= */
+.cluster-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 30, 45, 0.55);
+    z-index: 9000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.cluster-modal-inner {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: min(1400px, 100%);
+    height: min(900px, 100%);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.cluster-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    background: linear-gradient(90deg, #28537D, #5088C6);
+    color: #fff;
+}
+
+.cluster-modal-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.cluster-modal-block {
+    padding: 2px 10px;
+    background: rgba(255, 255, 255, 0.18);
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+}
+
+.cluster-modal-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.cluster-modal-controls select {
+    padding: 6px 10px;
+    border-radius: 4px;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    background: #fff;
+    color: #28537D;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.cluster-modal-close {
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.cluster-modal-close:hover { background: rgba(255, 255, 255, 0.32); }
+
+.cluster-modal-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 18px;
+    background: #f5f7f9;
+    border-bottom: 1px solid #e3e7eb;
+    font-size: 13px;
+    color: #555;
+}
+
+.cluster-modal-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.cluster-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 5px 10px;
+    background: #fff;
+    border: 1px solid #cfd6dc;
+    color: #28537D;
+    border-radius: 4px;
+    font-size: 12px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s;
+}
+.cluster-action-btn:hover { background: #eef3f8; }
+.cluster-action-btn[disabled],
+.cluster-action-btn.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.cluster-modal-map {
+    flex: 1;
+    width: 100%;
+    background: #eaf0f4;
+}
+
+#open-cluster-planner {
+    display: none;
+    align-items: center;
+    gap: 6px;
+}
+#open-cluster-planner:hover { background: #1f4467 !important; }
+
+/* Cluster legend strip */
+.cluster-modal-toolbar-left {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: wrap;
+}
+.cluster-legend {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #666;
+}
+.cluster-legend .legend-divider { color: #ccc; }
+.legend-swatch {
+    display: inline-block;
+    width: 16px;
+    height: 12px;
+    border-radius: 3px;
+    border: 1px solid #aaa;
+}
+.legend-swatch-multi {
+    background: linear-gradient(90deg, #E86933 0 33%, #22AD7A 33% 66%, #5088C6 66% 100%);
+}
+.legend-marker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    font-size: 9px;
+    font-weight: 700;
+    line-height: 1;
+    /* Visual indicator only, not interactive - make that clear to the user. */
+    cursor: default;
+}
+.legend-marker-proposed {
+    background: #fff;
+    border: 2px solid #999;
+}
+.legend-marker-finalised {
+    background: #22AD7A;
+    color: #fff;
+    border: 2px solid #1a8a5e;
+}
+/* Centroid status marker on the map - visual indicator only.
+   pointer-events: none lets clicks fall through to the cluster polygon
+   underneath so the popup opens on the polygon, not on the icon div. */
+.cluster-status-marker {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
+}
+.cluster-status-marker.finalised {
+    color: #22AD7A;
+    /* Soft white halo so the ✓ stays readable over any polygon colour. */
+    text-shadow:
+        0 0 3px rgba(255,255,255,0.95),
+        0 0 6px rgba(255,255,255,0.85),
+        0 1px 1px rgba(0,0,0,0.25);
+}
+
+/* Cluster planner - page mode (no dark backdrop, full viewport) */
+.cluster-modal.cluster-modal--page {
+    position: static;
+    inset: auto;
+    background: transparent;
+    padding: 0;
+    width: 100vw;
+    height: 100vh;
+    align-items: stretch;
+    justify-content: stretch;
+}
+.cluster-modal.cluster-modal--page .cluster-modal-inner {
+    width: 100%;
+    height: 100%;
+    border-radius: 0;
+    box-shadow: none;
+}
+/* Back arrow inside the cluster modal header (page mode). Lives in-flow
+   at the start of the title so it doesn't overlap the rest of the toolbar. */
+.cluster-back-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+    text-decoration: none;
+    margin-right: 4px;
+    transition: background 0.15s;
+}
+.cluster-back-link:hover { background: rgba(255,255,255,0.32); }
+
+/* Top-level help button - uses cluster-modal-close shape but blue */
+#open-workflow-help {
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+}
+#open-workflow-help:hover { background: rgba(255,255,255,0.32); }
+
+/* Workflow help overlay (full-modal pop-over) */
+.workflow-help-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(15,30,45,0.6);
+    /* Above Leaflet's panes (max ~700) and the cluster modal (z-index 9000). */
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 30px;
+}
+.workflow-help-panel {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+    max-width: 720px;
+    width: 100%;
+    max-height: 90%;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+.workflow-help-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 18px;
+    background: #28537D;
+    color: #fff;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+.workflow-help-header button {
+    background: rgba(255,255,255,0.18);
+    color: #fff;
+    border: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    font-size: 18px;
+    cursor: pointer;
+    line-height: 1;
+}
+.workflow-help-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 12px 18px 0 18px;
+}
+.workflow-help-tabs button {
+    padding: 4px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    border: 1px solid #5088C6;
+    border-radius: 4px;
+    background: #fff;
+    color: #28537D;
+}
+.workflow-help-tabs button.active {
+    background: #5088C6;
+    color: #fff;
+}
+.workflow-help-body {
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #333;
+    line-height: 1.6;
+}
+.workflow-help-body h4 {
+    color: #28537D;
+    font-size: 13px;
+    margin: 12px 0 4px 0;
+}
+.workflow-help-body ol {
+    margin: 4px 0 0 18px;
+    padding: 0;
+}
+.workflow-help-body li { margin-bottom: 5px; }
+.workflow-help-caveat {
+    margin: 0 18px 14px 18px;
+    padding: 8px 10px;
+    background: #fff7e6;
+    border: 1px solid #ffd591;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #614500;
+}
+
+/* Keep Leaflet panes/popups well under the workflow help overlay (z-index: 10000)
+   while still above other map content. */
+.cluster-modal .leaflet-pane,
+.cluster-modal .leaflet-top,
+.cluster-modal .leaflet-bottom {
+    z-index: 400;
+}
+.cluster-modal .leaflet-tooltip-pane { z-index: 650; }
+.cluster-modal .leaflet-popup-pane,
+.cluster-modal .leaflet-popup,
+.cluster-modal .leaflet-tooltip {
+    z-index: 700;
+}
+/* Ensure popup content sits above the marker icons (which Leaflet places in
+   the marker pane around z-index 600). */
+.cluster-modal .leaflet-marker-pane { z-index: 600; }
+
+/* ---- Loaders ---- */
+.cluster-spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(40, 83, 125, 0.25);
+    border-top-color: #28537D;
+    border-radius: 50%;
+    animation: cluster-spin 0.7s linear infinite;
+    vertical-align: middle;
+    margin-right: 5px;
+}
+@keyframes cluster-spin {
+    to { transform: rotate(360deg); }
+}
+.cluster-status-msg {
+    font-size: 12px;
+    color: #28537D;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.cluster-action-btn[disabled] {
+    opacity: 0.55;
+    cursor: wait;
+    pointer-events: none;
+}
+/* Make hover tooltips appear over the toolbar / legend / help button. */
+.cluster-modal .leaflet-tooltip-pane,
+.cluster-modal .leaflet-tooltip {
+    z-index: 9500 !important;
+}
+
+/* ---- Instant tooltips ----
+   Browser-default `title` attributes wait ~1s before showing. These show on
+   the first hover frame. Apply via `data-tooltip="…"` on any element. */
+[data-tooltip] {
+    position: relative;
+}
+[data-tooltip]:hover::after,
+[data-tooltip]:focus-visible::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(15, 30, 45, 0.92);
+    color: #fff;
+    padding: 5px 9px;
+    border-radius: 4px;
+    font-size: 11px;
+    line-height: 1.35;
+    font-weight: 500;
+    white-space: nowrap;
+    max-width: 320px;
+    z-index: 99999;
+    pointer-events: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+    /* Allow long copy to wrap by overriding nowrap when needed via class. */
+}
+[data-tooltip][data-tooltip-wrap]:hover::after {
+    white-space: normal;
+    width: max-content;
+    max-width: 260px;
+    text-align: center;
+}
+[data-tooltip]:hover::before,
+[data-tooltip]:focus-visible::before {
+    content: "";
+    position: absolute;
+    bottom: calc(100% + 1px);
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: rgba(15, 30, 45, 0.92);
+    z-index: 99999;
+    pointer-events: none;
+}
+/* When the element is anchored at the bottom edge, flip the tooltip below. */
+[data-tooltip][data-tooltip-below]:hover::after {
+    bottom: auto;
+    top: calc(100% + 6px);
+}
+[data-tooltip][data-tooltip-below]:hover::before {
+    bottom: auto;
+    top: calc(100% + 1px);
+    border-top-color: transparent;
+    border-bottom-color: rgba(15, 30, 45, 0.92);
+}
+
+/* Full-modal loading overlay used during heavyweight operations
+   (initial mount, block switch, regenerate, upload). */
+.cluster-page-loader {
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(2px);
+    z-index: 9500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.cluster-page-loader-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    padding: 24px 32px;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+    color: #28537D;
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 220px;
+}
+.cluster-page-spinner {
+    width: 36px;
+    height: 36px;
+    border: 4px solid rgba(40, 83, 125, 0.18);
+    border-top-color: #28537D;
+    border-radius: 50%;
+    animation: cluster-spin 0.7s linear infinite;
+}

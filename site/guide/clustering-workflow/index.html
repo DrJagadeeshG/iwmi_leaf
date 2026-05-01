@@ -1,0 +1,1732 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Decision Support System for Agricultural Interventions in Assam, India">
+      
+      
+      
+        <link rel="canonical" href="https://iwmi-leaf.onrender.com/documentation/guide/clustering-workflow/">
+      
+      
+        <link rel="prev" href="../architecture/">
+      
+      
+        <link rel="next" href="../deployment/">
+      
+      
+      <link rel="icon" href="../../assets/iwmi_logo.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.6.20">
+    
+    
+      
+        <title>Clustering Workflow - LEAF DSS</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.e53b48f4.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.06af60db.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:300,300i,400,400i,700,700i%7CJetBrains+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Inter";--md-code-font:"JetBrains Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="light-green">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#clustering-workflow" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="LEAF DSS" class="md-header__button md-logo" aria-label="LEAF DSS" data-md-component="logo">
+      
+  <img src="../../assets/iwmi_logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            LEAF DSS
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Clustering Workflow
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="green" data-md-color-accent="light-green"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="green" data-md-color-accent="light-green"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../../quickstart/" class="md-tabs__link">
+        
+  
+  
+    
+  
+  Getting Started
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../api/overview/" class="md-tabs__link">
+          
+  
+  
+  API Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../architecture/" class="md-tabs__link">
+          
+  
+  
+  Guides
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="LEAF DSS" class="md-nav__button md-logo" aria-label="LEAF DSS" data-md-component="logo">
+      
+  <img src="../../assets/iwmi_logo.png" alt="logo">
+
+    </a>
+    LEAF DSS
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Home
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Getting Started
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    API Reference
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            API Reference
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/overview/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Overview
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/blocks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Blocks
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/locations/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Locations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/gps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Gram Panchayats
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/villages/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Villages
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/clusters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Clusters
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/infrastructure/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Infrastructure
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/production-tool/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Production Tool
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/interventions/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Interventions
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/variables/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Variables
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/feasibility/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Feasibility
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/ai/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    AI Recommendations
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/export/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Export
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../api/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Config & Health
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    Guides
+    
+  </span>
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            Guides
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Architecture
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    Clustering Workflow
+    
+  </span>
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    Clustering Workflow
+    
+  </span>
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-big-picture" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. The big picture
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-input-village-level-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Input: village-level points
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-map-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Map levels
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-clustering-what-the-algorithm-does" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Clustering - what the algorithm does
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-edit-cycle-csv-download-edit-re-upload" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Edit cycle (CSV download → edit → re-upload)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-cluster-report-card" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Cluster report card
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-infrastructure-overlay" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Infrastructure overlay
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-finalisation-and-the-production-tool-handshake" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Finalisation and the production-tool handshake
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-user-interface-cluster-planning-workspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. User interface - Cluster Planning workspace
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. User interface - Cluster Planning workspace">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#urls" class="md-nav__link">
+    <span class="md-ellipsis">
+      URLs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-you-see" class="md-nav__link">
+    <span class="md-ellipsis">
+      What you see
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multilingual-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multilingual help
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loaders" class="md-nav__link">
+    <span class="md-ellipsis">
+      Loaders
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-persistence-and-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      10. Persistence and deployment
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-configurable-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      11. Configurable parameters
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-whats-not-yet-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      12. What's not yet implemented
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-reference-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      13. Reference implementation
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../deployment/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Deployment
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hosting/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Hosting & Handover
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#1-the-big-picture" class="md-nav__link">
+    <span class="md-ellipsis">
+      1. The big picture
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-input-village-level-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      2. Input: village-level points
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-map-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      3. Map levels
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-clustering-what-the-algorithm-does" class="md-nav__link">
+    <span class="md-ellipsis">
+      4. Clustering - what the algorithm does
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-edit-cycle-csv-download-edit-re-upload" class="md-nav__link">
+    <span class="md-ellipsis">
+      5. Edit cycle (CSV download → edit → re-upload)
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-cluster-report-card" class="md-nav__link">
+    <span class="md-ellipsis">
+      6. Cluster report card
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-infrastructure-overlay" class="md-nav__link">
+    <span class="md-ellipsis">
+      7. Infrastructure overlay
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-finalisation-and-the-production-tool-handshake" class="md-nav__link">
+    <span class="md-ellipsis">
+      8. Finalisation and the production-tool handshake
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-user-interface-cluster-planning-workspace" class="md-nav__link">
+    <span class="md-ellipsis">
+      9. User interface - Cluster Planning workspace
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. User interface - Cluster Planning workspace">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#urls" class="md-nav__link">
+    <span class="md-ellipsis">
+      URLs
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-you-see" class="md-nav__link">
+    <span class="md-ellipsis">
+      What you see
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#multilingual-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      Multilingual help
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#loaders" class="md-nav__link">
+    <span class="md-ellipsis">
+      Loaders
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-persistence-and-deployment" class="md-nav__link">
+    <span class="md-ellipsis">
+      10. Persistence and deployment
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#11-configurable-parameters" class="md-nav__link">
+    <span class="md-ellipsis">
+      11. Configurable parameters
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#12-whats-not-yet-implemented" class="md-nav__link">
+    <span class="md-ellipsis">
+      12. What's not yet implemented
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#13-reference-implementation" class="md-nav__link">
+    <span class="md-ellipsis">
+      13. Reference implementation
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="clustering-workflow">Clustering Workflow<a class="headerlink" href="#clustering-workflow" title="Permanent link">&para;</a></h1>
+<p>How the LEAF DSS clustering pipeline works end-to-end - from ODK village survey to a finalised cluster consumed by the external production tool. Use this guide as the orientation document for new contributors and for partner handovers.</p>
+<p>The workflow was designed in the IWMI requirements call on 2026-04-23 (with Faiz Alam) and the <em>LEAF DSS Clustering Workflow</em> deck. This guide reflects what the API actually implements; the API reference pages document each individual endpoint.</p>
+<hr />
+<h2 id="1-the-big-picture">1. The big picture<a class="headerlink" href="#1-the-big-picture" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>                                 +-----------------------------------+
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>ODK / MMUA seed data  ─────►     |  Postgres (Supabase)              |
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>(villages.csv)                   |    villages.csv source-of-truth   |
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>        │                        |    clusters table                 |
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>        │  cluster_block_*()     |    cluster_villages table         |
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>        ▼                        |    infrastructure table           |
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  Greedy seed-and-grow  ─────►   +-----------------------------------+
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>  (clustering.py)                            │
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>                                             │  CSV download/upload
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>                                             │  edit cycle
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>                                             ▼
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>                          Block coordinator / IWMI reviewer
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>                                             │
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>                                             │  finalize
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>                                             ▼
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>                            Outbound feed (production-tool API)
+<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>                                             │
+<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>                                             ▼
+<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>                              External production tool
+<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a>                                  (auth, per-cluster login,
+<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>                                   pashu-sakhi dashboards)
+<a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>                                             │
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>                                             │  POST aggregated metrics
+<a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a>                                             ▼
+<a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>                          /api/production-tool/dashboard/&lt;id&gt;
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a>                                             │
+<a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>                                             ▼
+<a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>                            Cluster report card on LEAF DSS UI
+</code></pre></div>
+<hr />
+<h2 id="2-input-village-level-points">2. Input: village-level points<a class="headerlink" href="#2-input-village-level-points" title="Permanent link">&para;</a></h2>
+<p>Two sources, same shape:</p>
+<table>
+<thead>
+<tr>
+<th>Source</th>
+<th>When</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>MMUA <code>Random_pointshapefile</code> sheet</strong></td>
+<td>Pilot bootstrap</td>
+<td>275 villages in KHOWANG block, Dibrugarh - currently active.</td>
+</tr>
+<tr>
+<td><strong>ODK village survey</strong></td>
+<td>Production</td>
+<td>Replaces the pilot once collection finishes. Same columns, no API change needed.</td>
+</tr>
+</tbody>
+</table>
+<p>Required columns: <code>district_name, block_name, gp_name, vill_name, lat, long, Dairy, Goatery, Piggery, Backyard_Poultry, Duckery, Fishery_Activity</code>.</p>
+<p>Each village is a single GPS point (no polygon shapefile needed - design principle from the deck). Member counts are how many SHG members in that village expressed interest in each commodity.</p>
+<p>Available via <a href="../../api/villages/"><code>GET /api/villages</code></a>, <a href="../../api/villages/#villages-as-geojson"><code>GET /api/villages/geojson</code></a>, <a href="../../api/villages/#aggregated-counts"><code>GET /api/villages/aggregate</code></a>.</p>
+<hr />
+<h2 id="3-map-levels">3. Map levels<a class="headerlink" href="#3-map-levels" title="Permanent link">&para;</a></h2>
+<p>The hierarchical map view in the dashboard switches representation as the user drills in. Showing 25k points at state scale would be unreadable, so:</p>
+<table>
+<thead>
+<tr>
+<th>Zoom</th>
+<th>Endpoint</th>
+<th>What you see</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>State (Assam)</strong></td>
+<td><code>GET /api/villages/aggregate?level=district</code></td>
+<td>One choropleth per district (member sums, village count).</td>
+</tr>
+<tr>
+<td><strong>District</strong></td>
+<td><code>GET /api/villages/aggregate?level=block&amp;district=&lt;X&gt;</code></td>
+<td>One choropleth per block.</td>
+</tr>
+<tr>
+<td><strong>Block</strong></td>
+<td><code>GET /api/villages/geojson?block=&lt;X&gt;</code> + <code>GET /api/clusters?block=&lt;X&gt;&amp;commodity=&lt;Y&gt;</code></td>
+<td>Village points + commodity-filtered cluster overlays.</td>
+</tr>
+</tbody>
+</table>
+<p>The block scale is where the real work happens: village dots, optionally tinted by member count, with cluster groupings drawn around them.</p>
+<hr />
+<h2 id="4-clustering-what-the-algorithm-does">4. Clustering - what the algorithm does<a class="headerlink" href="#4-clustering-what-the-algorithm-does" title="Permanent link">&para;</a></h2>
+<p>The full step-by-step is on the <a href="../../api/clusters/#how-clustering-works">Clusters API page</a>. Summary:</p>
+<ol>
+<li>Filter villages with ≥1 member interested in the commodity.</li>
+<li>Sort big-first.</li>
+<li>Seed the next cluster with the biggest unassigned village; greedily add nearest neighbours that fit <strong>all</strong> four constraints: ≤ 5 km from the seed, ≤ 5 km max pairwise span, total members ≤ 50, ≤ 4 villages.</li>
+<li>Discard the cluster if it ends up under floors (&lt; 30 members or &lt; 2 villages); release its villages back to the pool.</li>
+<li>Repeat for the next seed; then repeat for the next commodity.</li>
+</ol>
+<p>Block boundary is a hard wall - clusters never span two blocks. Each commodity is clustered independently, so one village can sit in many clusters (one per commodity it has interested members in).</p>
+<p>Trigger: <a href="../../api/clusters/#regenerate-clusters"><code>POST /api/clusters/regenerate</code></a> with <code>{block, commodity, ...overrides}</code>. Empty overrides = government defaults (30-50 members, 2-4 villages, 5 km, ≥1 member/village).</p>
+<hr />
+<h2 id="5-edit-cycle-csv-download-edit-re-upload">5. Edit cycle (CSV download → edit → re-upload)<a class="headerlink" href="#5-edit-cycle-csv-download-edit-re-upload" title="Permanent link">&para;</a></h2>
+<p>Per Faiz's call: <em>"we're not going to give them an interface to change it. The same way we have done our backend data upload thing."</em> The proposed clusters from the algorithm are a starting point - block coordinators can override them based on local knowledge (a mountain between two villages, social tension, road conditions) by editing a CSV and re-uploading.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>GET /api/clusters/export.csv?block=KHOWANG&amp;commodity=Goatery
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>   │   row-per-village CSV with cluster_id, commodity, vill_name, gp_name,
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>   │   lat, long, members, pashu_sakhi, block_coordinator
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>   ▼
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Open in Excel
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>   ┌─ split a cluster
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>   ├─ merge two clusters (use the same cluster_id)
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>   ├─ drop a village (delete the row)
+<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>   ├─ fill in pashu_sakhi / block_coordinator
+<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>   └─ change member count (rare; e.g. correcting an ODK error)
+<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>   │
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>   ▼
+<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>POST /api/clusters/import?block=KHOWANG&amp;commodity=Goatery   (raw CSV body or multipart)
+<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>   │   replaces all clusters in scope; recomputes total_members,
+<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>   │   max_span_km, centroid_lat/lon from the new village list
+<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>   ▼
+<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>GET /api/clusters?block=KHOWANG&amp;commodity=Goatery   (verify)
+</code></pre></div>
+<p>Re-upload as many times as needed. Each upload is a full replace within the scope; partial edits aren't supported (by design - keeps the contract simple and matches the existing LEAF data update flow).</p>
+<hr />
+<h2 id="6-cluster-report-card">6. Cluster report card<a class="headerlink" href="#6-cluster-report-card" title="Permanent link">&para;</a></h2>
+<p>Once a cluster exists, <a href="../../api/clusters/#cluster-report-card"><code>GET /api/clusters/&lt;id&gt;/report</code></a> returns the cluster <em>plus</em> every LEAF block-level variable for the parent block - soil, water, climate, infrastructure, people, livestock, land/agri (the same dataset that powers <code>/api/blocks</code>).</p>
+<p>This mirrors slide 7 of the deck: <em>one summary view per cluster that surfaces all relevant block context</em>. No new variables were added - we re-use existing LEAF data and join on <code>block_name</code>.</p>
+<hr />
+<h2 id="7-infrastructure-overlay">7. Infrastructure overlay<a class="headerlink" href="#7-infrastructure-overlay" title="Permanent link">&para;</a></h2>
+<p>POIs (vet centres, pharmacies, input shops, milk-collection centres) live in their own table, uploaded via CSV - same edit-via-CSV pattern as the cluster data. See the <a href="../../api/infrastructure/">Infrastructure API page</a>.</p>
+<p>The interesting query is <a href="../../api/infrastructure/#nearest-pois"><code>GET /api/infrastructure/nearest?cluster_id=&lt;id&gt;&amp;type=vet_centre&amp;n=3</code></a> - returns the closest POIs to a cluster's centroid with <code>distance_km</code> attached. Used on the cluster report card to answer <em>"what's the nearest vet centre for this dairy cluster?"</em></p>
+<hr />
+<h2 id="8-finalisation-and-the-production-tool-handshake">8. Finalisation and the production-tool handshake<a class="headerlink" href="#8-finalisation-and-the-production-tool-handshake" title="Permanent link">&para;</a></h2>
+<p>The clustering work is one half of a two-tool integration:</p>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Built by</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>LEAF DSS</strong></td>
+<td>Us</td>
+<td>Forms clusters, surfaces block context, hands the cluster definition to the production tool.</td>
+</tr>
+<tr>
+<td><strong>Production tool</strong></td>
+<td>Partner team (in development)</td>
+<td>Per-cluster login, day-to-day operations (Pashu Sakhi tracking, output recording), produces aggregate dashboards.</td>
+</tr>
+</tbody>
+</table>
+<p>Once cluster edits stabilise, an admin calls <a href="../../api/production-tool/#finalise-a-cluster"><code>POST /api/clusters/&lt;id&gt;/finalize</code></a> on each cluster. Only finalised clusters appear in the outbound feed <a href="../../api/production-tool/#outbound-clusters-feed"><code>GET /api/production-tool/clusters</code></a> - the contract the production tool consumes.</p>
+<p>After the production tool runs for a while, it sends back aggregated metrics via <a href="../../api/production-tool/#cluster-production-dashboard"><code>POST /api/production-tool/dashboard/&lt;id&gt;</code></a>. The payload is an arbitrary JSON blob (e.g. <code>{"period": "2026-Q1", "eggs_produced": 12450, "meat_kg": 320.5}</code>); LEAF DSS stores it as-is and surfaces it on the cluster report card. Schema is intentionally open - the production tool may evolve its output without coordinated releases.</p>
+<p>Per the call, the production tool's own user-level data (which Pashu Sakhi did what for which household) stays inside the production tool. We only exchange aggregates.</p>
+<hr />
+<h2 id="9-user-interface-cluster-planning-workspace">9. User interface - Cluster Planning workspace<a class="headerlink" href="#9-user-interface-cluster-planning-workspace" title="Permanent link">&para;</a></h2>
+<p>The clustering workflow has its own UI surface, separate from the existing block-detail dashboard.</p>
+<h3 id="urls">URLs<a class="headerlink" href="#urls" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>When to use</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/&lt;district&gt;/&lt;block&gt;/clustering</code></td>
+<td>Nested under the block detail view. Reached by the <strong>"Cluster Planning"</strong> button on the block page. Shareable.</td>
+</tr>
+<tr>
+<td><code>/clustering/&lt;block&gt;</code></td>
+<td>Standalone - same workspace, no district prefix. Useful when you only know the block name.</td>
+</tr>
+<tr>
+<td><code>/clustering</code></td>
+<td>Standalone, defaults to the first block that has village data ingested.</td>
+</tr>
+<tr>
+<td><code>/clustering/&lt;block&gt;?commodity=Goatery</code></td>
+<td>Pre-selects a commodity on load.</td>
+</tr>
+</tbody>
+</table>
+<p>The "Cluster Planning" button only appears on a block detail page when that block has village data ingested (matched case-insensitively against the <code>Block_name</code> in the LEAF shapefile).</p>
+<h3 id="what-you-see">What you see<a class="headerlink" href="#what-you-see" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Element</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Block boundary outline</strong> (dark blue stroke, faint teal fill)</td>
+<td>Spatial context - the hard wall that constrains clustering.</td>
+</tr>
+<tr>
+<td><strong>Village dots</strong> (~275 in Khowang)</td>
+<td>One per GPS point. Hover → name, GP, member counts per commodity.</td>
+</tr>
+<tr>
+<td><strong>District + block dropdowns</strong> in the header</td>
+<td>Switch context without leaving. Only districts/blocks with village data are listed; if the district has just one such block, the dropdown collapses to a static label.</td>
+</tr>
+<tr>
+<td><strong>Commodity dropdown</strong></td>
+<td>Pick one of the six commodities. Defaults to "Show villages only".</td>
+</tr>
+<tr>
+<td><strong>Cluster polygons</strong></td>
+<td>Coloured polygons (or thick lines for 2-village clusters) - colours just distinguish adjacent clusters, no semantic meaning.</td>
+</tr>
+<tr>
+<td><strong>Centroid ✓ marker</strong></td>
+<td>Only on <strong>finalised</strong> clusters. Proposed clusters have no marker (less visual noise).</td>
+</tr>
+<tr>
+<td><strong>Cluster popup</strong> (on click)</td>
+<td>Cluster ID, members, span, village list, status, <strong>Finalise &amp; publish</strong> / <strong>Unfinalise</strong> button.</td>
+</tr>
+<tr>
+<td><strong>Toolbar - <code>Map key</code></strong></td>
+<td>Decodes polygon colours and the ✓ marker.</td>
+</tr>
+<tr>
+<td><strong>Toolbar - <code>Download CSV</code> / <code>Upload CSV</code> / <code>Regenerate</code></strong></td>
+<td>The edit cycle for the current scope (block + commodity).</td>
+</tr>
+<tr>
+<td><strong><code>?</code> button in the header</strong></td>
+<td>Opens the multilingual workflow help (EN / हिं / অস).</td>
+</tr>
+<tr>
+<td><strong><code>?</code> button inside cluster popups</strong></td>
+<td>Opens the same workflow help overlay (so the popup itself stays compact).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="multilingual-help">Multilingual help<a class="headerlink" href="#multilingual-help" title="Permanent link">&para;</a></h3>
+<p>The <code>?</code> overlay has tabs for <strong>English</strong>, <strong>Hindi (हिं)</strong>, and <strong>Assamese (অস)</strong>, with a 6-step walkthrough of the whole workspace and a yellow caveat box noting that the Hindi/Assamese strings are AI-drafted and need a native-speaker review before final rollout. Source strings live in <a href="https://github.com/DrJagadeeshG/iwmi_leaf/blob/main/static/js/clusters.js"><code>leaf_flask/static/js/clusters.js</code></a> under <code>WORKFLOW_HELP</code>.</p>
+<h3 id="loaders">Loaders<a class="headerlink" href="#loaders" title="Permanent link">&para;</a></h3>
+<p>Async actions (cluster fetch, village load, regenerate, upload, finalise) show inline spinners in the toolbar summary line so the user gets feedback during slow Postgres round-trips on Render free tier.</p>
+<hr />
+<h2 id="10-persistence-and-deployment">10. Persistence and deployment<a class="headerlink" href="#10-persistence-and-deployment" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Concern</th>
+<th>Approach</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cluster store</strong></td>
+<td>Postgres on Supabase. Tables: <code>clusters</code>, <code>cluster_villages</code> (cascading delete), <code>infrastructure</code>. Schema in <a href="https://github.com/DrJagadeeshG/iwmi_leaf/blob/main/schema.sql"><code>leaf_flask/schema.sql</code></a>.</td>
+</tr>
+<tr>
+<td><strong>Village seed</strong></td>
+<td>Read-only CSV at <code>leaf_flask/data/villages.csv</code> (committed). Replaced by ODK feed in production.</td>
+</tr>
+<tr>
+<td><strong>Connection pooling</strong></td>
+<td><code>psycopg2.pool.ThreadedConnectionPool</code> (1-10 conns) in <a href="https://github.com/DrJagadeeshG/iwmi_leaf/blob/main/db.py"><code>leaf_flask/db.py</code></a>.</td>
+</tr>
+<tr>
+<td><strong>Env vars</strong></td>
+<td><code>DATABASE_URL</code>, <code>SUPABASE_URL</code>, <code>SUPABASE_PUBLISHABLE_KEY</code>, <code>SUPABASE_SECRET_KEY</code>. Loaded from <code>.env</code> locally; set in the Render dashboard for production.</td>
+</tr>
+<tr>
+<td><strong>Why a DB</strong></td>
+<td>Render's free disk is ephemeral - file-based persistence (<code>clusters.json</code>) reset on every redeploy. Postgres survives.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="11-configurable-parameters">11. Configurable parameters<a class="headerlink" href="#11-configurable-parameters" title="Permanent link">&para;</a></h2>
+<p>All four cluster constraints are server-side defaults but request-time overridable via the regenerate endpoint:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Default</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>min_members_per_village</code></td>
+<td>1</td>
+<td>LEAF</td>
+</tr>
+<tr>
+<td><code>min_cluster_members</code></td>
+<td>30</td>
+<td>Government</td>
+</tr>
+<tr>
+<td><code>max_cluster_members</code></td>
+<td>50</td>
+<td>Government</td>
+</tr>
+<tr>
+<td><code>min_villages_per_cluster</code></td>
+<td>2</td>
+<td>Government</td>
+</tr>
+<tr>
+<td><code>max_villages_per_cluster</code></td>
+<td>4</td>
+<td>Government</td>
+</tr>
+<tr>
+<td><code>max_radius_km</code></td>
+<td>5.0</td>
+<td>Government</td>
+</tr>
+</tbody>
+</table>
+<p>Government numbers come from the budgeting rule: each cluster will be allocated one trillion (recurring grant) so the band has a hard floor and ceiling. Faiz expects to iterate on these before final freeze.</p>
+<hr />
+<h2 id="12-whats-not-yet-implemented">12. What's not yet implemented<a class="headerlink" href="#12-whats-not-yet-implemented" title="Permanent link">&para;</a></h2>
+<p>Tracked for follow-up:</p>
+<ul>
+<li><strong>State and district choropleth UI</strong>: backend <code>/api/villages/aggregate</code> is live but the top-level dashboard map doesn't paint districts/blocks by member counts yet. The Cluster Planning workspace itself is at block scale and doesn't need it.</li>
+<li><strong>Authentication on the production-tool endpoints</strong>: currently open. Should add an API key header before the partner team integrates live.</li>
+<li><strong>Native-speaker review of Hindi / Assamese help copy</strong>: the <code>WORKFLOW_HELP</code> strings in <code>clusters.js</code> are AI-drafted and flagged with a translation caveat in the help overlay. Replace with reviewed copy before final rollout.</li>
+<li><strong>Parameter-tuning UI</strong>: the four cluster constraints (member band, village count, radius) are tunable via the API only; the <strong>Regenerate</strong> button uses defaults. Add an inline form when users hit "0 clusters formed" (e.g. for Dairy in Khowang).</li>
+<li><strong>PostGIS / earthdistance</strong>: nearest-N infrastructure query is currently in-Python haversine. Acceptable at current POI volumes; switch when the dataset grows beyond a few thousand rows or when query latency becomes a concern.</li>
+<li><strong>Persistent disk on Render</strong>: cluster + POI tables are in Supabase Postgres which survives redeploys, but Render's local disk is still ephemeral - anything written to <code>data/</code> is regenerated rather than persisted. Fine today; revisit if we add file uploads.</li>
+<li><strong>AI advisory layer</strong>: slide 9 of the deck. Out of scope for the first iteration - revisit after the cluster pipeline is live.</li>
+</ul>
+<hr />
+<h2 id="13-reference-implementation">13. Reference implementation<a class="headerlink" href="#13-reference-implementation" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://github.com/DrJagadeeshG/iwmi_leaf/blob/main/clustering.py"><code>clustering.py</code></a></td>
+<td>Pure-Python algorithm; no Flask/DB dependency.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/DrJagadeeshG/iwmi_leaf/blob/main/villages.py"><code>villages.py</code></a></td>
+<td>Village seed loader + Postgres-backed cluster store.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/DrJagadeeshG/iwmi_leaf/blob/main/infrastructure.py"><code>infrastructure.py</code></a></td>
+<td>POI store + nearest-N query.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/DrJagadeeshG/iwmi_leaf/blob/main/db.py"><code>db.py</code></a></td>
+<td>Postgres connection pool.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/DrJagadeeshG/iwmi_leaf/blob/main/schema.sql"><code>schema.sql</code></a></td>
+<td>Idempotent DDL - runs once against a fresh Supabase project.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/DrJagadeeshG/iwmi_leaf/blob/main/app.py"><code>app.py</code></a></td>
+<td>All HTTP routes with Swagger YAML docstrings.</td>
+</tr>
+<tr>
+<td><a href="https://github.com/DrJagadeeshG/iwmi_leaf/blob/main/templates/_cluster_planner.html"><code>templates/_cluster_planner.html</code></a></td>
+<td>Shared workspace HTML used by both the modal (index.html) and the page (clustering.html).</td>
+</tr>
+<tr>
+<td><a href="https://github.com/DrJagadeeshG/iwmi_leaf/blob/main/static/js/clusters.js"><code>static/js/clusters.js</code></a></td>
+<td>All workspace logic - map setup, dropdowns, popups, CSV cycle, finalise, multilingual help.</td>
+</tr>
+</tbody>
+</table>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+  <script>var tabs=__md_get("__tabs");if(Array.isArray(tabs))e:for(var set of document.querySelectorAll(".tabbed-set")){var labels=set.querySelector(".tabbed-labels");for(var tab of tabs)for(var label of labels.getElementsByTagName("label"))if(label.innerText.trim()===tab){var input=document.getElementById(label.htmlFor);input.checked=!0;continue e}}</script>
+
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      <script id="__config" type="application/json">{"base": "../..", "features": ["navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy", "content.tabs.link"], "search": "../../assets/javascripts/workers/search.973d3a69.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.f55a23d4.min.js"></script>
+      
+    
+  </body>
+</html>

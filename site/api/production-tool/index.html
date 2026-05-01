@@ -962,6 +962,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guide/clustering-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Clustering Workflow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guide/deployment/" class="md-nav__link">
         
   
@@ -1162,9 +1185,9 @@
 <p>Two-way integration with the external production tool that downstream partners are building. The contract per the IWMI requirements call (2026-04-23):</p>
 <ul>
 <li><strong>Outbound (we publish):</strong> finalised clusters with their villages, members, and assigned coordinators.</li>
-<li><strong>Inbound (they push):</strong> aggregated dashboard data per cluster (e.g. for a duckery cluster: eggs produced, meat output). Per-user filtering and authentication live in the production tool — only aggregates flow back to LEAF DSS.</li>
+<li><strong>Inbound (they push):</strong> aggregated dashboard data per cluster (e.g. for a duckery cluster: eggs produced, meat output). Per-user filtering and authentication live in the production tool - only aggregates flow back to LEAF DSS.</li>
 </ul>
-<p>A cluster only appears in the outbound feed once it has been <strong>finalised</strong> — typically after the CSV edit cycle has stabilised the village list.</p>
+<p>A cluster only appears in the outbound feed once it has been <strong>finalised</strong> - typically after the CSV edit cycle has stabilised the village list.</p>
 <hr />
 <h2 id="finalise-a-cluster">Finalise a Cluster<a class="headerlink" href="#finalise-a-cluster" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>POST /api/clusters/&lt;cluster_id&gt;/finalize
@@ -1258,7 +1281,7 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>GET  /api/production-tool/dashboard/&lt;cluster_id&gt;
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>POST /api/production-tool/dashboard/&lt;cluster_id&gt;
 </code></pre></div>
-<p><code>POST</code> accepts an arbitrary JSON payload and stores it on the cluster under <code>dashboard</code>. <code>GET</code> returns the last stored payload (or <code>{}</code> if none). Schema is intentionally open — the production tool sends whatever its commodity dashboard produces; LEAF DSS surfaces it on the cluster report card without inspection.</p>
+<p><code>POST</code> accepts an arbitrary JSON payload and stores it on the cluster under <code>dashboard</code>. <code>GET</code> returns the last stored payload (or <code>{}</code> if none). Schema is intentionally open - the production tool sends whatever its commodity dashboard produces; LEAF DSS surfaces it on the cluster report card without inspection.</p>
 <h3 id="example-post-body">Example POST Body<a class="headerlink" href="#example-post-body" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">&quot;period&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;2026-Q1&quot;</span><span class="p">,</span>

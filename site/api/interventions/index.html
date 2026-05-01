@@ -947,6 +947,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guide/clustering-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Clustering Workflow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guide/deployment/" class="md-nav__link">
         
   
@@ -1134,15 +1157,15 @@
 <hr />
 <h2 id="how-interventions-work">How Interventions Work<a class="headerlink" href="#how-interventions-work" title="Permanent link">&para;</a></h2>
 <ol>
-<li><strong>Definition</strong> — Each intervention groups related variables that determine its feasibility</li>
-<li><strong>Configuration</strong> — Each variable has a range (min/max), weight (importance), and preference (higher/lower/moderate)</li>
-<li><strong>Scoring</strong> — When a user selects an intervention, the system applies its variable config as filters to the <a href="../feasibility/">feasibility calculation</a></li>
-<li><strong>Customization</strong> — Users can override the default config in the UI's Configure modal</li>
+<li><strong>Definition</strong> - Each intervention groups related variables that determine its feasibility</li>
+<li><strong>Configuration</strong> - Each variable has a range (min/max), weight (importance), and preference (higher/lower/moderate)</li>
+<li><strong>Scoring</strong> - When a user selects an intervention, the system applies its variable config as filters to the <a href="../feasibility/">feasibility calculation</a></li>
+<li><strong>Customization</strong> - Users can override the default config in the UI's Configure modal</li>
 </ol>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Intervention &quot;Organic Farming&quot;
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  └─ Variable AD (Agricultural Diversity): range 20–80, weight 1.0, prefer higher
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  └─ Variable WA (Water Availability): range 30–70, weight 0.8, prefer moderate
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  └─ Variable CF (Crop Finance): range 10–60, weight 0.6, prefer higher
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>  └─ Variable AD (Agricultural Diversity): range 20-80, weight 1.0, prefer higher
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>  └─ Variable WA (Water Availability): range 30-70, weight 0.8, prefer moderate
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>  └─ Variable CF (Crop Finance): range 10-60, weight 0.6, prefer higher
 </code></pre></div>
 <hr />
 <h2 id="list-all-interventions">List All Interventions<a class="headerlink" href="#list-all-interventions" title="Permanent link">&para;</a></h2>
@@ -1223,7 +1246,7 @@
 </div>
 <hr />
 <h2 id="get-intervention-configuration">Get Intervention Configuration<a class="headerlink" href="#get-intervention-configuration" title="Permanent link">&para;</a></h2>
-<p>Returns the variable filters and weights configured for a specific intervention. This is the core configuration that drives feasibility analysis — it defines <strong>which variables matter</strong> for this intervention and <strong>what ranges are acceptable</strong>.</p>
+<p>Returns the variable filters and weights configured for a specific intervention. This is the core configuration that drives feasibility analysis - it defines <strong>which variables matter</strong> for this intervention and <strong>what ranges are acceptable</strong>.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>GET /api/intervention/{name}/config
 </code></pre></div>
 <h3 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">&para;</a></h3>
@@ -1349,7 +1372,7 @@
 <tr>
 <td><code>variables[].weight</code></td>
 <td>number</td>
-<td>Importance weight (0–1)</td>
+<td>Importance weight (0-1)</td>
 </tr>
 <tr>
 <td><code>variables[].data_min</code></td>
@@ -1400,7 +1423,7 @@
 <a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Intervention: </span><span class="si">{</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Variables: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">config</span><span class="p">[</span><span class="s1">&#39;variables&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 <a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">config</span><span class="p">[</span><span class="s1">&#39;variables&#39;</span><span class="p">]:</span>
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;field&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;range_min&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">–</span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;range_max&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> &quot;</span>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;field&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;range_min&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;range_max&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> &quot;</span>
 <a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>          <span class="sa">f</span><span class="s2">&quot;(weight </span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;weight&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, prefer </span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;preference&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
 </code></pre></div>
 </div>
@@ -1410,7 +1433,7 @@
 <a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="kd">const</span><span class="w"> </span><span class="nx">config</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">r</span><span class="p">.</span><span class="nx">json</span><span class="p">();</span>
 <a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>
 <a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a><span class="nx">config</span><span class="p">.</span><span class="nx">variables</span><span class="p">.</span><span class="nx">forEach</span><span class="p">(</span><span class="nx">v</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">v</span><span class="p">.</span><span class="nx">label</span><span class="si">}</span><span class="sb">: </span><span class="si">${</span><span class="nx">v</span><span class="p">.</span><span class="nx">range_min</span><span class="si">}</span><span class="sb">–</span><span class="si">${</span><span class="nx">v</span><span class="p">.</span><span class="nx">range_max</span><span class="si">}</span><span class="sb"> (w=</span><span class="si">${</span><span class="nx">v</span><span class="p">.</span><span class="nx">weight</span><span class="si">}</span><span class="sb">)`</span><span class="p">);</span>
+<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="w">  </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`</span><span class="si">${</span><span class="nx">v</span><span class="p">.</span><span class="nx">label</span><span class="si">}</span><span class="sb">: </span><span class="si">${</span><span class="nx">v</span><span class="p">.</span><span class="nx">range_min</span><span class="si">}</span><span class="sb">-</span><span class="si">${</span><span class="nx">v</span><span class="p">.</span><span class="nx">range_max</span><span class="si">}</span><span class="sb"> (w=</span><span class="si">${</span><span class="nx">v</span><span class="p">.</span><span class="nx">weight</span><span class="si">}</span><span class="sb">)`</span><span class="p">);</span>
 <a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="p">});</span>
 </code></pre></div>
 </div>

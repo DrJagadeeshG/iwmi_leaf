@@ -210,6 +210,9 @@
                 <div id="feasibility-badges" class="feasibility-badges">
                     <!-- Feasibility status badge -->
                 </div>
+                <a id="open-cluster-planner" class="back-link" href="#" data-tooltip-below data-tooltip-wrap data-tooltip="Open the cluster planning workspace for this block" style="display: none; background: #28537D; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 13px; gap: 6px; text-decoration: none;">
+                    <i class="bi bi-diagram-3"></i> Cluster Planning
+                </a>
             </div>
         </div>
 
@@ -411,6 +414,14 @@
     </script>
 
     <!-- Custom JS -->
+    <!-- Cluster Planning Modal -->
+    <div id="cluster-modal" class="cluster-modal" style="display: none;">
+        <div class="cluster-modal-inner">
+            {% include '_cluster_planner.html' %}
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/clusters.js') }}"></script>
 </body>
 </html>

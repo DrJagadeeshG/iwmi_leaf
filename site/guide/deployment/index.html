@@ -13,7 +13,7 @@
         <link rel="canonical" href="https://iwmi-leaf.onrender.com/documentation/guide/deployment/">
       
       
-        <link rel="prev" href="../architecture/">
+        <link rel="prev" href="../clustering-workflow/">
       
       
         <link rel="next" href="../hosting/">
@@ -809,6 +809,29 @@
                 
   
   
+  
+  
+    <li class="md-nav__item">
+      <a href="../clustering-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Clustering Workflow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
     
   
   
@@ -1460,7 +1483,7 @@
 <p>For editing documentation with live preview:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>mkdocs<span class="w"> </span>serve<span class="w">                    </span><span class="c1"># Serves at http://localhost:8000</span>
 </code></pre></div>
-<p>This runs a separate MkDocs dev server with hot-reload — changes to <code>docs/*.md</code> reflect instantly.</p>
+<p>This runs a separate MkDocs dev server with hot-reload - changes to <code>docs/*.md</code> reflect instantly.</p>
 <hr />
 <h2 id="documentation-site">Documentation Site<a class="headerlink" href="#documentation-site" title="Permanent link">&para;</a></h2>
 <p>The MkDocs documentation is served directly from the Flask app at <code>/documentation/</code>. This means both the API and its documentation are available from the same URL.</p>
@@ -1474,7 +1497,7 @@
 <p>After editing any file in <code>docs/</code>:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>mkdocs<span class="w"> </span>build<span class="w">          </span><span class="c1"># Regenerate site/ directory</span>
 </code></pre></div>
-<p>The Flask app serves from <code>site/</code> — no restart needed (files are served dynamically).</p>
+<p>The Flask app serves from <code>site/</code> - no restart needed (files are served dynamically).</p>
 <h3 id="configuration_1">Configuration<a class="headerlink" href="#configuration_1" title="Permanent link">&para;</a></h3>
 <p>MkDocs configuration is in <code>mkdocs.yml</code> at the project root:</p>
 <table>
@@ -1614,15 +1637,15 @@
 </tr>
 <tr>
 <td>Slow first request</td>
-<td>Normal — first request loads and caches all shapefiles (~3-5 seconds)</td>
+<td>Normal - first request loads and caches all shapefiles (~3-5 seconds)</td>
 </tr>
 <tr>
 <td>GP data missing</td>
-<td>GP data only exists for Tinsukia — ensure GP shapefiles and Excel files are present</td>
+<td>GP data only exists for Tinsukia - ensure GP shapefiles and Excel files are present</td>
 </tr>
 <tr>
 <td>Render deploy fails</td>
-<td>Check build logs — most common issue is missing Python version or system dependencies</td>
+<td>Check build logs - most common issue is missing Python version or system dependencies</td>
 </tr>
 </tbody>
 </table>

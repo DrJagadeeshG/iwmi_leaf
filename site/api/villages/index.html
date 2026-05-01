@@ -995,6 +995,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guide/clustering-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Clustering Workflow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guide/deployment/" class="md-nav__link">
         
   
@@ -1228,7 +1251,7 @@
 <p>Village-level point data used as the seed for the cluster generator. Each village has a GPS point and member counts for six commodities (Dairy, Goatery, Piggery, Backyard Poultry, Duckery, Fishery Activity).</p>
 <div class="admonition info">
 <p class="admonition-title">Data source</p>
-<p>The pilot dataset comes from the MMUA <code>Random_pointshapefile</code> sheet — 275 villages in <strong>Khowang block, Dibrugarh district</strong>. When the ODK collection rolls out, real survey points will replace this seed without changing the API contract.</p>
+<p>The pilot dataset comes from the MMUA <code>Random_pointshapefile</code> sheet - 275 villages in <strong>Khowang block, Dibrugarh district</strong>. When the ODK collection rolls out, real survey points will replace this seed without changing the API contract.</p>
 </div>
 <hr />
 <h2 id="list-villages">List Villages<a class="headerlink" href="#list-villages" title="Permanent link">&para;</a></h2>
@@ -1403,7 +1426,7 @@
 <h2 id="blocks-with-village-data">Blocks With Village Data<a class="headerlink" href="#blocks-with-village-data" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>GET /api/villages/blocks
 </code></pre></div>
-<p>Lists which (district, block) pairs have village data ingested. Use this to drive the block-scale drill-down — only these blocks will render points and clusters.</p>
+<p>Lists which (district, block) pairs have village data ingested. Use this to drive the block-scale drill-down - only these blocks will render points and clusters.</p>
 <h3 id="response_3">Response<a class="headerlink" href="#response_3" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="p">[</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">  </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;district_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;DIBRUGARH&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;block_name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;KHOWANG&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;village_count&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">275</span><span class="w"> </span><span class="p">}</span>

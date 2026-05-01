@@ -16,7 +16,7 @@
         <link rel="prev" href="../../api/config/">
       
       
-        <link rel="next" href="../deployment/">
+        <link rel="next" href="../clustering-workflow/">
       
       
       <link rel="icon" href="../../assets/iwmi_logo.png">
@@ -1016,6 +1016,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../clustering-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Clustering Workflow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../deployment/" class="md-nav__link">
         
   
@@ -1479,21 +1502,21 @@
 <h3 id="global-state-object">Global State Object<a class="headerlink" href="#global-state-object" title="Permanent link">&para;</a></h3>
 <p>All application state is stored in a single <code>state</code> object (<code>app.js:10</code>):</p>
 <ul>
-<li><code>state.map</code> — Leaflet map instance</li>
-<li><code>state.geojsonLayer</code> — Current data layer (blocks or GPs)</li>
-<li><code>state.districtLayer</code> — District boundary overlay</li>
-<li><code>state.protectedAreasLayer</code> — Protected areas overlay</li>
-<li><code>state.currentIntervention</code> — Selected intervention name</li>
-<li><code>state.currentFilters</code> — Active filter array</li>
-<li><code>state.currentLevel</code> — <code>'block'</code> or <code>'gp'</code></li>
-<li><code>state.activeVariable</code> — Variable for single-variable choropleth mode</li>
+<li><code>state.map</code> - Leaflet map instance</li>
+<li><code>state.geojsonLayer</code> - Current data layer (blocks or GPs)</li>
+<li><code>state.districtLayer</code> - District boundary overlay</li>
+<li><code>state.protectedAreasLayer</code> - Protected areas overlay</li>
+<li><code>state.currentIntervention</code> - Selected intervention name</li>
+<li><code>state.currentFilters</code> - Active filter array</li>
+<li><code>state.currentLevel</code> - <code>'block'</code> or <code>'gp'</code></li>
+<li><code>state.activeVariable</code> - Variable for single-variable choropleth mode</li>
 </ul>
 <h3 id="map-layers-z-order-bottom-to-top">Map Layers (z-order, bottom to top)<a class="headerlink" href="#map-layers-z-order-bottom-to-top" title="Permanent link">&para;</a></h3>
 <ol>
 <li>CartoDB Light tile layer (base map)</li>
-<li><code>state.geojsonLayer</code> — Feasibility-colored blocks/GPs</li>
-<li><code>state.protectedAreasLayer</code> — Green protected area polygons (optional)</li>
-<li><code>state.districtLayer</code> — Dashed district boundaries</li>
+<li><code>state.geojsonLayer</code> - Feasibility-colored blocks/GPs</li>
+<li><code>state.protectedAreasLayer</code> - Green protected area polygons (optional)</li>
+<li><code>state.districtLayer</code> - Dashed district boundaries</li>
 </ol>
 <hr />
 <h2 id="data-sources">Data Sources<a class="headerlink" href="#data-sources" title="Permanent link">&para;</a></h2>
@@ -1577,20 +1600,20 @@
 <h2 id="api-route-organization">API Route Organization<a class="headerlink" href="#api-route-organization" title="Permanent link">&para;</a></h2>
 <p>Routes in <code>app.py</code> are organized by section (in order):</p>
 <ol>
-<li><strong>Page Routes</strong> — HTML template rendering (<code>/</code>, <code>/&lt;district&gt;</code>, <code>/&lt;district&gt;/&lt;block&gt;</code>, <code>/&lt;district&gt;/&lt;block&gt;/&lt;gp&gt;</code>)</li>
-<li><strong>Block APIs</strong> — <code>GET /api/blocks/*</code></li>
-<li><strong>Location APIs</strong> — <code>GET /api/locations</code>, <code>/api/districts/*</code></li>
-<li><strong>Protected Areas</strong> — <code>GET /api/protected-areas/geojson</code></li>
-<li><strong>Intervention APIs</strong> — <code>GET /api/interventions</code>, <code>/api/intervention/&lt;name&gt;/config</code></li>
-<li><strong>Variable APIs</strong> — <code>GET /api/variables</code>, <code>/api/variable-groups</code>, <code>/api/variable-stats/*</code></li>
-<li><strong>Feasibility APIs</strong> — <code>POST /api/calculate-feasibility</code>, <code>POST /api/gp/calculate-feasibility</code></li>
-<li><strong>AI APIs</strong> — <code>POST /api/ai-recommendation</code>, <code>POST /api/ai-recommendation/init</code></li>
-<li><strong>Export API</strong> — <code>POST /api/export/csv</code></li>
-<li><strong>Config APIs</strong> — <code>GET /api/config</code>, <code>/api/levels</code></li>
-<li><strong>GP APIs</strong> — <code>GET /api/gp/*</code>, <code>POST /api/gp/calculate-feasibility</code></li>
-<li><strong>Health &amp; Meta</strong> — <code>GET /health</code>, <code>GET /api</code></li>
-<li><strong>Static Serving</strong> — <code>/ai-docs/*</code>, <code>/documentation/*</code></li>
-<li><strong>Error Handlers</strong> — 404 (returns main app for non-API routes), 500</li>
+<li><strong>Page Routes</strong> - HTML template rendering (<code>/</code>, <code>/&lt;district&gt;</code>, <code>/&lt;district&gt;/&lt;block&gt;</code>, <code>/&lt;district&gt;/&lt;block&gt;/&lt;gp&gt;</code>)</li>
+<li><strong>Block APIs</strong> - <code>GET /api/blocks/*</code></li>
+<li><strong>Location APIs</strong> - <code>GET /api/locations</code>, <code>/api/districts/*</code></li>
+<li><strong>Protected Areas</strong> - <code>GET /api/protected-areas/geojson</code></li>
+<li><strong>Intervention APIs</strong> - <code>GET /api/interventions</code>, <code>/api/intervention/&lt;name&gt;/config</code></li>
+<li><strong>Variable APIs</strong> - <code>GET /api/variables</code>, <code>/api/variable-groups</code>, <code>/api/variable-stats/*</code></li>
+<li><strong>Feasibility APIs</strong> - <code>POST /api/calculate-feasibility</code>, <code>POST /api/gp/calculate-feasibility</code></li>
+<li><strong>AI APIs</strong> - <code>POST /api/ai-recommendation</code>, <code>POST /api/ai-recommendation/init</code></li>
+<li><strong>Export API</strong> - <code>POST /api/export/csv</code></li>
+<li><strong>Config APIs</strong> - <code>GET /api/config</code>, <code>/api/levels</code></li>
+<li><strong>GP APIs</strong> - <code>GET /api/gp/*</code>, <code>POST /api/gp/calculate-feasibility</code></li>
+<li><strong>Health &amp; Meta</strong> - <code>GET /health</code>, <code>GET /api</code></li>
+<li><strong>Static Serving</strong> - <code>/ai-docs/*</code>, <code>/documentation/*</code></li>
+<li><strong>Error Handlers</strong> - 404 (returns main app for non-API routes), 500</li>
 </ol>
 
 

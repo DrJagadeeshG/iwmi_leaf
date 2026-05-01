@@ -100,7 +100,7 @@ swagger_template = {
         {"name": "Config", "description": "Application configuration and metadata"},
         {"name": "Villages", "description": "Village-level point data (ODK / MMUA seed) for cluster generation"},
         {"name": "Clusters", "description": "Per-commodity village clusters: generation, retrieval, CSV edit cycle"},
-        {"name": "Infrastructure", "description": "Vet centres, pharmacies, input shops — POI database with nearest-to-cluster query"},
+        {"name": "Infrastructure", "description": "Vet centres, pharmacies, input shops - POI database with nearest-to-cluster query"},
         {"name": "ProductionTool", "description": "Outbound feed of finalised clusters and inbound dashboard data exchange with the external production tool"},
         {"name": "Deprecated", "description": "Deprecated endpoints - use newer alternatives"},
     ],
@@ -172,10 +172,26 @@ def index():
     return render_app()
 
 
+@app.route('/clustering')
+@app.route('/clustering/')
+@app.route('/clustering/<block>')
+def clustering_page(block=None):
+    """Standalone cluster-planning workspace as a full page (rather than a modal).
+    Same UI as the in-block modal - useful for shareable links and side-by-side
+    comparisons across blocks. `block` is optional; defaults to the first block
+    that has village data ingested.
+    """
+    return render_template(
+        'clustering.html',
+        initial_block=block or '',
+        initial_commodity=request.args.get('commodity', ''),
+    )
+
+
 @app.route('/update')
 @app.route('/update/')
 def update_page():
-    """Data update page — shows Google Sheet links and refresh controls."""
+    """Data update page - shows Google Sheet links and refresh controls."""
     from google_sheets import get_status, SHEET_URLS
     return render_template('update.html',
                            status=get_status(),
@@ -187,8 +203,8 @@ def update_page():
 def district_view(district):
     """District level view (shows all blocks in district)."""
     from flask import redirect, url_for
-    # Reserved paths — let their own routes handle them
-    if district in ('documentation', 'docs', 'api', 'static', 'health', 'update'):
+    # Reserved paths - let their own routes handle them
+    if district in ('documentation', 'docs', 'api', 'static', 'health', 'update', 'clustering'):
         return redirect(f'/{district}/')
     gdf = load_shapefile()
     valid_districts = gdf['Dist_Name'].dropna().unique().tolist()
@@ -203,9 +219,22 @@ def block_detail_view(district, block):
     return render_app(level='block', district=district, block=block)
 
 
+@app.route('/<district>/<block>/clustering')
+def clustering_block_nested(district, block):
+    """Cluster planning workspace nested under block detail: /district/block/clustering."""
+    return render_template(
+        'clustering.html',
+        initial_block=block,
+        initial_district=district,
+        initial_commodity=request.args.get('commodity', ''),
+    )
+
+
 @app.route('/<district>/<block>/<gp>')
 def gp_detail_view(district, block, gp):
     """GP detail view: /district/block/gp_name."""
+    if gp == 'clustering':  # safety net - explicit route above should win first
+        return clustering_block_nested(district, block)
     return render_app(level='gp', district=district, block=block, gp=gp)
 
 
@@ -2711,7 +2740,7 @@ def api_production_tool_dashboard(cluster_id):
       eggs produced, meat output) keyed by cluster_id; we store the JSON as-is
       and surface it on the cluster report card. GET returns the last stored
       payload. Authentication and per-user filtering live in the production
-      tool — we only exchange aggregates.
+      tool - we only exchange aggregates.
     parameters:
       - name: cluster_id
         in: path

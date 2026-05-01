@@ -1175,6 +1175,29 @@
   
   
     <li class="md-nav__item">
+      <a href="../../guide/clustering-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    Clustering Workflow
+    
+  </span>
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../guide/deployment/" class="md-nav__link">
         
   
@@ -1585,7 +1608,7 @@
 
 
 <h1 id="gram-panchayats-api">Gram Panchayats API<a class="headerlink" href="#gram-panchayats-api" title="Permanent link">&para;</a></h1>
-<p>GP-level geospatial data and lookups. Gram Panchayats (GPs) are village-level administrative units within blocks — the finest spatial resolution in the LEAF DSS data hierarchy.</p>
+<p>GP-level geospatial data and lookups. Gram Panchayats (GPs) are village-level administrative units within blocks - the finest spatial resolution in the LEAF DSS data hierarchy.</p>
 <div class="admonition info">
 <p class="admonition-title">Data Availability</p>
 <p>GP-level data is currently available for <strong>Tinsukia district</strong> only (~95 GPs across 8 blocks). For all other districts, use the <a href="../blocks/">Blocks API</a> for block-level data. Use <a href="../config/#get-available-data-levels"><code>GET /api/levels</code></a> to check which districts support GP data.</p>
@@ -1659,7 +1682,7 @@
 <tr>
 <td><em>Variable codes</em></td>
 <td>number</td>
-<td>Indicator values — see <a href="#get-gp-variables">GP Variables</a> for metadata</td>
+<td>Indicator values - see <a href="#get-gp-variables">GP Variables</a> for metadata</td>
 </tr>
 </tbody>
 </table>
@@ -1936,7 +1959,7 @@
 <a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="n">data</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
 <a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;block&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;district&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;gps&#39;</span><span class="p">])</span><span class="si">}</span><span class="s2"> GPs&quot;</span><span class="p">)</span>
 <a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a><span class="k">for</span> <span class="n">gp</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;gps&#39;</span><span class="p">]:</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">gp</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> — </span><span class="si">{</span><span class="n">gp</span><span class="p">[</span><span class="s1">&#39;village_count&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> villages&quot;</span><span class="p">)</span>
+<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">gp</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">gp</span><span class="p">[</span><span class="s1">&#39;village_count&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> villages&quot;</span><span class="p">)</span>
 </code></pre></div>
 </div>
 </div>
@@ -2119,7 +2142,7 @@
 <a id="__codelineno-21-11" name="__codelineno-21-11" href="#__codelineno-21-11"></a><span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="nb">vars</span> <span class="ow">in</span> <span class="n">by_group</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
 <a id="__codelineno-21-12" name="__codelineno-21-12" href="#__codelineno-21-12"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
 <a id="__codelineno-21-13" name="__codelineno-21-13" href="#__codelineno-21-13"></a>    <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="nb">vars</span><span class="p">:</span>
-<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;field&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> — </span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;data_min&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">–</span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;data_max&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
+<a id="__codelineno-21-14" name="__codelineno-21-14" href="#__codelineno-21-14"></a>        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;field&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;label&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;data_min&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">v</span><span class="p">[</span><span class="s1">&#39;data_max&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
 </code></pre></div>
 </div>
 </div>
