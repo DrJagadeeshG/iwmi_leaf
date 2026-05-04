@@ -125,13 +125,16 @@ def list_blocks_with_villages() -> List[Dict]:
 
 def villages_for_block(block_name: str) -> pd.DataFrame:
     df = load_villages()
-    return df[df["block_name"] == block_name].copy()
+    # Case-insensitive: Kobo data lands as ALL-CAPS but dropdown values can
+    # arrive in /api/locations display case after the cluster-planner's
+    # name reconciliation step.
+    return df[df["block_name"].str.upper().str.strip() == block_name.upper().strip()].copy()
 
 
 def villages_geojson(block_name: Optional[str] = None) -> Dict:
     df = load_villages()
     if block_name is not None:
-        df = df[df["block_name"] == block_name]
+        df = df[df["block_name"].str.upper().str.strip() == block_name.upper().strip()]
     features = []
     for _, row in df.iterrows():
         props = {k: (None if pd.isna(row[k]) else row[k]) for k in df.columns if k not in ("lat", "long")}
