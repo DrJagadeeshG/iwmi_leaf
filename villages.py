@@ -27,6 +27,28 @@ from db import get_cursor
 
 DATA_DIR = Path(__file__).parent / "data"
 VILLAGES_CSV = DATA_DIR / "villages.csv"
+SHG_CSV = DATA_DIR / "shg_kobo_clean.csv"
+
+# Mapping from raw Kobo activity column to the 6 clustering commodities.
+# Activities not listed below are surfaced under "other" in the SHG summary.
+_COMMODITY_MAP = {
+    "Dairy": ["dairy_production"],
+    "Goatery": ["goat_farming", "goat_breeding_farm", "goat_kid_nursery", "goat_nursery"],
+    "Piggery": ["pig_farming", "pig_breeding_farm", "pig_piglet_nursery", "pig_nursery"],
+    "Backyard_Poultry": ["poultry_backyard", "poultry_broiler", "poultry_hen", "poultry_duck_hatchery"],
+    "Duckery": ["duck_rearing"],
+    "Fishery_Activity": [
+        "fishery_activity", "fishery_hatchery", "fishery_equip_trading",
+        "fishery_equip_lending", "fishery_equip_mfg", "fish_trading",
+        "fishery_nursery_pond",
+    ],
+}
+_OTHER_KEYS = {
+    "fodder_cultivation": "Fodder cultivation",
+    "feed_manufacturing": "Feed manufacturing",
+    "livestock_transport": "Livestock transport",
+    "meat_shop": "Meat shop",
+}
 
 
 @lru_cache(maxsize=1)
@@ -37,6 +59,58 @@ def load_villages() -> pd.DataFrame:
     df = pd.read_csv(VILLAGES_CSV)
     df.columns = [c.strip() for c in df.columns]
     return df
+
+
+@lru_cache(maxsize=1)
+def load_shg_kobo() -> pd.DataFrame:
+    """Load the raw SHG dataset (one row per village, 25 activity columns).
+
+    Used by the block summary panel; falls back to an empty frame when the
+    sidecar CSV hasn't been ingested yet so non-Kobo blocks still work.
+    """
+    if not SHG_CSV.exists():
+        return pd.DataFrame()
+    df = pd.read_csv(SHG_CSV)
+    df.columns = [c.strip() for c in df.columns]
+    return df
+
+
+def block_shg_summary(block_name: str) -> Dict:
+    """Aggregate SHG counts for one block, shaped for the right-side panel."""
+    df = load_shg_kobo()
+    if df.empty:
+        return {"block_name": block_name, "available": False}
+    sub = df[df["block_name"].str.upper() == block_name.upper()]
+    if sub.empty:
+        return {"block_name": block_name, "available": False}
+
+    has_gps = sub["lat"].notna() & sub["long"].notna()
+    activities_raw = {
+        k: int(sub[k].fillna(0).sum())
+        for keys in _COMMODITY_MAP.values() for k in keys
+    }
+    activities_raw.update({k: int(sub[k].fillna(0).sum()) for k in _OTHER_KEYS})
+
+    commodities = {
+        commodity: sum(activities_raw.get(k, 0) for k in keys)
+        for commodity, keys in _COMMODITY_MAP.items()
+    }
+    other = {label: activities_raw.get(key, 0) for key, label in _OTHER_KEYS.items()}
+
+    return {
+        "district_name": str(sub["district_name"].iloc[0]),
+        "block_name": str(sub["block_name"].iloc[0]),
+        "available": True,
+        "villages_total": int(len(sub)),
+        "villages_with_gps": int(has_gps.sum()),
+        "villages_without_gps": int((~has_gps).sum()),
+        "gp_count": int(sub["gp_name"].nunique()),
+        "gps": sorted(sub["gp_name"].dropna().unique().tolist()),
+        "members_total": int(sum(commodities.values()) + sum(other.values())),
+        "commodities": commodities,
+        "other": other,
+        "activities_raw": activities_raw,
+    }
 
 
 def list_blocks_with_villages() -> List[Dict]:

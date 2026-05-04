@@ -53,7 +53,14 @@
         <button id="cluster-regenerate" class="cluster-action-btn" data-tooltip-wrap data-tooltip="Re-run the clustering algorithm with default thresholds, replacing your edits"><i class="bi bi-arrow-clockwise"></i> Regenerate</button>
     </div>
 </div>
-<div id="cluster-modal-map" class="cluster-modal-map"></div>
+<div class="cluster-modal-body">
+    <div id="cluster-modal-map" class="cluster-modal-map"></div>
+    <aside id="cluster-modal-side" class="cluster-modal-side" aria-label="Block and cluster summary">
+        <div id="cluster-side-panel" class="cluster-side-panel">
+            <div class="cluster-side-empty">Select a block to see summary.</div>
+        </div>
+    </aside>
+</div>
 <div id="cluster-page-loader" class="cluster-page-loader" style="display: none;">
     <div class="cluster-page-loader-inner">
         <div class="cluster-page-spinner"></div>

@@ -352,6 +352,68 @@ def api_block_by_name(block_name):
         return jsonify({'error': str(e)}), 500
 
 
+@app.route('/api/blocks/<block_name>/shg-summary')
+def api_block_shg_summary(block_name):
+    """Return SHG aggregates for a block, shaped for the right-side panel.
+    ---
+    tags:
+      - Blocks
+    summary: SHG summary for a block
+    description: |
+      Aggregates the village-level SHG form data (Kobo export) for one block:
+      total/mapped/unmapped village counts, GP count, member counts grouped
+      into the 6 clustering commodities (Dairy/Goatery/Piggery/Backyard
+      Poultry/Duckery/Fishery), plus an "other" group for fodder, feed,
+      transport, meat shop, and a raw per-activity breakdown of all 25 form
+      questions. Returns `available: false` when the block has no Kobo rows.
+    parameters:
+      - name: block_name
+        in: path
+        type: string
+        required: true
+        description: Block name (case-insensitive match).
+    responses:
+      200:
+        description: SHG summary
+        schema:
+          type: object
+          properties:
+            district_name: {type: string}
+            block_name: {type: string}
+            available: {type: boolean}
+            villages_total: {type: integer}
+            villages_with_gps: {type: integer}
+            villages_without_gps: {type: integer}
+            gp_count: {type: integer}
+            gps: {type: array, items: {type: string}}
+            members_total: {type: integer}
+            commodities:
+              type: object
+              properties:
+                Dairy: {type: integer}
+                Goatery: {type: integer}
+                Piggery: {type: integer}
+                Backyard_Poultry: {type: integer}
+                Duckery: {type: integer}
+                Fishery_Activity: {type: integer}
+            other:
+              type: object
+              description: Aggregates for activities outside the 6 cluster commodities.
+            activities_raw:
+              type: object
+              description: Raw totals per Kobo activity key (25 entries).
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
+    try:
+        from villages import block_shg_summary
+        return jsonify(block_shg_summary(block_name))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 # =============================================================================
 # Location APIs - Unified location data
 # =============================================================================

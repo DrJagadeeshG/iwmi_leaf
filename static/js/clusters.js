@@ -9,6 +9,11 @@
 (function () {
     'use strict';
 
+    // Demo guardrail (2026-05-05): hide Finalise & Publish surfaces during the
+    // stakeholder demo so the conversation stays on data + clusters. Flip back
+    // to true after the demo to restore the production-tool publication path.
+    const SHOW_FINALIZE = false;
+
     const COMMODITY_LABEL = {
         Dairy: 'Dairy',
         Goatery: 'Goatery',
@@ -139,6 +144,21 @@
         let h = 0;
         for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
         return PALETTE[h % PALETTE.length];
+    }
+
+    // Categorical palette for GP coloring on the village layer. Picked for
+    // adjacency contrast — Tableau 10 + 6 extras to comfortably cover the
+    // 13–25 GPs typically found in one block.
+    const GP_PALETTE = [
+        '#4E79A7', '#F28E2B', '#59A14F', '#E15759', '#76B7B2', '#EDC948',
+        '#B07AA1', '#FF9DA7', '#9C755F', '#BAB0AC', '#1F77B4', '#FF7F0E',
+        '#2CA02C', '#D62728', '#9467BD', '#8C564B',
+    ];
+    function colorForGp(gpName) {
+        const seed = (gpName || '').toString().toUpperCase();
+        let h = 5381;
+        for (let i = 0; i < seed.length; i++) h = ((h << 5) + h + seed.charCodeAt(i)) >>> 0;
+        return GP_PALETTE[h % GP_PALETTE.length];
     }
 
     async function ensureBlocksWithVillages() {
@@ -476,28 +496,41 @@
                 const radius = local.currentCommodity
                     ? Math.max(4, Math.min(14, 4 + Math.sqrt(members) * 1.2))
                     : 5;
-                const fill = local.currentCommodity
-                    ? (members > 0 ? '#28537D' : '#bbb')
-                    : '#28537D';
+                const gpColor = colorForGp(p.gp_name);
+                // In commodity-mode, dim villages with no interest so the
+                // active commodity stands out; GP color still readable.
+                const noInterest = local.currentCommodity && members === 0;
                 return L.circleMarker(latlng, {
                     radius,
-                    color: '#1e3d5c',
+                    color: '#243240',
                     weight: 1,
-                    fillColor: fill,
-                    fillOpacity: 0.85,
+                    fillColor: noInterest ? '#cfd6dc' : gpColor,
+                    fillOpacity: noInterest ? 0.55 : 0.85,
                 });
             },
             onEachFeature: (feat, layer) => {
                 const p = feat.properties || {};
-                const lines = [
-                    `<b>${p.vill_name || 'Village'}</b>`,
-                    `<small>${p.gp_name || ''} · ${p.block_name || ''}</small>`,
-                ];
-                ['Dairy', 'Goatery', 'Piggery', 'Backyard_Poultry', 'Duckery', 'Fishery_Activity'].forEach(k => {
+                const swatch = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colorForGp(p.gp_name)};margin-right:5px;vertical-align:middle"></span>`;
+                let total = 0;
+                const rows = COMMODITY_PANEL_ORDER.map(k => {
                     const v = Number(p[k] || 0);
-                    if (v > 0) lines.push(`${COMMODITY_LABEL[k]}: <b>${v}</b>`);
-                });
-                layer.bindTooltip(lines.join('<br>'), { className: 'custom-tooltip', direction: 'top' });
+                    total += v;
+                    const dim = v === 0 ? 'opacity:0.5;' : '';
+                    return `<tr style="${dim}"><td style="padding-right:8px;color:#4a5868">${escapeHtml(COMMODITY_LABEL[k] || k)}</td>` +
+                           `<td style="text-align:right;font-weight:${v > 0 ? '600' : '400'}">${v ? v.toLocaleString() : '—'}</td></tr>`;
+                }).join('');
+                const html = `
+                    <div style="font-size:12px;min-width:170px">
+                        <div style="font-weight:600;font-size:13px">${escapeHtml(p.vill_name || 'Village')}</div>
+                        <div style="color:#607080;margin-bottom:4px">${swatch}${escapeHtml(p.gp_name || '')}</div>
+                        <table style="width:100%;border-collapse:collapse;font-size:11px">${rows}
+                            <tr style="border-top:1px solid #e3e7eb">
+                                <td style="padding-top:3px;color:#4a5868">Total</td>
+                                <td style="text-align:right;padding-top:3px;font-weight:700">${total.toLocaleString()}</td>
+                            </tr>
+                        </table>
+                    </div>`;
+                layer.bindTooltip(html, { className: 'custom-tooltip', direction: 'top' });
             },
         }).addTo(local.modalMap);
 
@@ -549,6 +582,7 @@
                 ${c.block_coordinator ? '<br>Block coord: <b>' + c.block_coordinator + '</b>' : ''}
             </div>` : ''}
             <ul style="margin: 8px 0 0 18px; padding: 0;">${villages}</ul>
+            ${SHOW_FINALIZE ? `
             <hr style="margin: 8px 0; border: 0; border-top: 1px solid #eee">
             <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                 <button class="cluster-finalize-btn" data-cluster-id="${c.cluster_id}" data-finalized="${c.finalized}"
@@ -564,6 +598,7 @@
                            background: #fff; color: #28537D; font-weight: 700; cursor: pointer;
                            font-size: 13px; line-height: 1;">?</button>
             </div>
+            ` : ''}
         </div>`;
     }
 
@@ -660,6 +695,7 @@
                     closeButton: true,
                     autoPanPadding: [40, 40],
                 });
+                shape.on('click', () => renderClusterSummaryPanel(c));
                 layers.push(shape);
             }
             const m = statusMarker(c);
@@ -703,6 +739,117 @@
         a.classList.toggle('disabled', !local.currentCommodity);
     }
 
+    // ---- Right-side summary panel ----
+
+    const COMMODITY_PANEL_ORDER = [
+        'Dairy', 'Goatery', 'Piggery', 'Backyard_Poultry', 'Duckery', 'Fishery_Activity',
+    ];
+
+    function escapeHtml(s) {
+        return String(s == null ? '' : s)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function renderSidePanelEmpty(msg) {
+        const el = $('cluster-side-panel');
+        if (el) el.innerHTML = `<div class="cluster-side-empty">${escapeHtml(msg || 'Select a block.')}</div>`;
+    }
+
+    function renderBlockSummaryPanel(s) {
+        const el = $('cluster-side-panel');
+        if (!el) return;
+        if (!s || !s.available) {
+            renderSidePanelEmpty(`No SHG form data for ${s && s.block_name ? s.block_name : 'this block'} yet.`);
+            return;
+        }
+        local.lastBlockSummary = s;
+        const row = (label, value, muted) =>
+            `<div class="cluster-side-row${muted ? ' muted' : ''}">
+                <span class="label">${escapeHtml(label)}</span>
+                <span class="value">${escapeHtml(value)}</span>
+            </div>`;
+        const commodityRows = COMMODITY_PANEL_ORDER.map(k => {
+            const label = COMMODITY_LABEL[k] || k.replace(/_/g, ' ');
+            const v = (s.commodities && s.commodities[k]) || 0;
+            return row(label, v.toLocaleString(), v === 0);
+        }).join('');
+        const otherTotal = Object.values(s.other || {}).reduce((a, b) => a + b, 0);
+        const otherRows = Object.entries(s.other || {}).map(([k, v]) =>
+            row(k, v.toLocaleString(), v === 0)).join('');
+        const gpItems = (s.gps || []).map(gp =>
+            `<span class="gp-chip" title="${escapeHtml(gp)}">
+                <span class="gp-swatch" style="background:${colorForGp(gp)}"></span>${escapeHtml(gp)}
+            </span>`).join('');
+        el.innerHTML = `
+            <h3><i class="bi bi-bar-chart-line"></i> ${escapeHtml(s.block_name)}</h3>
+            <div class="cluster-side-sub">${escapeHtml(s.district_name || '')} district</div>
+            <div class="cluster-side-section">Coverage</div>
+            ${row('Villages mapped', s.villages_total.toLocaleString())}
+            ${row('With GPS', s.villages_with_gps.toLocaleString())}
+            ${row('Without GPS', s.villages_without_gps.toLocaleString(), s.villages_without_gps === 0)}
+            ${row('Gram Panchayats', s.gp_count.toLocaleString())}
+            <div class="cluster-side-section" title="Map dots are coloured by GP">Gram Panchayats — dot colours</div>
+            <div class="gp-chip-list">${gpItems || '<div class="cluster-side-empty">No GPs.</div>'}</div>
+            <div class="cluster-side-section">SHG members by commodity</div>
+            ${commodityRows}
+            <details class="cluster-side-other"${otherTotal ? ' open' : ''}>
+                <summary>Other activities (${otherTotal.toLocaleString()})</summary>
+                ${otherRows || '<div class="cluster-side-empty">No data.</div>'}
+            </details>
+            <div class="cluster-side-section">Total members</div>
+            ${row('Across all activities', s.members_total.toLocaleString())}
+        `;
+    }
+
+    function renderClusterSummaryPanel(c) {
+        const el = $('cluster-side-panel');
+        if (!el) return;
+        local.activeClusterId = c && c.cluster_id;
+        const villages = (c.villages || []).map(v =>
+            `<li>${escapeHtml(v.vill_name)} <small>(${(v.members || 0).toLocaleString()} members)</small></li>`).join('');
+        const status = c.finalized
+            ? '<span style="color:#22AD7A; font-weight: 600">Finalised</span>'
+            : '<span style="color:#888">Proposed</span>';
+        const row = (label, value) =>
+            `<div class="cluster-side-row"><span class="label">${escapeHtml(label)}</span><span class="value">${value}</span></div>`;
+        el.innerHTML = `
+            <button type="button" class="cluster-side-back" id="cluster-side-back-btn">
+                <i class="bi bi-arrow-left"></i> Back to block summary
+            </button>
+            <h3><i class="bi bi-diagram-3"></i> ${escapeHtml(c.cluster_id)}</h3>
+            <div class="cluster-side-sub">${escapeHtml(COMMODITY_LABEL[c.commodity] || c.commodity)} · ${escapeHtml(c.block_name)}</div>
+            <div class="cluster-side-section">Cluster</div>
+            ${row('Members', (c.total_members || 0).toLocaleString())}
+            ${row('Villages', (c.villages || []).length.toLocaleString())}
+            ${row('Max span', `${c.max_span_km} km`)}
+            ${row('Status', status)}
+            ${(c.pashu_sakhi || c.block_coordinator) ? `
+                <div class="cluster-side-section">Assigned</div>
+                ${c.pashu_sakhi ? row('Pashu Sakhi', escapeHtml(c.pashu_sakhi)) : ''}
+                ${c.block_coordinator ? row('Block coord', escapeHtml(c.block_coordinator)) : ''}
+            ` : ''}
+            <div class="cluster-side-section">Villages in this cluster</div>
+            <ul style="margin: 4px 0 0 18px; padding: 0; font-size: 12px;">${villages || '<li><i>(none)</i></li>'}</ul>
+        `;
+        const back = $('cluster-side-back-btn');
+        if (back) back.addEventListener('click', () => {
+            local.activeClusterId = null;
+            renderBlockSummaryPanel(local.lastBlockSummary);
+        });
+    }
+
+    async function loadBlockSummary(blockName) {
+        if (!blockName) { renderSidePanelEmpty(); return; }
+        try {
+            const r = await fetch(`/api/blocks/${encodeURIComponent(blockName)}/shg-summary`);
+            const s = await r.json();
+            renderBlockSummaryPanel(s);
+        } catch (e) {
+            console.warn('block summary fetch failed:', e);
+            renderSidePanelEmpty('Could not load summary.');
+        }
+    }
+
     async function loadVillagesForBlock(canonical) {
         setBusy(`Loading villages for ${canonical}…`);
         try {
@@ -743,6 +890,7 @@
             await renderBoundaries();
             await loadVillagesForBlock(canonical);
             renderVillageLayer();
+            loadBlockSummary(canonical);
 
             setTimeout(() => {
                 if (!local.modalMap) return;
@@ -790,6 +938,9 @@
         local.currentBlock = null;
         local.currentCommodity = '';
         local.villageFeatures = null;
+        local.lastBlockSummary = null;
+        local.activeClusterId = null;
+        renderSidePanelEmpty();
     }
 
     // ---- Event handlers ----
