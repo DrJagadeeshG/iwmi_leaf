@@ -842,16 +842,43 @@
             summary.textContent = `${n} villages - pick a commodity to see clusters.`;
             return;
         }
+        // Block-wide interest for this commodity, summed from the village
+        // features already loaded for the map. Same source the clustering
+        // algorithm reads, so the coverage comparison is apples-to-apples.
+        // (The /api/blocks/<x>/shg-summary endpoint uses the separate Kobo
+        // SHG dump which isn't populated for every block, so we don't rely
+        // on it here.) Lets us show the gap Faiz called out on 9 May:
+        // "we have 1749 members but clusters only have 1146".
+        let blockTotal = 0;
+        if (local.villageFeatures && local.villageFeatures.features) {
+            const key = local.currentCommodity;
+            blockTotal = local.villageFeatures.features.reduce((sum, f) => {
+                const n = Number(((f.properties || {})[key]) || 0);
+                return sum + (Number.isFinite(n) ? n : 0);
+            }, 0);
+        }
+        const label = COMMODITY_LABEL[local.currentCommodity] || local.currentCommodity;
         if (!count) {
-            summary.textContent = `No ${COMMODITY_LABEL[local.currentCommodity]} clusters formed at default thresholds. ` +
-                                  'Try Regenerate with relaxed parameters via the API.';
+            const blockBit = blockTotal
+                ? ` Block has ${blockTotal.toLocaleString()} interested member${blockTotal === 1 ? '' : 's'} - all unassigned.`
+                : '';
+            summary.textContent =
+                `No ${label} clusters formed at default thresholds.${blockBit} ` +
+                'Try Regenerate with relaxed parameters via the API.';
             return;
         }
-        const total = (clusters || []).reduce((s, c) => s + (c.total_members || 0), 0);
+        const inClusters = (clusters || []).reduce((s, c) => s + (c.total_members || 0), 0);
         const finalised = (clusters || []).filter(c => c.finalized).length;
+        let coverage = '';
+        if (blockTotal > 0) {
+            const pct = Math.round((inClusters / blockTotal) * 100);
+            const gap = Math.max(0, blockTotal - inClusters);
+            coverage = ` · ${inClusters.toLocaleString()} / ${blockTotal.toLocaleString()} interested (${pct}%, ${gap.toLocaleString()} unassigned)`;
+        } else {
+            coverage = ` · ${inClusters.toLocaleString()} members`;
+        }
         summary.textContent =
-            `${count} ${COMMODITY_LABEL[local.currentCommodity]} cluster${count === 1 ? '' : 's'} · ` +
-            `${total} members · ${finalised} finalised`;
+            `${count} ${label} cluster${count === 1 ? '' : 's'}${coverage} · ${finalised} finalised`;
     }
 
     function updateDownloadHref() {
@@ -1050,7 +1077,15 @@
             <ul style="margin: 4px 0 0 18px; padding: 0; font-size: 13px;">${villages || '<li><i>(none)</i></li>'}</ul>
             <div class="cluster-side-section">Other commodities in these villages</div>
             ${othersHtml}
-            <div class="cluster-side-section">Why this is a cluster</div>
+            <div class="cluster-side-section" style="display:flex; align-items:center; justify-content:space-between;">
+                <span>Why this is a cluster</span>
+                <a href="/documentation/guide/clustering-workflow/#worked-example"
+                   target="_blank" rel="noopener"
+                   data-tooltip-wrap data-tooltip="Open the clustering workflow guide with a worked example"
+                   style="font-size: 11px; font-weight: 500; text-transform: none; letter-spacing: 0; color: #28537D; text-decoration: none;">
+                    Learn more <i class="bi bi-box-arrow-up-right" style="font-size: 10px"></i>
+                </a>
+            </div>
             <ul style="margin: 4px 0 0 18px; padding: 0; font-size: 12px; list-style: none;">
                 ${ruleExplanation(c)}
             </ul>

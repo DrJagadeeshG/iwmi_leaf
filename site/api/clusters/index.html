@@ -1727,6 +1727,10 @@
 <div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>POST /api/clusters/regenerate
 </code></pre></div>
 <p>Runs the algorithm and <strong>replaces</strong> stored clusters within scope. Scope precedence: <code>(block + commodity)</code> &gt; <code>(block)</code> &gt; all blocks / all commodities.</p>
+<div class="admonition warning">
+<p class="admonition-title">Admin-only endpoint</p>
+<p>Pass <code>?admin=1</code> or header <code>X-Admin: 1</code>. The endpoint returns <code>403</code> without it. Regenerate wipes any CSV edits in scope, so it is hidden from the UI for regular users and gated server-side as defense-in-depth (per Faiz, 2026-05-09 call).</p>
+</div>
 <h3 id="request-body">Request Body<a class="headerlink" href="#request-body" title="Permanent link">&para;</a></h3>
 <p>All fields optional; missing parameters fall back to <code>/api/clusters/params</code> defaults.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span>
@@ -1750,18 +1754,21 @@
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">cURL</label><label for="__tabbed_1_2">Python</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>https://iwmi-leaf.onrender.com/api/clusters/regenerate<span class="w"> </span><span class="se">\</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a>curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span><span class="s2">&quot;https://iwmi-leaf.onrender.com/api/clusters/regenerate?admin=1&quot;</span><span class="w"> </span><span class="se">\</span>
 <a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="w">     </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">     </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;block&quot;: &quot;KHOWANG&quot;, &quot;commodity&quot;: &quot;Goatery&quot;}&#39;</span>
+<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">     </span>-H<span class="w"> </span><span class="s2">&quot;X-Admin: 1&quot;</span><span class="w"> </span><span class="se">\</span>
+<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="w">     </span>-d<span class="w"> </span><span class="s1">&#39;{&quot;block&quot;: &quot;KHOWANG&quot;, &quot;commodity&quot;: &quot;Goatery&quot;}&#39;</span>
 </code></pre></div>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>    <span class="s2">&quot;https://iwmi-leaf.onrender.com/api/clusters/regenerate&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;block&quot;</span><span class="p">:</span> <span class="s2">&quot;KHOWANG&quot;</span><span class="p">,</span> <span class="s2">&quot;max_radius_km&quot;</span><span class="p">:</span> <span class="mf">4.0</span><span class="p">},</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="p">)</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a><span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;count&quot;</span><span class="p">],</span> <span class="s2">&quot;clusters&quot;</span><span class="p">)</span>
+<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>    <span class="n">params</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;admin&quot;</span><span class="p">:</span> <span class="s2">&quot;1&quot;</span><span class="p">},</span>
+<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;X-Admin&quot;</span><span class="p">:</span> <span class="s2">&quot;1&quot;</span><span class="p">},</span>
+<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="n">json</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;block&quot;</span><span class="p">:</span> <span class="s2">&quot;KHOWANG&quot;</span><span class="p">,</span> <span class="s2">&quot;max_radius_km&quot;</span><span class="p">:</span> <span class="mf">4.0</span><span class="p">},</span>
+<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a><span class="p">)</span>
+<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s2">&quot;count&quot;</span><span class="p">],</span> <span class="s2">&quot;clusters&quot;</span><span class="p">)</span>
 </code></pre></div>
 </div>
 </div>
@@ -1803,6 +1810,7 @@
 </tbody>
 </table>
 <h3 id="csv-columns">CSV Columns<a class="headerlink" href="#csv-columns" title="Permanent link">&para;</a></h3>
+<p>Schema simplified per Faiz (2026-05-09 call): lat/long dropped, sequential cluster number added.</p>
 <table>
 <thead>
 <tr>
@@ -1811,6 +1819,10 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><code>cluster_num</code></td>
+<td>Display-only sequence number (1, 2, 3...) within the <code>(block, commodity)</code> scope. Ignored on upload.</td>
+</tr>
 <tr>
 <td><code>cluster_id</code></td>
 <td>Server-assigned ID. Reuse for round-trip; new clusters can be added with any string.</td>
@@ -1824,12 +1836,8 @@
 <td>Parent district / block.</td>
 </tr>
 <tr>
-<td><code>vill_name</code>, <code>gp_name</code></td>
-<td>Village identification.</td>
-</tr>
-<tr>
-<td><code>lat</code>, <code>long</code></td>
-<td>WGS84 coordinates.</td>
+<td><code>gp_name</code>, <code>vill_name</code></td>
+<td>Village identification. <code>vill_name</code> must match the village master for the named block (lat/long is looked up from there on upload).</td>
 </tr>
 <tr>
 <td><code>members</code></td>
@@ -1845,6 +1853,7 @@
 </tr>
 </tbody>
 </table>
+<p>Legacy <code>lat</code> / <code>long</code> columns are still accepted on upload (if present they override the master lookup), so older CSVs continue to round-trip.</p>
 <hr />
 <h2 id="import-clusters-from-csv">Import Clusters from CSV<a class="headerlink" href="#import-clusters-from-csv" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>POST /api/clusters/import?block=&lt;block&gt;[&amp;commodity=&lt;commodity&gt;]

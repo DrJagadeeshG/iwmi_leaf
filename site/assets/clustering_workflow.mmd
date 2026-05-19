@@ -1,0 +1,51 @@
+flowchart TD
+    Start([User opens clustering workspace]) --> Entry["/clustering<br/>or /district/block/clustering"]
+
+    Entry --> Pick["Pick block + commodity<br/>Dairy / Goatery / Piggery /<br/>Backyard Poultry / Duckery / Fishery"]
+
+    Pick --> Params["Adjust parameters<br/>min/max members per cluster<br/>min/max villages per cluster<br/>max radius (km)<br/>min members per village"]
+
+    Params --> Call["GET /api/clusters<br/>?block=...&commodity=...&params=..."]
+
+    Call --> Algo
+
+    subgraph Algo ["Seed-and-grow algorithm (clustering.py)"]
+        A1["Filter villages<br/>where commodity_count ≥ min"] --> A2["Sort villages by<br/>member count, descending"]
+        A2 --> A3["Take biggest unassigned<br/>village → SEED a cluster"]
+        A3 --> A4["Find nearest unassigned village<br/>that passes 4 checks:<br/>1 within radius of seed<br/>2 max pairwise distance OK<br/>3 total members ≤ max<br/>4 village count ≤ max"]
+        A4 --> A5{Any village fits?}
+        A5 -->|Yes| A6["Add it<br/>mark assigned"] --> A4
+        A5 -->|No / limits hit| A7["Stop growing this cluster"]
+        A7 --> A8{Cluster meets minimums?<br/>members ≥ 30<br/>villages ≥ 2}
+        A8 -->|No| A9["Discard cluster<br/>release villages back"]
+        A9 --> A10
+        A8 -->|Yes| A11["Finalize:<br/>compute centroid<br/>compute max span<br/>generate cluster_id<br/>save Cluster object"]
+        A11 --> A10
+        A10{More unassigned villages?}
+        A10 -->|Yes| A3
+        A10 -->|No| A12["Return list of clusters"]
+    end
+
+    Algo --> Map["Map renders clusters<br/>village pins + centroids<br/>convex hulls<br/>color per cluster"]
+
+    Map --> Decide{Happy with the result?}
+    Decide -->|No, tweak| Params
+    Decide -->|Yes| Pick2["Click a cluster on map"]
+
+    Pick2 --> Action{What next?}
+
+    Action -->|Find nearest infra| Infra["GET /api/infrastructure/nearest<br/>?cluster_id=...<br/>milk plants, vet clinics,<br/>markets, AI centers"]
+    Action -->|Download report| Report["GET /api/clusters/cluster_id/report<br/>per-cluster PDF/CSV"]
+    Action -->|Export all| Export["GET /api/clusters/export.csv<br/>full block export"]
+    Action -->|Finalize| Finalize["POST /api/clusters/cluster_id/finalize<br/>locks the cluster<br/>persists to Postgres"]
+
+    Finalize --> Prod["Cluster appears in<br/>Production-Tool Dashboard<br/>/api/production-tool/clusters"]
+
+    Prod --> Field["Field team workflow:<br/>Pashu Sakhi assigned<br/>Block Coordinator notified<br/>weekly progress tracked<br/>POST /api/production-tool/dashboard/cluster_id"]
+
+    Field --> Done([Cluster operational])
+
+    PreCheck["⚠️ DATA-QUALITY GATE<br/>SHG GPS duplicate report<br/>(must run before clustering<br/>output is trustworthy)<br/>Garbage GPS → garbage clusters"]:::warn
+    PreCheck -.feeds clean lat/long.-> A1
+
+    classDef warn fill:#ffe9c7,stroke:#c47a00,color:#5a3a00,font-weight:bold

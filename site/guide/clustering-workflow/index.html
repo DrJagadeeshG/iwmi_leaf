@@ -895,6 +895,48 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="4. Clustering - what the algorithm does">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pass-a-single-village-clusters-pre-pass" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pass A - Single-village clusters (pre-pass)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pass-b-greedy-seed-and-grow-main-pass" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pass B - Greedy seed-and-grow (main pass)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pass-c-orphan-merge-post-pass" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pass C - Orphan merge (post-pass)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4a-worked-example-khowang-goatery-cluster-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      4a. Worked example - KHOWANG / Goatery / Cluster 1
+    </span>
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1142,6 +1184,48 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="4. Clustering - what the algorithm does">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#pass-a-single-village-clusters-pre-pass" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pass A - Single-village clusters (pre-pass)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pass-b-greedy-seed-and-grow-main-pass" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pass B - Greedy seed-and-grow (main pass)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pass-c-orphan-merge-post-pass" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pass C - Orphan merge (post-pass)
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4a-worked-example-khowang-goatery-cluster-1" class="md-nav__link">
+    <span class="md-ellipsis">
+      4a. Worked example - KHOWANG / Goatery / Cluster 1
+    </span>
+  </a>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1376,16 +1460,111 @@
 <p>The block scale is where the real work happens: village dots, optionally tinted by member count, with cluster groupings drawn around them.</p>
 <hr />
 <h2 id="4-clustering-what-the-algorithm-does">4. Clustering - what the algorithm does<a class="headerlink" href="#4-clustering-what-the-algorithm-does" title="Permanent link">&para;</a></h2>
-<p>The full step-by-step is on the <a href="../../api/clusters/#how-clustering-works">Clusters API page</a>. Summary:</p>
+<p>The pipeline runs in three passes. Each addresses an edge case the previous one creates.</p>
+<h3 id="pass-a-single-village-clusters-pre-pass">Pass A - Single-village clusters (pre-pass)<a class="headerlink" href="#pass-a-single-village-clusters-pre-pass" title="Permanent link">&para;</a></h3>
+<p>Before the greedy loop, any village whose member count for the commodity is already at or above <code>max_cluster_members</code> is emitted as its <strong>own one-village cluster</strong>. This bypasses both the "minimum 2 villages" rule and the upper member cap.</p>
+<p>Why: a 274-member dairy village cannot be paired with any neighbour without busting the 50-member cap, so the old greedy loop would silently drop it. After this pass, large standalone villages stay in the output as singletons.</p>
+<h3 id="pass-b-greedy-seed-and-grow-main-pass">Pass B - Greedy seed-and-grow (main pass)<a class="headerlink" href="#pass-b-greedy-seed-and-grow-main-pass" title="Permanent link">&para;</a></h3>
+<p>For the remaining (unassigned) villages:</p>
 <ol>
-<li>Filter villages with ≥1 member interested in the commodity.</li>
-<li>Sort big-first.</li>
-<li>Seed the next cluster with the biggest unassigned village; greedily add nearest neighbours that fit <strong>all</strong> four constraints: ≤ 5 km from the seed, ≤ 5 km max pairwise span, total members ≤ 50, ≤ 4 villages.</li>
-<li>Discard the cluster if it ends up under floors (&lt; 30 members or &lt; 2 villages); release its villages back to the pool.</li>
-<li>Repeat for the next seed; then repeat for the next commodity.</li>
+<li>Filter villages with ≥ <code>min_members_per_village</code> for the commodity.</li>
+<li>Sort big-first by member count.</li>
+<li>Seed the next cluster with the biggest unassigned village; greedily add nearest neighbours that fit <strong>all</strong> four constraints: ≤ <code>max_radius_km</code> from the seed, ≤ <code>max_radius_km</code> max pairwise span, total members ≤ <code>max_cluster_members</code>, ≤ <code>max_villages_per_cluster</code> villages.</li>
+<li>Discard the cluster if it ends up under floors (&lt; <code>min_cluster_members</code> or &lt; <code>min_villages_per_cluster</code>); release its villages back to the pool.</li>
+<li>Repeat for the next seed.</li>
 </ol>
+<h3 id="pass-c-orphan-merge-post-pass">Pass C - Orphan merge (post-pass)<a class="headerlink" href="#pass-c-orphan-merge-post-pass" title="Permanent link">&para;</a></h3>
+<p>Any village still unassigned after Pass B is merged into the <strong>nearest existing cluster within <code>2 * max_radius_km</code></strong> of the cluster's centroid. Soft cap: the merged cluster's total cannot exceed <code>3 * max_cluster_members</code>, so a flood of nearby orphans cannot inflate a cluster without bound.</p>
+<p>The merged cluster keeps its original <code>cluster_id</code>, <code>pashu_sakhi</code>, and <code>block_coordinator</code>; centroid, span, and total are recomputed. Orphans that cannot find any cluster within reach stay unassigned (and don't appear in the cluster output - they are still visible as village dots on the map).</p>
+<hr />
 <p>Block boundary is a hard wall - clusters never span two blocks. Each commodity is clustered independently, so one village can sit in many clusters (one per commodity it has interested members in).</p>
-<p>Trigger: <a href="../../api/clusters/#regenerate-clusters"><code>POST /api/clusters/regenerate</code></a> with <code>{block, commodity, ...overrides}</code>. Empty overrides = government defaults (30-50 members, 2-4 villages, 5 km, ≥1 member/village).</p>
+<p>Trigger: <a href="../../api/clusters/#regenerate-clusters"><code>POST /api/clusters/regenerate</code></a> with <code>{block, commodity, ...overrides}</code>. Admin-only - pass <code>?admin=1</code> or the <code>X-Admin: 1</code> header. Empty overrides = government defaults (30-50 members, 2-4 villages, 5 km, ≥1 member/village).</p>
+<p>Worth noting: a GET on <a href="../../api/clusters/"><code>/api/clusters?block=&lt;X&gt;&amp;commodity=&lt;Y&gt;</code></a> now <strong>lazily materialises</strong> clusters the first time a <code>(block, commodity)</code> scope is queried, so a fresh block doesn't need an explicit Regenerate to populate.</p>
+<hr />
+<p><a id="worked-example"></a></p>
+<h2 id="4a-worked-example-khowang-goatery-cluster-1">4a. Worked example - KHOWANG / Goatery / Cluster 1<a class="headerlink" href="#4a-worked-example-khowang-goatery-cluster-1" title="Permanent link">&para;</a></h2>
+<p>A concrete cluster from the current pilot data:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Block</td>
+<td>KHOWANG (DIBRUGARH)</td>
+</tr>
+<tr>
+<td>Commodity</td>
+<td>Goatery</td>
+</tr>
+<tr>
+<td><code>cluster_num</code></td>
+<td>1 (sequential, 1..N within the block-commodity scope)</td>
+</tr>
+<tr>
+<td><code>cluster_id</code></td>
+<td><code>KHOWANG-Goatery-02b1321b</code> (stable hash; reuse in CSV round-trips)</td>
+</tr>
+<tr>
+<td>Total members</td>
+<td>35</td>
+</tr>
+<tr>
+<td>Villages</td>
+<td>3</td>
+</tr>
+<tr>
+<td>Max pairwise span</td>
+<td>1.398 km</td>
+</tr>
+</tbody>
+</table>
+<p>The "Why this is a cluster" panel walks through each check using these numbers:</p>
+<table>
+<thead>
+<tr>
+<th>Rule</th>
+<th>Default range</th>
+<th>This cluster</th>
+<th>Outcome</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Total members in funding band</td>
+<td>30 – 50</td>
+<td><strong>35</strong></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Village count in 2 – 4</td>
+<td>2 – 4</td>
+<td><strong>3</strong></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Max pairwise span ≤ radius cap</td>
+<td>≤ 5 km</td>
+<td><strong>1.398 km</strong></td>
+<td>✓</td>
+</tr>
+<tr>
+<td>Every village has ≥ 1 interested member</td>
+<td>≥ 1</td>
+<td>smallest is <strong>8</strong></td>
+<td>✓</td>
+</tr>
+</tbody>
+</table>
+<p>Now contrast with two edge cases captured by Passes A and C:</p>
+<ul>
+<li><strong>Pass A example.</strong> If one Goatery village in a block had 274 interested members, Pass B would have rejected it (any neighbour would push the total past 50). Pass A produces a one-village cluster with <code>total_members = 274</code>, <code>village_count = 1</code>, <code>max_span_km = 0</code>. The "Why this is a cluster" panel flags the member-band check as <code>!</code> rather than <code>✓</code> and the comment in the cluster popup notes the single-village exception.</li>
+<li><strong>Pass C example.</strong> A 4-member Goatery village far from any seed is dropped by Pass B (would form a 4-member sub-floor cluster on its own). Pass C asks: is there a cluster centroid within <code>2 * 5 = 10 km</code>? If yes, the village is appended to that cluster and <code>total_members</code> jumps by 4. If no, the village is left unassigned and only shown as a dot.</li>
+</ul>
+<p>The whole cycle is visible in the Cluster Planning workspace - pick KHOWANG, Goatery, hover a ring to see the count, click for the rules panel.</p>
 <hr />
 <h2 id="5-edit-cycle-csv-download-edit-re-upload">5. Edit cycle (CSV download → edit → re-upload)<a class="headerlink" href="#5-edit-cycle-csv-download-edit-re-upload" title="Permanent link">&para;</a></h2>
 <p>Per Faiz's call: <em>"we're not going to give them an interface to change it. The same way we have done our backend data upload thing."</em> The proposed clusters from the algorithm are a starting point - block coordinators can override them based on local knowledge (a mountain between two villages, social tension, road conditions) by editing a CSV and re-uploading.</p>
@@ -1500,8 +1679,16 @@
 <td>Pick one of the six commodities. Defaults to "Show villages only".</td>
 </tr>
 <tr>
-<td><strong>Cluster polygons</strong></td>
-<td>Coloured polygons (or thick lines for 2-village clusters) - colours just distinguish adjacent clusters, no semantic meaning.</td>
+<td><strong>Cluster ring</strong></td>
+<td>Single neutral-blue <strong>containment circle</strong> centered on the cluster centroid. Radius bounds all member villages with a small padding. One colour for every cluster; identity comes from the number, not the colour. Overlaps between rings are expected.</td>
+</tr>
+<tr>
+<td><strong>Cluster numbering</strong></td>
+<td>Each cluster gets a sequential <code>cluster_num</code> (1, 2, 3...) within the <code>(block, commodity)</code> scope. The hash <code>cluster_id</code> is kept as a faint subtitle for CSV cross-reference.</td>
+</tr>
+<tr>
+<td><strong>Cluster search pill</strong> (toolbar)</td>
+<td>Type a cluster number or hash. Live border colour for match / no-match; Enter pans, opens the popup, and flashes the ring stroke. Esc clears.</td>
 </tr>
 <tr>
 <td><strong>Centroid ✓ marker</strong></td>
@@ -1509,15 +1696,23 @@
 </tr>
 <tr>
 <td><strong>Cluster popup</strong> (on click)</td>
-<td>Cluster ID, members, span, village list, status, <strong>Finalise &amp; publish</strong> / <strong>Unfinalise</strong> button.</td>
+<td>Cluster number + ID, members, span, village list, status, <strong>Finalise &amp; publish</strong> / <strong>Unfinalise</strong> button.</td>
+</tr>
+<tr>
+<td><strong>Side panel - cluster summary</strong></td>
+<td>Members, villages, max span, status, assigned Pashu Sakhi / block coordinator, the full village list, <strong>Other commodities in these villages</strong> (aggregated from the same village set), and <strong>Why this is a cluster</strong> with a tick or <code>!</code> per rule.</td>
 </tr>
 <tr>
 <td><strong>Toolbar - <code>Map key</code></strong></td>
-<td>Decodes polygon colours and the ✓ marker.</td>
+<td>Decodes the ring, village dot size, and the ✓ marker.</td>
 </tr>
 <tr>
-<td><strong>Toolbar - <code>Download CSV</code> / <code>Upload CSV</code> / <code>Regenerate</code></strong></td>
+<td><strong>Toolbar - <code>Download CSV</code> / <code>Upload CSV</code></strong></td>
 <td>The edit cycle for the current scope (block + commodity).</td>
+</tr>
+<tr>
+<td><strong>Toolbar - <code>Regenerate</code></strong></td>
+<td>Admin-only. Hidden by default; appears when <code>?admin=1</code> is in the URL or <code>localStorage.leaf_admin=1</code>. The POST endpoint itself returns <code>403</code> without the same flag.</td>
 </tr>
 <tr>
 <td><strong><code>?</code> button in the header</strong></td>

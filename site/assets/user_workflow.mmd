@@ -1,0 +1,59 @@
+flowchart TD
+    Start([User opens website]) --> Landing["/  — Main Dashboard<br/>Map of Assam, all districts shown"]
+
+    Landing --> Choose{What does the user want?}
+    Choose -->|Explore data| Drill
+    Choose -->|Plan clusters| Cluster
+    Choose -->|Refresh source data| Update
+    Choose -->|Read docs| Docs["/documentation/<br/>MkDocs site"]
+
+    subgraph Drill ["Drill-down exploration"]
+        D1["Click a district on map<br/>→ /district"] --> D2["See all blocks in district<br/>color-coded by feasibility"]
+        D2 --> D3["Click a block<br/>→ /district/block"]
+        D3 --> D4["Block detail<br/>variable charts, GPs inside"]
+        D4 --> D5["Click a GP<br/>→ /district/block/gp"]
+        D5 --> D6["GP-level data<br/>villages, indicators"]
+    end
+
+    Drill --> Filters["Apply filters & weights<br/>(side panel)"]
+    Filters --> Calc["POST /api/calculate-feasibility<br/>or /api/gp/calculate-feasibility"]
+    Calc --> ColorMap["Map recolors:<br/>High / Medium / Low feasibility"]
+
+    ColorMap --> NextAction{Next?}
+    NextAction -->|Get AI advice| AI["POST /api/ai-recommendation<br/>RAG over docs + current filters"]
+    AI --> AIOut["Recommendation text<br/>+ suggested interventions"]
+    NextAction -->|Export| Export["POST /api/export/csv<br/>download filtered dataset"]
+    NextAction -->|Move to clustering| Cluster
+    NextAction -->|Keep exploring| Drill
+
+    subgraph Cluster ["Cluster planning workspace"]
+        C1["/clustering or<br/>/district/block/clustering"] --> C2["Pick block + commodity<br/>(Dairy, Goatery, ...)"]
+        C2 --> C3["Adjust params:<br/>min/max members, villages, radius"]
+        C3 --> C4["GET /api/clusters<br/>seed-and-grow algorithm runs"]
+        C4 --> C5["Map shows clusters<br/>+ village pins + centroids"]
+        C5 --> C6{Happy with result?}
+        C6 -->|No| C3
+        C6 -->|Yes| C7["Pick a cluster"]
+        C7 --> C8{Action?}
+        C8 -->|Find nearest infra| C9["GET /api/infrastructure/nearest<br/>milk plants, vet clinics, markets"]
+        C8 -->|Download report| C10["GET /api/clusters/cluster_id/report"]
+        C8 -->|Finalize| C11["POST /api/clusters/cluster_id/finalize"]
+        C11 --> C12["Cluster locked<br/>handed to production-tool"]
+    end
+
+    C12 --> Prod["/api/production-tool/clusters<br/>dashboard for field team<br/>(Pashu Sakhi / Block Coordinator)"]
+    Prod --> End([Cluster ready for execution])
+
+    subgraph Update ["Source data update"]
+        U1["/update"] --> U2["Edit Google Sheets<br/>(block values, intervention defs)"]
+        U2 --> U3["POST /api/config/refresh<br/>re-pull sheet contents"]
+        U3 --> U4["GET /api/config/sheets-status<br/>verify ingestion"]
+    end
+    U4 --> Landing
+
+    Docs --> Landing
+
+    PreCheck["Pre-check: SHG GPS duplicate report<br/>(must run before clustering is trustworthy)"]:::warn
+    PreCheck -.feeds clean lat/long.-> C4
+
+    classDef warn fill:#ffe9c7,stroke:#c47a00,color:#5a3a00
