@@ -239,7 +239,19 @@ def get_clusters(
         cur.execute(sql, params)
         rows = cur.fetchall()
     villages_map = _fetch_villages([r["cluster_id"] for r in rows])
-    return [_row_to_cluster(r, villages_map.get(r["cluster_id"], [])) for r in rows]
+    clusters = [_row_to_cluster(r, villages_map.get(r["cluster_id"], [])) for r in rows]
+    # Sequential numbering per (block, commodity) for the left-panel display
+    # and the CSV. Restarts each group; rows are already ordered by
+    # (block_name, commodity, cluster_id). Display-only - not persisted.
+    n, last_key = 0, None
+    for c in clusters:
+        key = (c.get("block_name"), c.get("commodity"))
+        if key != last_key:
+            n, last_key = 1, key
+        else:
+            n += 1
+        c["cluster_num"] = n
+    return clusters
 
 
 def get_cluster(cluster_id: str) -> Optional[Dict]:
@@ -249,7 +261,17 @@ def get_cluster(cluster_id: str) -> Optional[Dict]:
     if row is None:
         return None
     villages_map = _fetch_villages([cluster_id])
-    return _row_to_cluster(row, villages_map.get(cluster_id, []))
+    c = _row_to_cluster(row, villages_map.get(cluster_id, []))
+    # Derive cluster_num by counting earlier clusters in the same scope so
+    # single-cluster lookups match the numbering used in the list/CSV.
+    with get_cursor(commit=False) as cur:
+        cur.execute(
+            "SELECT COUNT(*) AS n FROM clusters "
+            "WHERE block_name = %s AND commodity = %s AND cluster_id < %s",
+            (c.get("block_name"), c.get("commodity"), cluster_id),
+        )
+        c["cluster_num"] = int(cur.fetchone()["n"]) + 1
+    return c
 
 
 def _delete_clusters(cur, block_name: Optional[str] = None, commodity: Optional[str] = None) -> None:
@@ -396,53 +418,126 @@ def set_cluster_dashboard(cluster_id: str, payload: Dict) -> Optional[Dict]:
     return get_cluster(cluster_id)
 
 
+_CSV_COLUMNS = [
+    "cluster_num", "cluster_id", "commodity", "district_name", "block_name",
+    "gp_name", "vill_name", "members", "pashu_sakhi", "block_coordinator",
+]
+
+
 def clusters_to_csv(clusters: List[Dict]) -> str:
-    """Flatten clusters to a row-per-village CSV string for download/edit/upload."""
+    """Flatten clusters to a row-per-village CSV string for download/edit/upload.
+
+    Schema per Faiz (2026-05-09): cluster_num + cluster_id, then district /
+    block / GP / village / members and the assignment fields. Lat/long are
+    omitted - they're recomputed on upload by looking up the village master.
+    """
     rows = []
     for c in clusters:
         for v in c.get("villages", []):
             rows.append({
+                "cluster_num": c.get("cluster_num"),
                 "cluster_id": c.get("cluster_id"),
                 "commodity": c.get("commodity"),
                 "district_name": c.get("district_name"),
                 "block_name": c.get("block_name"),
-                "vill_name": v.get("vill_name"),
                 "gp_name": v.get("gp_name"),
-                "lat": v.get("lat"),
-                "long": v.get("long"),
+                "vill_name": v.get("vill_name"),
                 "members": v.get("members"),
                 "pashu_sakhi": c.get("pashu_sakhi"),
                 "block_coordinator": c.get("block_coordinator"),
             })
     if not rows:
-        return ("cluster_id,commodity,district_name,block_name,vill_name,gp_name,"
-                "lat,long,members,pashu_sakhi,block_coordinator\n")
-    df = pd.DataFrame(rows)
+        return ",".join(_CSV_COLUMNS) + "\n"
+    df = pd.DataFrame(rows, columns=_CSV_COLUMNS)
     return df.to_csv(index=False)
 
 
+def _village_coord_lookup(block_name: Optional[str]) -> Dict[str, Dict[str, float]]:
+    """Build {vill_name_upper: {lat, long, gp_name}} from the village master,
+    scoped to a block when given. Used by csv_text_to_records to backfill
+    lat/long when the uploaded CSV omits them (current schema)."""
+    try:
+        df = load_villages()
+    except FileNotFoundError:
+        return {}
+    if block_name and "block_name" in df.columns:
+        df = df[df["block_name"].astype(str).str.upper() == str(block_name).upper()]
+    out: Dict[str, Dict[str, float]] = {}
+    for _, r in df.iterrows():
+        name = r.get("vill_name")
+        if not isinstance(name, str) or not name.strip():
+            continue
+        try:
+            lat = float(r.get("lat"))
+            lon = float(r.get("long"))
+        except (TypeError, ValueError):
+            continue
+        out[name.strip().upper()] = {
+            "lat": lat, "long": lon, "gp_name": r.get("gp_name"),
+        }
+    return out
+
+
 def csv_text_to_records(csv_text: str) -> List[Dict]:
-    """Parse a clusters CSV (row-per-village) back into nested cluster records."""
+    """Parse a clusters CSV (row-per-village) back into nested cluster records.
+
+    Accepts the current schema (no lat/long) and the legacy schema (with
+    lat/long). When lat/long are absent, looks them up from the village master
+    by (block_name, vill_name). Unknown villages produce a ValueError so the
+    upload fails fast and the user sees which row needs attention.
+    """
     from io import StringIO
     df = pd.read_csv(StringIO(csv_text))
     df.columns = [c.strip() for c in df.columns]
+
+    has_coords = "lat" in df.columns and "long" in df.columns
+    # Build lookup once per block referenced in the CSV; small N (one block
+    # per upload in practice), so keyed by block name is fine.
+    coord_cache: Dict[str, Dict[str, Dict[str, float]]] = {}
+
     records: Dict[str, Dict] = {}
+    missing: List[str] = []
     for _, row in df.iterrows():
         cid = str(row["cluster_id"])
+        block = row.get("block_name")
+        vill = row.get("vill_name")
         rec = records.setdefault(cid, {
             "cluster_id": cid,
             "commodity": row.get("commodity"),
             "district_name": row.get("district_name"),
-            "block_name": row.get("block_name"),
+            "block_name": block,
             "villages": [],
             "pashu_sakhi": row.get("pashu_sakhi") if pd.notna(row.get("pashu_sakhi")) else None,
             "block_coordinator": row.get("block_coordinator") if pd.notna(row.get("block_coordinator")) else None,
         })
+
+        lat = lon = None
+        if has_coords and pd.notna(row.get("lat")) and pd.notna(row.get("long")):
+            lat = float(row["lat"])
+            lon = float(row["long"])
+        else:
+            key = str(block) if pd.notna(block) else ""
+            if key not in coord_cache:
+                coord_cache[key] = _village_coord_lookup(key or None)
+            hit = coord_cache[key].get(str(vill).strip().upper()) if isinstance(vill, str) else None
+            if hit:
+                lat, lon = hit["lat"], hit["long"]
+            else:
+                missing.append(f"{block} / {vill}")
+
         rec["villages"].append({
-            "vill_name": row.get("vill_name"),
+            "vill_name": vill,
             "gp_name": row.get("gp_name"),
-            "lat": float(row["lat"]),
-            "long": float(row["long"]),
+            "lat": lat,
+            "long": lon,
             "members": int(row["members"]) if pd.notna(row.get("members")) else 0,
         })
+
+    if missing:
+        sample = ", ".join(missing[:5])
+        extra = "" if len(missing) <= 5 else f" (and {len(missing) - 5} more)"
+        raise ValueError(
+            f"Could not resolve lat/long for {len(missing)} village(s): {sample}{extra}. "
+            "Either include lat/long columns in the CSV or use vill_name values that match the village master."
+        )
     return list(records.values())

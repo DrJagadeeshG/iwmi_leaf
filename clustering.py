@@ -124,6 +124,47 @@ def cluster_block_commodity(
     assigned = [False] * len(candidates)
     clusters: List[Cluster] = []
 
+    def _emit_cluster(idxs: List[int]) -> Cluster:
+        """Build a Cluster from a list of candidate indices. Used by the main
+        loop and by the single-village / orphan-merge passes."""
+        cluster_coords = [coords[k] for k in idxs]
+        c_lat = sum(c[0] for c in cluster_coords) / len(cluster_coords)
+        c_lon = sum(c[1] for c in cluster_coords) / len(cluster_coords)
+        villages = []
+        for k in idxs:
+            row = candidates.iloc[k]
+            villages.append({
+                "vill_name": str(row["vill_name"]),
+                "gp_name": str(row["gp_name"]),
+                "lat": float(row["lat"]),
+                "long": float(row["long"]),
+                "members": int(row[commodity]),
+            })
+        return Cluster(
+            cluster_id=f"{block_name}-{commodity}-{uuid.uuid4().hex[:8]}",
+            commodity=commodity,
+            block_name=block_name,
+            district_name=district_name,
+            village_indices=[int(candidates.index[k]) for k in idxs],
+            villages=villages,
+            total_members=int(sum(members[k] for k in idxs)),
+            max_span_km=round(_max_pairwise_km(cluster_coords), 3),
+            centroid_lat=round(c_lat, 6),
+            centroid_lon=round(c_lon, 6),
+        )
+
+    # Pre-pass (Faiz 2026-05-09, #18): a single village can already meet or
+    # exceed the funding band on its own (e.g. 274 members of dairy interest
+    # against a 30-50 default band). Without this exception the greedy loop
+    # rejects them because adding any neighbour blows max_cluster_members.
+    # Treat them as standalone clusters before the main pass runs.
+    for i in seed_order:
+        if assigned[i]:
+            continue
+        if members[i] >= p["max_cluster_members"]:
+            clusters.append(_emit_cluster([i]))
+            assigned[i] = True
+
     for seed in seed_order:
         if assigned[seed]:
             continue
@@ -166,31 +207,48 @@ def cluster_block_commodity(
                 assigned[k] = False
             continue
 
-        cluster_coords = [coords[k] for k in idxs]
-        c_lat = sum(c[0] for c in cluster_coords) / len(cluster_coords)
-        c_lon = sum(c[1] for c in cluster_coords) / len(cluster_coords)
-        villages = []
-        for k in idxs:
-            row = candidates.iloc[k]
-            villages.append({
-                "vill_name": str(row["vill_name"]),
-                "gp_name": str(row["gp_name"]),
-                "lat": float(row["lat"]),
-                "long": float(row["long"]),
-                "members": int(row[commodity]),
-            })
-        clusters.append(Cluster(
-            cluster_id=f"{block_name}-{commodity}-{uuid.uuid4().hex[:8]}",
-            commodity=commodity,
-            block_name=block_name,
-            district_name=district_name,
-            village_indices=[int(candidates.index[k]) for k in idxs],
-            villages=villages,
-            total_members=int(total),
-            max_span_km=round(_max_pairwise_km(cluster_coords), 3),
-            centroid_lat=round(c_lat, 6),
-            centroid_lon=round(c_lon, 6),
-        ))
+        clusters.append(_emit_cluster(idxs))
+
+    # Post-pass (Faiz 2026-05-09, #19): orphan villages that the main loop
+    # left unassigned (typically tiny isolated counts) get merged into the
+    # nearest existing cluster within 2x max_radius_km. Faiz's framing: small
+    # outliers shouldn't be silently dropped - either absorb them or surface
+    # them. We absorb, with a soft cap (3x max_cluster_members) so a flood of
+    # nearby orphans can't blow a cluster up indefinitely.
+    soft_cap = 3 * p["max_cluster_members"]
+    merge_radius_km = 2 * p["max_radius_km"]
+    for i in range(len(candidates)):
+        if assigned[i]:
+            continue
+        v_lat, v_lon = coords[i]
+        best_c, best_d = None, float("inf")
+        for c in clusters:
+            d = haversine_km(v_lat, v_lon, c.centroid_lat, c.centroid_lon)
+            if d > merge_radius_km:
+                continue
+            if c.total_members + members[i] > soft_cap:
+                continue
+            if d < best_d:
+                best_d = d
+                best_c = c
+        if best_c is None:
+            continue
+        # Re-emit the cluster with the orphan appended; cheaper than mutating
+        # the dataclass in place and keeps centroid/span derivations in one
+        # spot. Original index list survives via village_indices.
+        orig_idxs = [candidates.index.get_loc(idx) for idx in best_c.village_indices]
+        new_idxs = orig_idxs + [i]
+        merged = _emit_cluster(new_idxs)
+        # Preserve the original cluster_id so downstream consumers don't see
+        # the orphan absorption as a "different" cluster.
+        merged.cluster_id = best_c.cluster_id
+        merged.pashu_sakhi = best_c.pashu_sakhi
+        merged.block_coordinator = best_c.block_coordinator
+        for j, existing in enumerate(clusters):
+            if existing is best_c:
+                clusters[j] = merged
+                break
+        assigned[i] = True
 
     return clusters
 

@@ -14,6 +14,19 @@
     // to true after the demo to restore the production-tool publication path.
     const SHOW_FINALIZE = false;
 
+    // Admin-only surfaces (2026-05-09 call): Regenerate wipes user edits and
+    // confused Faiz in the demo, so it's hidden from regular users. Devs can
+    // still get to it via /?admin=1 or by setting localStorage.leaf_admin=1.
+    // The API itself also rejects non-admin POSTs, so this isn't just cosmetic.
+    const IS_ADMIN = (() => {
+        try {
+            const qs = new URLSearchParams(window.location.search);
+            if (qs.get('admin') === '1') return true;
+            if (window.localStorage && window.localStorage.getItem('leaf_admin') === '1') return true;
+        } catch (e) {}
+        return false;
+    })();
+
     const COMMODITY_LABEL = {
         Dairy: 'Dairy',
         Goatery: 'Goatery',
@@ -520,10 +533,10 @@
                            `<td style="text-align:right;font-weight:${v > 0 ? '600' : '400'}">${v ? v.toLocaleString() : '—'}</td></tr>`;
                 }).join('');
                 const html = `
-                    <div style="font-size:12px;min-width:170px">
-                        <div style="font-weight:600;font-size:13px">${escapeHtml(p.vill_name || 'Village')}</div>
+                    <div style="font-size:13px;min-width:190px">
+                        <div style="font-weight:600;font-size:15px">${escapeHtml(p.vill_name || 'Village')}</div>
                         <div style="color:#607080;margin-bottom:4px">${swatch}${escapeHtml(p.gp_name || '')}</div>
-                        <table style="width:100%;border-collapse:collapse;font-size:11px">${rows}
+                        <table style="width:100%;border-collapse:collapse;font-size:12px">${rows}
                             <tr style="border-top:1px solid #e3e7eb">
                                 <td style="padding-top:3px;color:#4a5868">Total</td>
                                 <td style="text-align:right;padding-top:3px;font-weight:700">${total.toLocaleString()}</td>
@@ -538,28 +551,62 @@
         // re-fitting to villages so the user keeps the block-extent context.
     }
 
+    // Cluster shape (post-2026-05-09 redesign per Faiz):
+    //   - One neutral colour for every cluster - the multi-colour palette was
+    //     confusing and didn't encode anything meaningful. Village dots still
+    //     carry GP colour; cluster size is read from the dot sizes inside.
+    //   - Draw a containment CIRCLE around the cluster (instead of polygons /
+    //     connector lines), so the shape reads as "this group" without
+    //     implying a polygonal boundary. Overlaps between clusters are
+    //     expected and fine.
+    const CLUSTER_STROKE = '#28537D';
+    const CLUSTER_FILL = '#28537D';
+
     function clusterShape(cluster) {
-        const villages = cluster.villages || [];
-        if (villages.length < 2) return null;
+        const villages = (cluster.villages || []).filter(v =>
+            Number.isFinite(Number(v.lat)) && Number.isFinite(Number(v.long)));
+        if (villages.length === 0) return null;
+
         const pts = villages.map(v => [Number(v.lat), Number(v.long)]);
-        const colour = colorFor(cluster.cluster_id);
-        if (pts.length === 2) {
-            return L.polyline(pts, { color: colour, weight: 5, opacity: 0.9 });
+        // Centroid: prefer the persisted one (algorithm output) so the circle
+        // sits exactly where the centroid marker would; fall back to mean.
+        let centerLat = Number(cluster.centroid_lat);
+        let centerLon = Number(cluster.centroid_lon);
+        if (!Number.isFinite(centerLat) || !Number.isFinite(centerLon)
+            || (centerLat === 0 && centerLon === 0)) {
+            centerLat = pts.reduce((s, p) => s + p[0], 0) / pts.length;
+            centerLon = pts.reduce((s, p) => s + p[1], 0) / pts.length;
         }
-        const cy = pts.reduce((s, p) => s + p[0], 0) / pts.length;
-        const cx = pts.reduce((s, p) => s + p[1], 0) / pts.length;
-        const ordered = pts.slice().sort((a, b) =>
-            Math.atan2(a[0] - cy, a[1] - cx) - Math.atan2(b[0] - cy, b[1] - cx));
-        return L.polygon(ordered, {
-            color: colour, weight: 2.5, opacity: 0.95,
-            fillColor: colour, fillOpacity: 0.18,
+
+        // Radius: farthest village from centroid, plus a small padding so the
+        // outermost dot sits visibly inside the ring, not on it. For single-
+        // village clusters (new in #18) fall back to a fixed visible radius.
+        const center = L.latLng(centerLat, centerLon);
+        let radiusM = 0;
+        pts.forEach(p => {
+            const d = L.latLng(p[0], p[1]).distanceTo(center);
+            if (d > radiusM) radiusM = d;
+        });
+        radiusM = radiusM > 0 ? radiusM * 1.18 + 60 : 220;
+
+        return L.circle(center, {
+            radius: radiusM,
+            color: CLUSTER_STROKE,
+            weight: 2.5,
+            opacity: 0.95,
+            fillColor: CLUSTER_FILL,
+            fillOpacity: 0.10,
         });
     }
 
     function clusterHoverHTML(c) {
-        // Brief, non-interactive hover hint.
-        return `<div style="font-size: 12px">
-            <b>${c.cluster_id}</b><br>
+        // Brief, non-interactive hover hint. cluster_num is the user-friendly
+        // sequential label (per Faiz, 2026-05-09); cluster_id stays as a faint
+        // subtitle so devs/CSV editors can still cross-reference.
+        const label = c.cluster_num != null ? `Cluster ${c.cluster_num}` : c.cluster_id;
+        return `<div style="font-size: 13px">
+            <b>${label}</b>
+            ${c.cluster_num != null ? `<small style="color:#888"> · ${c.cluster_id}</small>` : ''}<br>
             ${c.total_members} members · ${(c.villages || []).length} villages · ${c.max_span_km} km
             <br><small>Click for details</small>
         </div>`;
@@ -571,8 +618,9 @@
         const status = c.finalized
             ? '<span style="color:#22AD7A; font-weight: 600">✓ Finalised - published to production tool</span>'
             : '<span style="color:#888">Proposed - not yet published</span>';
-        return `<div class="cluster-popup" style="min-width: 240px; max-width: 340px; font-size: 13px;">
-            <div style="font-weight: 600; font-size: 14px;">${c.cluster_id}</div>
+        const label = c.cluster_num != null ? `Cluster ${c.cluster_num}` : c.cluster_id;
+        return `<div class="cluster-popup" style="min-width: 260px; max-width: 360px; font-size: 14px;">
+            <div style="font-weight: 600; font-size: 15px;">${label}${c.cluster_num != null ? `<small style="color:#888;font-weight:400"> · ${c.cluster_id}</small>` : ''}</div>
             <small style="color: #666;">${COMMODITY_LABEL[c.commodity] || c.commodity} · ${c.block_name} · ${c.district_name || ''}</small>
             <hr style="margin: 8px 0; border: 0; border-top: 1px solid #eee">
             <div><b>${c.total_members}</b> members across <b>${(c.villages || []).length}</b> villages, <b>${c.max_span_km}</b> km max span</div>
@@ -665,6 +713,7 @@
         }
         if (!local.currentBlock || !local.currentCommodity) {
             updateSummary(0);
+            setSearchVisible(false);
             return;
         }
         setBusy(`Loading ${COMMODITY_LABEL[local.currentCommodity] || local.currentCommodity} clusters…`);
@@ -678,9 +727,13 @@
         }
         if (!Array.isArray(clusters) || clusters.length === 0) {
             updateSummary(0);
+            setSearchVisible(false);
             return;
         }
         const layers = [];
+        // Registry for the search box: keyed by both numeric cluster_num and
+        // (lower-cased) cluster_id so users can type either.
+        local.clusterRegistry = {};
         clusters.forEach(c => {
             const shape = clusterShape(c);
             if (shape) {
@@ -697,16 +750,88 @@
                 });
                 shape.on('click', () => renderClusterSummaryPanel(c));
                 layers.push(shape);
+                if (c.cluster_num != null) local.clusterRegistry[String(c.cluster_num)] = { cluster: c, shape };
+                if (c.cluster_id) local.clusterRegistry[String(c.cluster_id).toLowerCase()] = { cluster: c, shape };
             }
             const m = statusMarker(c);
             if (m) layers.push(m);
         });
         if (!layers.length) {
             updateSummary(0);
+            setSearchVisible(false);
             return;
         }
         local.clusterLayer = L.featureGroup(layers).addTo(local.modalMap);
         updateSummary(clusters.length, clusters);
+        setSearchVisible(true);
+    }
+
+    // ---- Cluster search ----
+
+    function setSearchVisible(show) {
+        const wrap = $('cluster-search-wrap');
+        if (!wrap) return;
+        wrap.style.display = show ? '' : 'none';
+        if (!show) {
+            const input = $('cluster-search');
+            if (input) input.value = '';
+            wrap.classList.remove('found', 'not-found');
+        }
+    }
+
+    function findCluster(query) {
+        if (!query || !local.clusterRegistry) return null;
+        const key = String(query).trim().toLowerCase();
+        return local.clusterRegistry[key] || null;
+    }
+
+    function highlightCluster(hit) {
+        if (!hit || !hit.shape || !local.modalMap) return;
+        const shape = hit.shape;
+        try {
+            const bounds = shape.getBounds ? shape.getBounds() : null;
+            if (bounds && bounds.isValid()) {
+                local.modalMap.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
+            } else if (shape.getLatLngs) {
+                const pts = shape.getLatLngs();
+                if (pts && pts.length) local.modalMap.panTo(pts[0]);
+            }
+            shape.openPopup();
+            const path = shape._path;
+            if (path) {
+                path.classList.remove('cluster-search-flash');
+                // Reflow to restart the animation if the user searches repeatedly.
+                void path.getBoundingClientRect();
+                path.classList.add('cluster-search-flash');
+            }
+        } catch (e) {
+            console.warn('Highlight failed:', e);
+        }
+    }
+
+    function handleSearchInput(ev) {
+        const wrap = $('cluster-search-wrap');
+        const value = ev.target.value;
+        if (!wrap) return;
+        wrap.classList.remove('found', 'not-found');
+        if (!value.trim()) return;
+        // On Enter, commit and highlight. On plain typing, just hint match/no-match.
+        const hit = findCluster(value);
+        if (ev.key === 'Escape') {
+            ev.target.value = '';
+            return;
+        }
+        if (ev.key === 'Enter') {
+            if (hit) {
+                wrap.classList.add('found');
+                highlightCluster(hit);
+            } else {
+                wrap.classList.add('not-found');
+            }
+            return;
+        }
+        // Live feedback as the user types.
+        wrap.classList.add(hit ? 'found' : 'not-found');
     }
 
     function updateSummary(count, clusters) {
@@ -785,11 +910,7 @@
             <div class="cluster-side-sub">${escapeHtml(s.district_name || '')} district</div>
             <div class="cluster-side-section">Coverage</div>
             ${row('Villages mapped', s.villages_total.toLocaleString())}
-            ${row('With GPS', s.villages_with_gps.toLocaleString())}
-            ${row('Without GPS', s.villages_without_gps.toLocaleString(), s.villages_without_gps === 0)}
             ${row('Gram Panchayats', s.gp_count.toLocaleString())}
-            <div class="cluster-side-section" title="Map dots are coloured by GP">Gram Panchayats — dot colours</div>
-            <div class="gp-chip-list">${gpItems || '<div class="cluster-side-empty">No GPs.</div>'}</div>
             <div class="cluster-side-section">SHG members by commodity</div>
             ${commodityRows}
             <details class="cluster-side-other"${otherTotal ? ' open' : ''}>
@@ -798,7 +919,90 @@
             </details>
             <div class="cluster-side-section">Total members</div>
             ${row('Across all activities', s.members_total.toLocaleString())}
+            <div class="cluster-side-section" title="Map dots are coloured by GP">Gram Panchayats — dot colours</div>
+            <div class="gp-chip-list">${gpItems || '<div class="cluster-side-empty">No GPs.</div>'}</div>
         `;
+    }
+
+    // Defaults mirror clustering.py DEFAULT_PARAMS. Kept here so the side
+    // panel can explain *why* a group qualified as a cluster without making
+    // an extra round-trip on every click. If thresholds change server-side,
+    // update both. Also tunable per-block via the params API, but the demo
+    // flow uses defaults.
+    const CLUSTER_RULES = {
+        min_members_per_village: 1,
+        min_cluster_members: 30,
+        max_cluster_members: 50,
+        min_villages_per_cluster: 2,
+        max_villages_per_cluster: 4,
+        max_radius_km: 5.0,
+    };
+
+    function otherCommoditiesFor(cluster) {
+        // Aggregate non-focal commodity counts across the cluster's villages
+        // by looking them up in the village features already loaded for the
+        // current block. Returns [{commodity, total, perVillage:[{name, n}]}].
+        if (!local.villageFeatures || !local.villageFeatures.features) return [];
+        const want = new Set((cluster.villages || []).map(v =>
+            String(v.vill_name || '').trim().toLowerCase()));
+        if (!want.size) return [];
+        const matches = local.villageFeatures.features.filter(f =>
+            want.has(String(((f.properties || {}).vill_name) || '').trim().toLowerCase()));
+        if (!matches.length) return [];
+        const focal = cluster.commodity;
+        return COMMODITY_PANEL_ORDER
+            .filter(k => k !== focal)
+            .map(k => {
+                let total = 0;
+                const perVillage = [];
+                matches.forEach(f => {
+                    const n = Number((f.properties || {})[k] || 0);
+                    if (n > 0) {
+                        total += n;
+                        perVillage.push({ name: f.properties.vill_name, n });
+                    }
+                });
+                return { commodity: k, total, perVillage };
+            })
+            .filter(r => r.total > 0)
+            .sort((a, b) => b.total - a.total);
+    }
+
+    function ruleExplanation(cluster) {
+        // Restate the rules in terms of THIS cluster's numbers so users can
+        // see *which* checks the group satisfied. Each row is a fact + tick.
+        const villageCount = (cluster.villages || []).length;
+        const members = Number(cluster.total_members || 0);
+        const span = Number(cluster.max_span_km || 0);
+        const minPerVill = Math.min(...((cluster.villages || []).map(v => Number(v.members || 0))));
+        const tick = ok => ok
+            ? '<span style="color:#22AD7A;font-weight:600">&#10003;</span>'
+            : '<span style="color:#c0392b;font-weight:600">!</span>';
+        const rules = [
+            {
+                ok: members >= CLUSTER_RULES.min_cluster_members
+                    && members <= CLUSTER_RULES.max_cluster_members,
+                text: `Total members <b>${members.toLocaleString()}</b> sits in the funding band ` +
+                      `[${CLUSTER_RULES.min_cluster_members}-${CLUSTER_RULES.max_cluster_members}]`,
+            },
+            {
+                ok: villageCount >= CLUSTER_RULES.min_villages_per_cluster
+                    && villageCount <= CLUSTER_RULES.max_villages_per_cluster,
+                text: `Village count <b>${villageCount}</b> sits in ` +
+                      `[${CLUSTER_RULES.min_villages_per_cluster}-${CLUSTER_RULES.max_villages_per_cluster}]`,
+            },
+            {
+                ok: span <= CLUSTER_RULES.max_radius_km,
+                text: `Max pairwise span <b>${span} km</b> is within the ${CLUSTER_RULES.max_radius_km} km radius cap`,
+            },
+            {
+                ok: minPerVill >= CLUSTER_RULES.min_members_per_village,
+                text: `Every village has at least ${CLUSTER_RULES.min_members_per_village} interested member ` +
+                      `(smallest here: <b>${isFinite(minPerVill) ? minPerVill : 0}</b>)`,
+            },
+        ];
+        return rules.map(r =>
+            `<li style="margin: 3px 0;">${tick(r.ok)} ${r.text}</li>`).join('');
     }
 
     function renderClusterSummaryPanel(c) {
@@ -812,12 +1016,26 @@
             : '<span style="color:#888">Proposed</span>';
         const row = (label, value) =>
             `<div class="cluster-side-row"><span class="label">${escapeHtml(label)}</span><span class="value">${value}</span></div>`;
+
+        const others = otherCommoditiesFor(c);
+        const othersHtml = others.length ? `
+            <details class="cluster-side-other" open>
+                <summary>Other commodities in these villages (${others.reduce((s, r) => s + r.total, 0).toLocaleString()})</summary>
+                <div style="font-size: 12px; margin-top: 6px;">
+                    ${others.map(r =>
+                        `<div class="cluster-side-row">
+                            <span class="label">${escapeHtml(COMMODITY_LABEL[r.commodity] || r.commodity)}</span>
+                            <span class="value">${r.total.toLocaleString()}</span>
+                        </div>`).join('')}
+                </div>
+            </details>` : `<div class="cluster-side-empty" style="font-size:12px">No other commodities in these villages.</div>`;
+
         el.innerHTML = `
             <button type="button" class="cluster-side-back" id="cluster-side-back-btn">
                 <i class="bi bi-arrow-left"></i> Back to block summary
             </button>
-            <h3><i class="bi bi-diagram-3"></i> ${escapeHtml(c.cluster_id)}</h3>
-            <div class="cluster-side-sub">${escapeHtml(COMMODITY_LABEL[c.commodity] || c.commodity)} · ${escapeHtml(c.block_name)}</div>
+            <h3><i class="bi bi-diagram-3"></i> ${c.cluster_num != null ? `Cluster ${c.cluster_num}` : escapeHtml(c.cluster_id)}</h3>
+            <div class="cluster-side-sub">${escapeHtml(COMMODITY_LABEL[c.commodity] || c.commodity)} · ${escapeHtml(c.block_name)}${c.cluster_num != null ? ` · <span style="color:#888">${escapeHtml(c.cluster_id)}</span>` : ''}</div>
             <div class="cluster-side-section">Cluster</div>
             ${row('Members', (c.total_members || 0).toLocaleString())}
             ${row('Villages', (c.villages || []).length.toLocaleString())}
@@ -829,7 +1047,13 @@
                 ${c.block_coordinator ? row('Block coord', escapeHtml(c.block_coordinator)) : ''}
             ` : ''}
             <div class="cluster-side-section">Villages in this cluster</div>
-            <ul style="margin: 4px 0 0 18px; padding: 0; font-size: 12px;">${villages || '<li><i>(none)</i></li>'}</ul>
+            <ul style="margin: 4px 0 0 18px; padding: 0; font-size: 13px;">${villages || '<li><i>(none)</i></li>'}</ul>
+            <div class="cluster-side-section">Other commodities in these villages</div>
+            ${othersHtml}
+            <div class="cluster-side-section">Why this is a cluster</div>
+            <ul style="margin: 4px 0 0 18px; padding: 0; font-size: 12px; list-style: none;">
+                ${ruleExplanation(c)}
+            </ul>
         `;
         const back = $('cluster-side-back-btn');
         if (back) back.addEventListener('click', () => {
@@ -990,9 +1214,9 @@
         try {
             const body = { block: local.currentBlock };
             if (local.currentCommodity) body.commodity = local.currentCommodity;
-            const r = await fetch('/api/clusters/regenerate', {
+            const r = await fetch('/api/clusters/regenerate?admin=1', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 'Content-Type': 'application/json', 'X-Admin': '1' },
                 body: JSON.stringify(body),
             });
             const data = await r.json();
@@ -1156,7 +1380,15 @@
         if (closeBtn) closeBtn.addEventListener('click', closeModal);
         if (sel) sel.addEventListener('change', handleCommodityChange);
         if (upload) upload.addEventListener('change', handleUpload);
-        if (regen) regen.addEventListener('click', handleRegenerate);
+        if (regen) {
+            regen.addEventListener('click', handleRegenerate);
+            if (IS_ADMIN) regen.style.display = '';
+        }
+        const searchInput = $('cluster-search');
+        if (searchInput) {
+            searchInput.addEventListener('input', handleSearchInput);
+            searchInput.addEventListener('keydown', handleSearchInput);
+        }
         if (districtSel) districtSel.addEventListener('change', handleDistrictChange);
         if (blockSel) blockSel.addEventListener('change', handleModalBlockChange);
         if (workflowOpen) workflowOpen.addEventListener('click', openWorkflowHelp);

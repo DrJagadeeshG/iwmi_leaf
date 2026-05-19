@@ -2041,6 +2041,19 @@ from infrastructure import (
 )
 
 
+def _is_admin_request() -> bool:
+    """Admin-only API guard. No real auth in this app, but Faiz wanted Regenerate
+    hidden from regular users (2026-05-09 call) because it wipes their CSV edits.
+    Mirrors the IS_ADMIN flag in static/js/clusters.js: query `?admin=1` or
+    header `X-Admin: 1`. Defense-in-depth alongside the JS-side button hide.
+    """
+    if request.args.get('admin') == '1':
+        return True
+    if request.headers.get('X-Admin') == '1':
+        return True
+    return False
+
+
 def _cluster_params_from_request():
     """Pull tunable clustering params from query string or JSON body, applying defaults."""
     src = {}
@@ -2259,8 +2272,11 @@ def api_clusters_list():
     summary: List clusters
     description: |
       Returns clusters previously generated and stored on the server. Use the
-      filters to scope to a block, district, or commodity. If no clusters exist
-      yet, call `POST /api/clusters/regenerate` to run the algorithm.
+      filters to scope to a block, district, or commodity. If a `block` is
+      provided and no clusters are stored yet for that scope, the algorithm is
+      run lazily (single block, optionally one commodity) and the results are
+      persisted before returning — so the first call on a freshly ingested
+      block doesn't require an explicit `POST /api/clusters/regenerate`.
     parameters:
       - name: block
         in: query
@@ -2282,11 +2298,24 @@ def api_clusters_list():
         description: Array of cluster records
     """
     try:
+        block = request.args.get('block')
+        commodity = request.args.get('commodity')
+        district = request.args.get('district')
         clusters = get_clusters(
-            block_name=request.args.get('block'),
-            commodity=request.args.get('commodity'),
-            district_name=request.args.get('district'),
+            block_name=block,
+            commodity=commodity,
+            district_name=district,
         )
+        # Lazy materialise: scope is empty → run the algorithm now and persist,
+        # so freshly ingested blocks don't need a manual Regenerate click.
+        # Skipped when no block is given (would trigger a full-corpus run).
+        # If a user ever uploads a CSV that intentionally empties a scope, this
+        # path will overwrite that emptiness on the next read — add a per-scope
+        # "last_run" marker if that workflow becomes real.
+        if not clusters and block:
+            clusters = regenerate_clusters(block_name=block, commodity=commodity)
+            if district:
+                clusters = [c for c in clusters if c.get('district_name') == district]
         return jsonify(clusters)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -2372,6 +2401,10 @@ def api_clusters_regenerate():
       stores the resulting clusters. Scope precedence: (block + commodity) >
       (block) > (all blocks, all commodities). Tunable parameters can be passed
       in the body and override defaults from `/api/clusters/params`.
+
+      **Admin-only.** Requires either `?admin=1` query param or `X-Admin: 1`
+      header. Regenerate wipes any user edits/CSV uploads in scope, so it is
+      gated to avoid accidental clicks from regular users (per Faiz, 2026-05-09).
     parameters:
       - in: body
         name: body
@@ -2401,10 +2434,15 @@ def api_clusters_regenerate():
             clusters:
               type: array
               items: {type: object}
+      403:
+        description: Admin flag missing
+        schema: {$ref: '#/definitions/Error'}
       500:
         description: Server error
         schema: {$ref: '#/definitions/Error'}
     """
+    if not _is_admin_request():
+        return jsonify({'error': 'Admin-only endpoint. Pass ?admin=1 or X-Admin: 1.'}), 403
     try:
         body = request.get_json(silent=True) or {}
         block = body.get('block')
@@ -2448,13 +2486,22 @@ def api_clusters_export_csv():
         schema: {type: string}
     """
     try:
+        block = request.args.get('block')
+        commodity = request.args.get('commodity')
+        district = request.args.get('district')
         clusters = get_clusters(
-            block_name=request.args.get('block'),
-            commodity=request.args.get('commodity'),
-            district_name=request.args.get('district'),
+            block_name=block,
+            commodity=commodity,
+            district_name=district,
         )
+        # Mirror the lazy materialise in /api/clusters so the download CSV is
+        # never empty on first request for a freshly ingested block.
+        if not clusters and block:
+            clusters = regenerate_clusters(block_name=block, commodity=commodity)
+            if district:
+                clusters = [c for c in clusters if c.get('district_name') == district]
         csv_text = clusters_to_csv(clusters)
-        scope = request.args.get('block') or request.args.get('district') or 'all'
+        scope = block or district or 'all'
         return Response(
             csv_text,
             mimetype='text/csv',
