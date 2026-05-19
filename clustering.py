@@ -31,7 +31,7 @@ COMMODITIES = [
 DEFAULT_PARAMS = {
     "min_members_per_village": 1,
     "min_cluster_members": 30,
-    "max_cluster_members": 50,
+    "max_cluster_members": 150,
     "min_villages_per_cluster": 2,
     "max_villages_per_cluster": 4,
     "max_radius_km": 5.0,

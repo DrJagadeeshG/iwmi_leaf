@@ -1460,14 +1460,14 @@
 <p>The block scale is where the real work happens: village dots, optionally tinted by member count, with cluster groupings drawn around them.</p>
 <hr />
 <h2 id="4-clustering-what-the-algorithm-does">4. Clustering - what the algorithm does<a class="headerlink" href="#4-clustering-what-the-algorithm-does" title="Permanent link">&para;</a></h2>
-<p>The pipeline runs in three passes. Each addresses an edge case the previous one creates.</p>
+<p>Input filter (runs once, before any pass): villages with fewer than <code>min_members_per_village</code> interested members for the commodity are dropped from the candidate set. Every pass below operates on the filtered set.</p>
+<p>The pipeline then runs in three passes. Each addresses an edge case the previous one creates.</p>
 <h3 id="pass-a-single-village-clusters-pre-pass">Pass A - Single-village clusters (pre-pass)<a class="headerlink" href="#pass-a-single-village-clusters-pre-pass" title="Permanent link">&para;</a></h3>
 <p>Before the greedy loop, any village whose member count for the commodity is already at or above <code>max_cluster_members</code> is emitted as its <strong>own one-village cluster</strong>. This bypasses both the "minimum 2 villages" rule and the upper member cap.</p>
 <p>Why: a 274-member dairy village cannot be paired with any neighbour without busting the 50-member cap, so the old greedy loop would silently drop it. After this pass, large standalone villages stay in the output as singletons.</p>
 <h3 id="pass-b-greedy-seed-and-grow-main-pass">Pass B - Greedy seed-and-grow (main pass)<a class="headerlink" href="#pass-b-greedy-seed-and-grow-main-pass" title="Permanent link">&para;</a></h3>
 <p>For the remaining (unassigned) villages:</p>
 <ol>
-<li>Filter villages with ≥ <code>min_members_per_village</code> for the commodity.</li>
 <li>Sort big-first by member count.</li>
 <li>Seed the next cluster with the biggest unassigned village; greedily add nearest neighbours that fit <strong>all</strong> four constraints: ≤ <code>max_radius_km</code> from the seed, ≤ <code>max_radius_km</code> max pairwise span, total members ≤ <code>max_cluster_members</code>, ≤ <code>max_villages_per_cluster</code> villages.</li>
 <li>Discard the cluster if it ends up under floors (&lt; <code>min_cluster_members</code> or &lt; <code>min_villages_per_cluster</code>); release its villages back to the pool.</li>
@@ -1478,7 +1478,7 @@
 <p>The merged cluster keeps its original <code>cluster_id</code>, <code>pashu_sakhi</code>, and <code>block_coordinator</code>; centroid, span, and total are recomputed. Orphans that cannot find any cluster within reach stay unassigned (and don't appear in the cluster output - they are still visible as village dots on the map).</p>
 <hr />
 <p>Block boundary is a hard wall - clusters never span two blocks. Each commodity is clustered independently, so one village can sit in many clusters (one per commodity it has interested members in).</p>
-<p>Trigger: <a href="../../api/clusters/#regenerate-clusters"><code>POST /api/clusters/regenerate</code></a> with <code>{block, commodity, ...overrides}</code>. Admin-only - pass <code>?admin=1</code> or the <code>X-Admin: 1</code> header. Empty overrides = government defaults (30-50 members, 2-4 villages, 5 km, ≥1 member/village).</p>
+<p>Trigger: <a href="../../api/clusters/#regenerate-clusters"><code>POST /api/clusters/regenerate</code></a> with <code>{block, commodity, ...overrides}</code>. Admin-only - pass <code>?admin=1</code> or the <code>X-Admin: 1</code> header. Empty overrides = government defaults (30-150 members, 2-4 villages, 5 km, ≥1 member/village).</p>
 <p>Worth noting: a GET on <a href="../../api/clusters/"><code>/api/clusters?block=&lt;X&gt;&amp;commodity=&lt;Y&gt;</code></a> now <strong>lazily materialises</strong> clusters the first time a <code>(block, commodity)</code> scope is queried, so a fresh block doesn't need an explicit Regenerate to populate.</p>
 <hr />
 <p><a id="worked-example"></a></p>
@@ -1535,7 +1535,7 @@
 <tbody>
 <tr>
 <td>Total members in funding band</td>
-<td>30 – 50</td>
+<td>30 – 150</td>
 <td><strong>35</strong></td>
 <td>✓</td>
 </tr>
@@ -1784,7 +1784,7 @@
 </tr>
 <tr>
 <td><code>max_cluster_members</code></td>
-<td>50</td>
+<td>150</td>
 <td>Government</td>
 </tr>
 <tr>

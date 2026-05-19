@@ -2547,7 +2547,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 18px;
+    padding: 14px 22px;
     background: linear-gradient(90deg, #28537D, #5088C6);
     color: #fff;
 }
@@ -2556,7 +2556,8 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 16px;
+    /* Scales with viewport so the title doesn't look tiny on 1440p / 4K. */
+    font-size: clamp(16px, 1.2vw, 19px);
     font-weight: 600;
 }
 
@@ -2564,7 +2565,7 @@ body {
     padding: 2px 10px;
     background: rgba(255, 255, 255, 0.18);
     border-radius: 999px;
-    font-size: 13px;
+    font-size: clamp(13px, 0.95vw, 15px);
     font-weight: 500;
 }
 
@@ -2572,15 +2573,17 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
 }
 
 .cluster-modal-controls select {
-    padding: 6px 10px;
+    padding: 7px 12px;
     border-radius: 4px;
     border: 1px solid rgba(255, 255, 255, 0.4);
     background: #fff;
     color: #28537D;
-    font-size: 13px;
+    font-size: clamp(13px, 0.95vw, 15px);
     cursor: pointer;
 }
 
@@ -2603,10 +2606,12 @@ body {
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 10px 18px;
+    padding: 10px 22px;
     background: #f5f7f9;
     border-bottom: 1px solid #e3e7eb;
-    font-size: 13px;
+    /* Scales modestly with viewport; clamps so phones don't shrink and 4K
+       doesn't blow up. */
+    font-size: clamp(13px, 0.92vw, 15px);
     color: #555;
 }
 
@@ -2620,12 +2625,12 @@ body {
     display: inline-flex;
     align-items: center;
     gap: 5px;
-    padding: 5px 10px;
+    padding: 6px 12px;
     background: #fff;
     border: 1px solid #cfd6dc;
     color: #28537D;
     border-radius: 4px;
-    font-size: 12px;
+    font-size: clamp(12px, 0.85vw, 14px);
     cursor: pointer;
     text-decoration: none;
     transition: background 0.15s;
@@ -2651,7 +2656,10 @@ body {
 }
 
 .cluster-modal-side {
-    width: 340px;
+    /* Fluid width: grows on bigger screens so the rule-explanation list and
+       village names don't wrap every 3 words on 1440p / 4K monitors. Caps at
+       a generous 460px so it never starves the map. */
+    width: clamp(340px, 24vw, 460px);
     min-width: 340px;
     background: #fff;
     border-left: 1px solid #e3e7eb;
@@ -2805,8 +2813,10 @@ body {
     border: none;
     outline: none;
     background: transparent;
-    font-size: 13px;
-    width: 140px;
+    font-size: clamp(13px, 0.92vw, 15px);
+    /* Wider on big screens so "Find cluster # or ID" placeholder fits without
+       being chopped. */
+    width: clamp(140px, 14vw, 220px);
     color: #1d3557;
 }
 .cluster-search-wrap input::placeholder { color: #9aa5b1; }

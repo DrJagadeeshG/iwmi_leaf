@@ -711,9 +711,14 @@
             local.modalMap.removeLayer(local.clusterLayer);
             local.clusterLayer = null;
         }
+        // Any prior village highlight belongs to the previous commodity's
+        // active cluster - reset before we re-render.
+        clearVillageHighlight();
+        local.activeClusterId = null;
         if (!local.currentBlock || !local.currentCommodity) {
             updateSummary(0);
             setSearchVisible(false);
+            setJumpVisible(false);
             return;
         }
         setBusy(`Loading ${COMMODITY_LABEL[local.currentCommodity] || local.currentCommodity} clusters…`);
@@ -728,12 +733,15 @@
         if (!Array.isArray(clusters) || clusters.length === 0) {
             updateSummary(0);
             setSearchVisible(false);
+            setJumpVisible(false);
             return;
         }
         const layers = [];
-        // Registry for the search box: keyed by both numeric cluster_num and
-        // (lower-cased) cluster_id so users can type either.
+        // Registry for the search box AND the jump-to dropdown: keyed by
+        // numeric cluster_num and (lower-cased) cluster_id so users can use
+        // either path.
         local.clusterRegistry = {};
+        local.clusterList = clusters;
         clusters.forEach(c => {
             const shape = clusterShape(c);
             if (shape) {
@@ -742,13 +750,11 @@
                     direction: 'auto',  // Leaflet flips to keep tooltip visible.
                     sticky: true,
                 });
-                shape.bindPopup(clusterPopupHTML(c), {
-                    minWidth: 240,
-                    maxWidth: 340,
-                    closeButton: true,
-                    autoPanPadding: [40, 40],
-                });
-                shape.on('click', () => renderClusterSummaryPanel(c));
+                // Popup removed (Faiz, 2026-05-19): the right-side panel
+                // already carries the same information, and the popup was
+                // visual noise on top of overlapping rings. Click now goes
+                // straight to the side panel and the village highlight.
+                shape.on('click', () => selectCluster(c, { pan: false }));
                 layers.push(shape);
                 if (c.cluster_num != null) local.clusterRegistry[String(c.cluster_num)] = { cluster: c, shape };
                 if (c.cluster_id) local.clusterRegistry[String(c.cluster_id).toLowerCase()] = { cluster: c, shape };
@@ -759,11 +765,129 @@
         if (!layers.length) {
             updateSummary(0);
             setSearchVisible(false);
+            setJumpVisible(false);
             return;
         }
         local.clusterLayer = L.featureGroup(layers).addTo(local.modalMap);
         updateSummary(clusters.length, clusters);
         setSearchVisible(true);
+        populateJumpDropdown(clusters);
+    }
+
+    // ---- Cluster selection (dropdown / search / click share this) ----
+    //
+    // selectCluster(c) opens the right-side panel for a cluster, outlines
+    // its member villages on the map, and optionally pans/zooms to the
+    // ring. The click handler doesn't pan (the cluster is already at the
+    // cursor); the dropdown and the search box do pan.
+    function selectCluster(c, { pan = true } = {}) {
+        if (!c) return;
+        renderClusterSummaryPanel(c);
+        highlightClusterVillages(c);
+        // Keep the jump dropdown in sync if the click came from elsewhere.
+        const sel = $('cluster-jump-select');
+        if (sel && c.cluster_id) sel.value = c.cluster_id;
+        if (pan) {
+            const hit = local.clusterRegistry
+                && local.clusterRegistry[String(c.cluster_id).toLowerCase()];
+            if (hit) panToCluster(hit);
+        }
+    }
+
+    function panToCluster(hit) {
+        if (!hit || !hit.shape || !local.modalMap) return;
+        try {
+            const bounds = hit.shape.getBounds ? hit.shape.getBounds() : null;
+            if (bounds && bounds.isValid()) {
+                local.modalMap.fitBounds(bounds, { padding: [80, 80], maxZoom: 14 });
+            }
+            const path = hit.shape._path;
+            if (path) {
+                path.classList.remove('cluster-search-flash');
+                void path.getBoundingClientRect();  // restart animation
+                path.classList.add('cluster-search-flash');
+            }
+        } catch (e) {
+            console.warn('panToCluster failed:', e);
+        }
+    }
+
+    // Outline + size up the village circleMarkers whose vill_name belongs
+    // to this cluster. Faiz wanted to see "which dots are in this cluster"
+    // visually because overlapping rings make the membership hard to read.
+    function highlightClusterVillages(c) {
+        if (!local.villageLayer) return;
+        const want = new Set((c.villages || []).map(v =>
+            String(v.vill_name || '').trim().toLowerCase()));
+        local.villageLayer.eachLayer(l => {
+            const props = (l.feature && l.feature.properties) || {};
+            const name = String(props.vill_name || '').trim().toLowerCase();
+            const inCluster = want.has(name);
+            // Stash the original style once so clearHighlight can restore.
+            if (!l.__origStyle) {
+                l.__origStyle = {
+                    radius: l.options.radius,
+                    weight: l.options.weight,
+                    color: l.options.color,
+                };
+            }
+            if (inCluster) {
+                l.setStyle({
+                    color: '#E86933',  // IWMI accent orange - pops on top
+                    weight: 3.5,
+                    fillOpacity: 0.95,
+                });
+                l.setRadius(Math.max(l.__origStyle.radius + 3, 8));
+                if (l.bringToFront) l.bringToFront();
+            } else {
+                l.setStyle({
+                    color: l.__origStyle.color,
+                    weight: l.__origStyle.weight,
+                    fillOpacity: 0.35,  // dim non-members for contrast
+                });
+                l.setRadius(l.__origStyle.radius);
+            }
+        });
+    }
+
+    function clearVillageHighlight() {
+        if (!local.villageLayer) return;
+        local.villageLayer.eachLayer(l => {
+            if (!l.__origStyle) return;
+            l.setStyle({
+                color: l.__origStyle.color,
+                weight: l.__origStyle.weight,
+                fillOpacity: 0.85,
+            });
+            l.setRadius(l.__origStyle.radius);
+        });
+    }
+
+    // ---- Cluster jump dropdown ----
+
+    function populateJumpDropdown(clusters) {
+        const sel = $('cluster-jump-select');
+        if (!sel) return;
+        sel.innerHTML = '<option value="">Jump to cluster...</option>' +
+            clusters.map(c => {
+                const num = c.cluster_num != null ? `Cluster ${c.cluster_num}` : c.cluster_id;
+                const v = (c.villages || []).length;
+                const m = c.total_members || 0;
+                return `<option value="${escapeHtml(c.cluster_id)}">${escapeHtml(num)} - ${m} m / ${v} v</option>`;
+            }).join('');
+        setJumpVisible(true);
+    }
+
+    function setJumpVisible(show) {
+        const sel = $('cluster-jump-select');
+        if (sel) sel.style.display = show ? '' : 'none';
+    }
+
+    function handleJumpChange(ev) {
+        const id = ev.target.value;
+        if (!id) return;
+        const c = (local.clusterList || []).find(x => x.cluster_id === id);
+        if (c) selectCluster(c, { pan: true });
     }
 
     // ---- Cluster search ----
@@ -785,37 +909,12 @@
         return local.clusterRegistry[key] || null;
     }
 
-    function highlightCluster(hit) {
-        if (!hit || !hit.shape || !local.modalMap) return;
-        const shape = hit.shape;
-        try {
-            const bounds = shape.getBounds ? shape.getBounds() : null;
-            if (bounds && bounds.isValid()) {
-                local.modalMap.fitBounds(bounds, { padding: [60, 60], maxZoom: 14 });
-            } else if (shape.getLatLngs) {
-                const pts = shape.getLatLngs();
-                if (pts && pts.length) local.modalMap.panTo(pts[0]);
-            }
-            shape.openPopup();
-            const path = shape._path;
-            if (path) {
-                path.classList.remove('cluster-search-flash');
-                // Reflow to restart the animation if the user searches repeatedly.
-                void path.getBoundingClientRect();
-                path.classList.add('cluster-search-flash');
-            }
-        } catch (e) {
-            console.warn('Highlight failed:', e);
-        }
-    }
-
     function handleSearchInput(ev) {
         const wrap = $('cluster-search-wrap');
         const value = ev.target.value;
         if (!wrap) return;
         wrap.classList.remove('found', 'not-found');
         if (!value.trim()) return;
-        // On Enter, commit and highlight. On plain typing, just hint match/no-match.
         const hit = findCluster(value);
         if (ev.key === 'Escape') {
             ev.target.value = '';
@@ -824,13 +923,15 @@
         if (ev.key === 'Enter') {
             if (hit) {
                 wrap.classList.add('found');
-                highlightCluster(hit);
+                // Route through the same selectCluster path the dropdown and
+                // map clicks use, so the side panel and village highlight
+                // stay in sync no matter how the user picked the cluster.
+                selectCluster(hit.cluster, { pan: true });
             } else {
                 wrap.classList.add('not-found');
             }
             return;
         }
-        // Live feedback as the user types.
         wrap.classList.add(hit ? 'found' : 'not-found');
     }
 
@@ -959,7 +1060,7 @@
     const CLUSTER_RULES = {
         min_members_per_village: 1,
         min_cluster_members: 30,
-        max_cluster_members: 50,
+        max_cluster_members: 150,
         min_villages_per_cluster: 2,
         max_villages_per_cluster: 4,
         max_radius_km: 5.0,
@@ -1093,6 +1194,9 @@
         const back = $('cluster-side-back-btn');
         if (back) back.addEventListener('click', () => {
             local.activeClusterId = null;
+            clearVillageHighlight();
+            const sel = $('cluster-jump-select');
+            if (sel) sel.value = '';
             renderBlockSummaryPanel(local.lastBlockSummary);
         });
     }
@@ -1424,6 +1528,8 @@
             searchInput.addEventListener('input', handleSearchInput);
             searchInput.addEventListener('keydown', handleSearchInput);
         }
+        const jumpSel = $('cluster-jump-select');
+        if (jumpSel) jumpSel.addEventListener('change', handleJumpChange);
         if (districtSel) districtSel.addEventListener('change', handleDistrictChange);
         if (blockSel) blockSel.addEventListener('change', handleModalBlockChange);
         if (workflowOpen) workflowOpen.addEventListener('click', openWorkflowHelp);

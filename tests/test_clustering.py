@@ -45,10 +45,13 @@ def test_orphan_village_merges_into_nearest_cluster(sample_villages_df):
 
 def test_orphan_merge_respects_soft_cap():
     """Orphans should not be merged when doing so would exceed
-    3 * max_cluster_members - prevents runaway absorption."""
+    3 * max_cluster_members - prevents runaway absorption. Uses an
+    explicit max=50 override so the cap (150) is easy to trip with a
+    120-member orphan; with the production default (150) the cap is
+    450 and the same scenario gets handled by Pass A instead."""
     import pandas as pd
     rows = [
-        # Two normal villages forming a cluster at max_cluster_members
+        # Two normal villages forming a cluster at max_cluster_members=50
         {"district_name": "D", "block_name": "B", "gp_name": "G",
          "vill_name": "V1", "lat": 26.5, "long": 92.0, "Dairy": 25},
         {"district_name": "D", "block_name": "B", "gp_name": "G",
@@ -59,7 +62,8 @@ def test_orphan_merge_respects_soft_cap():
          "vill_name": "Big_Orphan", "lat": 26.510, "long": 92.010, "Dairy": 120},
     ]
     df = pd.DataFrame(rows)
-    clusters = clustering.cluster_block_commodity(df, "B", "Dairy")
+    clusters = clustering.cluster_block_commodity(
+        df, "B", "Dairy", params={"max_cluster_members": 50})
     # Big_Orphan is itself > max_cluster_members (50), so it becomes a
     # single-village cluster via #18 - and that's exactly what we want:
     # it doesn't get crammed into the existing tight cluster.
