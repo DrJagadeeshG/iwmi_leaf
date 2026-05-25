@@ -35,6 +35,11 @@ DEFAULT_PARAMS = {
     "min_villages_per_cluster": 2,
     "max_villages_per_cluster": 4,
     "max_radius_km": 5.0,
+    # When on, villages that never clear the min_cluster_members floor are
+    # surfaced as PROVISIONAL clusters (relaxed floor) instead of being dropped
+    # off the map. Default off => no output drift until the UI can flag them.
+    "emit_provisional": False,
+    "provisional_min_members": 1,
 }
 
 
@@ -62,6 +67,9 @@ class Cluster:
     centroid_lon: float = 0.0
     pashu_sakhi: Optional[str] = None
     block_coordinator: Optional[str] = None
+    # True when the cluster falls below the fundable member floor and is only
+    # surfaced for review (Pass D). Eligible clusters keep this False.
+    provisional: bool = False
 
     def to_dict(self) -> Dict:
         return asdict(self)
@@ -124,9 +132,9 @@ def cluster_block_commodity(
     assigned = [False] * len(candidates)
     clusters: List[Cluster] = []
 
-    def _emit_cluster(idxs: List[int]) -> Cluster:
+    def _emit_cluster(idxs: List[int], provisional: bool = False) -> Cluster:
         """Build a Cluster from a list of candidate indices. Used by the main
-        loop and by the single-village / orphan-merge passes."""
+        loop and by the single-village / orphan-merge / provisional passes."""
         cluster_coords = [coords[k] for k in idxs]
         c_lat = sum(c[0] for c in cluster_coords) / len(cluster_coords)
         c_lon = sum(c[1] for c in cluster_coords) / len(cluster_coords)
@@ -151,6 +159,7 @@ def cluster_block_commodity(
             max_span_km=round(_max_pairwise_km(cluster_coords), 3),
             centroid_lat=round(c_lat, 6),
             centroid_lon=round(c_lon, 6),
+            provisional=provisional,
         )
 
     # Pre-pass (Faiz 2026-05-09, #18): a single village can already meet or
@@ -165,14 +174,13 @@ def cluster_block_commodity(
             clusters.append(_emit_cluster([i]))
             assigned[i] = True
 
-    for seed in seed_order:
-        if assigned[seed]:
-            continue
-
+    def _grow(seed: int):
+        """Greedy seed-and-grow from one seed. Marks chosen villages assigned
+        and returns (indices, total_members). Distance is measured to the seed
+        (Pass B's growth metric); size and radius guards still gate every add."""
         idxs = [seed]
         total = members[seed]
         assigned[seed] = True
-
         while (
             len(idxs) < p["max_villages_per_cluster"]
             and total < p["max_cluster_members"]
@@ -198,7 +206,12 @@ def cluster_block_commodity(
             idxs.append(best_i)
             total += members[best_i]
             assigned[best_i] = True
+        return idxs, total
 
+    for seed in seed_order:
+        if assigned[seed]:
+            continue
+        idxs, total = _grow(seed)
         if (
             total < p["min_cluster_members"]
             or len(idxs) < p["min_villages_per_cluster"]
@@ -206,7 +219,6 @@ def cluster_block_commodity(
             for k in idxs:
                 assigned[k] = False
             continue
-
         clusters.append(_emit_cluster(idxs))
 
     # Post-pass (Faiz 2026-05-09, #19): orphan villages that the main loop
@@ -249,6 +261,25 @@ def cluster_block_commodity(
                 clusters[j] = merged
                 break
         assigned[i] = True
+
+    # Pass D (Faiz 2026-05-19): low-density blocks/pockets (BHERGAON's Tangla
+    # corner, all of KHOWANG/Dairy) leave villages that never clear the
+    # min_cluster_members floor, so they vanish from the map. When
+    # emit_provisional is on, surface every still-unassigned village as a
+    # PROVISIONAL cluster - same growth, radius and size caps, but the member
+    # floor is relaxed to provisional_min_members and the 2-village floor is
+    # dropped so isolated villages still show. Flagged so the UI can mark them
+    # "below funding floor - review" rather than presenting them as fundable.
+    if p["emit_provisional"]:
+        for seed in seed_order:
+            if assigned[seed]:
+                continue
+            idxs, total = _grow(seed)
+            if total >= p["provisional_min_members"]:
+                clusters.append(_emit_cluster(idxs, provisional=True))
+            else:
+                for k in idxs:
+                    assigned[k] = False
 
     return clusters
 
