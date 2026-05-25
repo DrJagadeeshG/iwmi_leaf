@@ -558,8 +558,8 @@
     //     connector lines), so the shape reads as "this group" without
     //     implying a polygonal boundary. Overlaps between clusters are
     //     expected and fine.
-    const CLUSTER_STROKE = '#28537D';
-    const CLUSTER_FILL = '#28537D';
+    const CLUSTER_STROKE = '#00BCD4';  // cyan - fundable clusters
+    const CLUSTER_FILL = '#00BCD4';
     const PROVISIONAL_STROKE = '#E8833A';  // amber - below-floor "review" groups
 
     function clusterShape(cluster) {

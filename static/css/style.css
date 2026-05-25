@@ -2871,8 +2871,8 @@ body {
     width: 14px;
     height: 14px;
     border-radius: 50%;
-    background: rgba(40, 83, 125, 0.10);
-    border: 2px solid #28537D;
+    background: rgba(0, 188, 212, 0.12);
+    border: 2px solid #00BCD4;
 }
 .legend-swatch-provisional {
     width: 14px;
