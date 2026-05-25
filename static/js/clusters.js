@@ -37,6 +37,19 @@
     };
     const PALETTE = ['#E86933', '#22AD7A', '#5088C6', '#0297A6', '#DD9103', '#46BBD4', '#a259ff', '#ff5c8a'];
 
+    // LEAF-46: villages are a neutral grey by default; when a commodity is
+    // selected, interested villages take that commodity's colour (one colour
+    // per livestock type, per Faiz). Colours are easily tweaked here.
+    const VILLAGE_GREY = '#9aa5ad';
+    const COMMODITY_COLOR = {
+        Dairy: '#5088C6',            // blue
+        Goatery: '#22AD7A',          // green
+        Piggery: '#E86933',          // orange
+        Backyard_Poultry: '#0297A6', // teal
+        Duckery: '#DD9103',          // yellow
+        Fishery_Activity: '#46BBD4', // sky
+    };
+
     // Workflow help - explains the whole workspace, not just finalisation.
     const WORKFLOW_HELP = {
         en: { label: 'EN', sections: [
@@ -45,7 +58,7 @@
             ['Step 1 - Pick a block',
                 'Use the district + block dropdowns top-right. Only blocks with village data ingested are listed; if the district has just one such block, the dropdown collapses to a static label. Today only Khowang (Dibrugarh) has data; more arrive as ODK collection rolls out. The URL reflects your selection: /<district>/<block>/clustering - bookmark or share it.'],
             ['Step 2 - See the villages',
-                'Coloured dots are villages plotted at their GPS point. Hover any dot for the village name, GP and per-commodity member counts. The dark blue outline is the block boundary - clusters never cross it (a hard rule per the IWMI requirements call). When you pick a commodity, dot sizes scale with members interested in that commodity.'],
+                'Dots are villages plotted at their GPS point - grey until you pick a commodity. Hover any dot for the village name and per-commodity member counts. The dark blue outline is the block boundary - clusters never cross it (a hard rule per the IWMI requirements call). When you pick a commodity, interested villages take that commodity\'s colour and dot sizes scale with members.'],
             ['Step 3 - Pick a commodity',
                 'The Commodity dropdown switches the cluster overlay. The greedy algorithm runs once at ingest and keeps results in Postgres; picking a commodity just reads them. Each polygon is a proposed cluster of 2-4 nearby villages whose total interested members fall in 30-50 (government band, tunable). Polygon colours are arbitrary - they only help you tell adjacent clusters apart.'],
             ['Step 4 - Review a cluster',
@@ -157,21 +170,6 @@
         let h = 0;
         for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
         return PALETTE[h % PALETTE.length];
-    }
-
-    // Categorical palette for GP coloring on the village layer. Picked for
-    // adjacency contrast — Tableau 10 + 6 extras to comfortably cover the
-    // 13–25 GPs typically found in one block.
-    const GP_PALETTE = [
-        '#4E79A7', '#F28E2B', '#59A14F', '#E15759', '#76B7B2', '#EDC948',
-        '#B07AA1', '#FF9DA7', '#9C755F', '#BAB0AC', '#1F77B4', '#FF7F0E',
-        '#2CA02C', '#D62728', '#9467BD', '#8C564B',
-    ];
-    function colorForGp(gpName) {
-        const seed = (gpName || '').toString().toUpperCase();
-        let h = 5381;
-        for (let i = 0; i < seed.length; i++) h = ((h << 5) + h + seed.charCodeAt(i)) >>> 0;
-        return GP_PALETTE[h % GP_PALETTE.length];
     }
 
     async function ensureBlocksWithVillages() {
@@ -509,21 +507,23 @@
                 const radius = local.currentCommodity
                     ? Math.max(4, Math.min(14, 4 + Math.sqrt(members) * 1.2))
                     : 5;
-                const gpColor = colorForGp(p.gp_name);
-                // In commodity-mode, dim villages with no interest so the
-                // active commodity stands out; GP color still readable.
+                // Grey by default; in commodity-mode interested villages take
+                // the commodity colour and no-interest villages are dimmed grey
+                // so the active commodity stands out (LEAF-46).
                 const noInterest = local.currentCommodity && members === 0;
+                const fillColor = !local.currentCommodity
+                    ? VILLAGE_GREY
+                    : (noInterest ? '#cfd6dc' : (COMMODITY_COLOR[local.currentCommodity] || VILLAGE_GREY));
                 return L.circleMarker(latlng, {
                     radius,
                     color: '#243240',
                     weight: 1,
-                    fillColor: noInterest ? '#cfd6dc' : gpColor,
+                    fillColor,
                     fillOpacity: noInterest ? 0.55 : 0.85,
                 });
             },
             onEachFeature: (feat, layer) => {
                 const p = feat.properties || {};
-                const swatch = `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${colorForGp(p.gp_name)};margin-right:5px;vertical-align:middle"></span>`;
                 let total = 0;
                 const rows = COMMODITY_PANEL_ORDER.map(k => {
                     const v = Number(p[k] || 0);
@@ -534,8 +534,7 @@
                 }).join('');
                 const html = `
                     <div style="font-size:13px;min-width:190px">
-                        <div style="font-weight:600;font-size:15px">${escapeHtml(p.vill_name || 'Village')}</div>
-                        <div style="color:#607080;margin-bottom:4px">${swatch}${escapeHtml(p.gp_name || '')}</div>
+                        <div style="font-weight:600;font-size:15px;margin-bottom:4px">${escapeHtml(p.vill_name || 'Village')}</div>
                         <table style="width:100%;border-collapse:collapse;font-size:12px">${rows}
                             <tr style="border-top:1px solid #e3e7eb">
                                 <td style="padding-top:3px;color:#4a5868">Total</td>
@@ -561,6 +560,7 @@
     //     expected and fine.
     const CLUSTER_STROKE = '#28537D';
     const CLUSTER_FILL = '#28537D';
+    const PROVISIONAL_STROKE = '#E8833A';  // amber - below-floor "review" groups
 
     function clusterShape(cluster) {
         const villages = (cluster.villages || []).filter(v =>
@@ -589,6 +589,19 @@
         });
         radiusM = radiusM > 0 ? radiusM * 1.18 + 60 : 220;
 
+        // Provisional (below-floor) groups are drawn with a dashed amber ring so
+        // they read as "review, not a fundable cluster" at a glance.
+        if (cluster.provisional) {
+            return L.circle(center, {
+                radius: radiusM,
+                color: PROVISIONAL_STROKE,
+                weight: 2,
+                opacity: 0.9,
+                dashArray: '5,5',
+                fillColor: PROVISIONAL_STROKE,
+                fillOpacity: 0.06,
+            });
+        }
         return L.circle(center, {
             radius: radiusM,
             color: CLUSTER_STROKE,
@@ -604,11 +617,14 @@
         // sequential label (per Faiz, 2026-05-09); cluster_id stays as a faint
         // subtitle so devs/CSV editors can still cross-reference.
         const label = c.cluster_num != null ? `Cluster ${c.cluster_num}` : c.cluster_id;
+        const provBadge = c.provisional
+            ? ' <span style="background:#E8833A;color:#fff;border-radius:3px;padding:0 5px;font-size:11px">Provisional</span>'
+            : '';
         return `<div style="font-size: 13px">
-            <b>${label}</b>
+            <b>${label}</b>${provBadge}
             ${c.cluster_num != null ? `<small style="color:#888"> · ${c.cluster_id}</small>` : ''}<br>
             ${c.total_members} members · ${(c.villages || []).length} villages · ${c.max_span_km} km
-            <br><small>Click for details</small>
+            <br><small>${c.provisional ? 'Below 30-member floor — for review' : 'Click for details'}</small>
         </div>`;
     }
 
@@ -784,6 +800,7 @@
         if (!c) return;
         renderClusterSummaryPanel(c);
         highlightClusterVillages(c);
+        highlightClusterRing(c);
         // Keep the jump dropdown in sync if the click came from elsewhere.
         const sel = $('cluster-jump-select');
         if (sel && c.cluster_id) sel.value = c.cluster_id;
@@ -791,6 +808,22 @@
             const hit = local.clusterRegistry
                 && local.clusterRegistry[String(c.cluster_id).toLowerCase()];
             if (hit) panToCluster(hit);
+        }
+    }
+
+    // LEAF-45: darken the selected cluster's ring (and reset all the others)
+    // so the clicked cluster stands out from the overlapping rings.
+    function highlightClusterRing(c) {
+        const reg = local.clusterRegistry || {};
+        Object.values(reg).forEach(entry => {
+            if (entry.shape && entry.shape.setStyle) {
+                entry.shape.setStyle({ color: CLUSTER_STROKE, weight: 2.5, fillOpacity: 0.10 });
+            }
+        });
+        const hit = c && c.cluster_id && reg[String(c.cluster_id).toLowerCase()];
+        if (hit && hit.shape && hit.shape.setStyle) {
+            hit.shape.setStyle({ color: '#16314d', weight: 4, fillOpacity: 0.32 });
+            if (hit.shape.bringToFront) hit.shape.bringToFront();
         }
     }
 
@@ -959,17 +992,32 @@
             }, 0);
         }
         const label = COMMODITY_LABEL[local.currentCommodity] || local.currentCommodity;
-        if (!count) {
+        // Split fundable (eligible) from provisional (below-floor) groups so the
+        // headline count reflects only fundable clusters.
+        const all = clusters || [];
+        const fundable = all.filter(c => !c.provisional);
+        const provisional = all.filter(c => c.provisional);
+        const provBit = provisional.length
+            ? ` · ${provisional.length} provisional (below floor, review)`
+            : '';
+        if (!fundable.length) {
             const blockBit = blockTotal
-                ? ` Block has ${blockTotal.toLocaleString()} interested member${blockTotal === 1 ? '' : 's'} - all unassigned.`
+                ? ` Block has ${blockTotal.toLocaleString()} interested member${blockTotal === 1 ? '' : 's'}.`
                 : '';
-            summary.textContent =
-                `No ${label} clusters formed at default thresholds.${blockBit} ` +
-                'Try Regenerate with relaxed parameters via the API.';
+            if (provisional.length) {
+                summary.textContent =
+                    `No fundable ${label} clusters at default thresholds.${blockBit} ` +
+                    `${provisional.length} provisional group${provisional.length === 1 ? '' : 's'} ` +
+                    'below the 30-member floor shown for review.';
+            } else {
+                summary.textContent =
+                    `No ${label} clusters formed at default thresholds.${blockBit} ` +
+                    'Try Regenerate with relaxed parameters via the API.';
+            }
             return;
         }
-        const inClusters = (clusters || []).reduce((s, c) => s + (c.total_members || 0), 0);
-        const finalised = (clusters || []).filter(c => c.finalized).length;
+        const inClusters = fundable.reduce((s, c) => s + (c.total_members || 0), 0);
+        const finalised = fundable.filter(c => c.finalized).length;
         let coverage = '';
         if (blockTotal > 0) {
             const pct = Math.round((inClusters / blockTotal) * 100);
@@ -979,7 +1027,7 @@
             coverage = ` · ${inClusters.toLocaleString()} members`;
         }
         summary.textContent =
-            `${count} ${label} cluster${count === 1 ? '' : 's'}${coverage} · ${finalised} finalised`;
+            `${fundable.length} ${label} cluster${fundable.length === 1 ? '' : 's'}${coverage} · ${finalised} finalised${provBit}`;
     }
 
     function updateDownloadHref() {
@@ -1029,10 +1077,6 @@
         const otherTotal = Object.values(s.other || {}).reduce((a, b) => a + b, 0);
         const otherRows = Object.entries(s.other || {}).map(([k, v]) =>
             row(k, v.toLocaleString(), v === 0)).join('');
-        const gpItems = (s.gps || []).map(gp =>
-            `<span class="gp-chip" title="${escapeHtml(gp)}">
-                <span class="gp-swatch" style="background:${colorForGp(gp)}"></span>${escapeHtml(gp)}
-            </span>`).join('');
         el.innerHTML = `
             <h3><i class="bi bi-bar-chart-line"></i> ${escapeHtml(s.block_name)}</h3>
             <div class="cluster-side-sub">${escapeHtml(s.district_name || '')} district</div>
@@ -1047,8 +1091,6 @@
             </details>
             <div class="cluster-side-section">Total members</div>
             ${row('Across all activities', s.members_total.toLocaleString())}
-            <div class="cluster-side-section" title="Map dots are coloured by GP">Gram Panchayats — dot colours</div>
-            <div class="gp-chip-list">${gpItems || '<div class="cluster-side-empty">No GPs.</div>'}</div>
         `;
     }
 
@@ -1129,8 +1171,16 @@
                       `(smallest here: <b>${isFinite(minPerVill) ? minPerVill : 0}</b>)`,
             },
         ];
-        return rules.map(r =>
+        const body = rules.map(r =>
             `<li style="margin: 3px 0;">${tick(r.ok)} ${r.text}</li>`).join('');
+        if (cluster.provisional) {
+            // Below-floor group surfaced for review: lead with why it doesn't yet
+            // qualify so the failing rule(s) below read as the reason, not a bug.
+            return `<li style="margin:3px 0 6px; list-style:none; color:#9a5a23; background:#fdf1e7; padding:6px 8px; border-radius:4px;">
+                This group is shown for <b>review</b>: it doesn't meet the funding floor, so it isn't a fundable cluster yet. The flagged rule below is why.
+            </li>` + body;
+        }
+        return body;
     }
 
     function renderClusterSummaryPanel(c) {
@@ -1139,9 +1189,11 @@
         local.activeClusterId = c && c.cluster_id;
         const villages = (c.villages || []).map(v =>
             `<li>${escapeHtml(v.vill_name)} <small>(${(v.members || 0).toLocaleString()} members)</small></li>`).join('');
-        const status = c.finalized
-            ? '<span style="color:#22AD7A; font-weight: 600">Finalised</span>'
-            : '<span style="color:#888">Proposed</span>';
+        const status = c.provisional
+            ? '<span style="color:#E8833A; font-weight: 600">Provisional — below funding floor</span>'
+            : c.finalized
+                ? '<span style="color:#22AD7A; font-weight: 600">Finalised</span>'
+                : '<span style="color:#888">Proposed</span>';
         const row = (label, value) =>
             `<div class="cluster-side-row"><span class="label">${escapeHtml(label)}</span><span class="value">${value}</span></div>`;
 
@@ -1162,7 +1214,7 @@
             <button type="button" class="cluster-side-back" id="cluster-side-back-btn">
                 <i class="bi bi-arrow-left"></i> Back to block summary
             </button>
-            <h3><i class="bi bi-diagram-3"></i> ${c.cluster_num != null ? `Cluster ${c.cluster_num}` : escapeHtml(c.cluster_id)}</h3>
+            <h3><i class="bi bi-diagram-3"></i> ${c.cluster_num != null ? `Cluster ${c.cluster_num}` : escapeHtml(c.cluster_id)}${c.provisional ? ' <span style="background:#E8833A;color:#fff;border-radius:3px;padding:1px 6px;font-size:11px;vertical-align:middle">Provisional</span>' : ''}</h3>
             <div class="cluster-side-sub">${escapeHtml(COMMODITY_LABEL[c.commodity] || c.commodity)} · ${escapeHtml(c.block_name)}${c.cluster_num != null ? ` · <span style="color:#888">${escapeHtml(c.cluster_id)}</span>` : ''}</div>
             <div class="cluster-side-section">Cluster</div>
             ${row('Members', (c.total_members || 0).toLocaleString())}
@@ -1179,7 +1231,7 @@
             <div class="cluster-side-section">Other commodities in these villages</div>
             ${othersHtml}
             <div class="cluster-side-section" style="display:flex; align-items:center; justify-content:space-between;">
-                <span>Why this is a cluster</span>
+                <span>${c.provisional ? 'Why this is provisional' : 'Why this is a cluster'}</span>
                 <a href="/documentation/guide/clustering-workflow/#worked-example"
                    target="_blank" rel="noopener"
                    data-tooltip-wrap data-tooltip="Open the clustering workflow guide with a worked example"
