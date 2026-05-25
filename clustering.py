@@ -22,7 +22,7 @@ import pandas as pd
 # Bump whenever the clustering LOGIC changes (a change params/data don't
 # capture). The smart-refresh fingerprint includes this, so bumping it forces
 # every unlocked scope to regenerate on its next read.
-ALGO_VERSION = 3
+ALGO_VERSION = 4
 
 COMMODITIES = [
     "Dairy",
@@ -42,8 +42,9 @@ DEFAULT_PARAMS = {
     "max_radius_km": 5.0,
     # When on, villages that never clear the min_cluster_members floor are
     # surfaced as PROVISIONAL clusters (relaxed floor) instead of being dropped
-    # off the map. Default off => no output drift until the UI can flag them.
-    "emit_provisional": False,
+    # off the map. On by default since 2026-05-25 (UI flags them with a badge
+    # and excludes them from fundable counts).
+    "emit_provisional": True,
     "provisional_min_members": 1,
 }
 
@@ -231,13 +232,16 @@ def cluster_block_commodity(
             continue
         clusters.append(_emit_cluster(idxs))
 
-    # Post-pass (Faiz 2026-05-09, #19): orphan villages that the main loop
-    # left unassigned (typically tiny isolated counts) get merged into the
-    # nearest existing cluster within 2x max_radius_km. Faiz's framing: small
-    # outliers shouldn't be silently dropped - either absorb them or surface
-    # them. We absorb, with a soft cap (3x max_cluster_members) so a flood of
-    # nearby orphans can't blow a cluster up indefinitely.
-    soft_cap = 3 * p["max_cluster_members"]
+    # Post-pass (Faiz 2026-05-09 #19, fixed 2026-05-25 #S2): orphan villages the
+    # main loop left unassigned get merged into the nearest existing cluster -
+    # but ONLY if the merge keeps the cluster fully valid. The earlier version
+    # checked just a loose member soft-cap and so produced clusters that broke
+    # the 4-village and 5km-span rules (e.g. CHARANPARA/DULIAPARA stapled onto
+    # BARTANGLA -> 6 villages, 5.139 km). Now every cap is re-checked, so an
+    # orphan is absorbed only when the result still satisfies max_villages,
+    # max_radius span and max_cluster_members. Orphans that fit nowhere valid are
+    # left for the provisional pass to surface (Pass D) rather than corrupting a
+    # good cluster. Centroid distance is just a prefilter / tie-break.
     merge_radius_km = 2 * p["max_radius_km"]
     for i in range(len(candidates)):
         if assigned[i]:
@@ -248,7 +252,12 @@ def cluster_block_commodity(
             d = haversine_km(v_lat, v_lon, c.centroid_lat, c.centroid_lon)
             if d > merge_radius_km:
                 continue
-            if c.total_members + members[i] > soft_cap:
+            c_idxs = [candidates.index.get_loc(idx) for idx in c.village_indices]
+            if len(c_idxs) + 1 > p["max_villages_per_cluster"]:
+                continue
+            if c.total_members + members[i] > p["max_cluster_members"]:
+                continue
+            if _max_pairwise_km([coords[k] for k in c_idxs] + [coords[i]]) > p["max_radius_km"]:
                 continue
             if d < best_d:
                 best_d = d

@@ -186,7 +186,8 @@ def aggregate_villages(level: str, district: Optional[str] = None) -> List[Dict]
 
 CLUSTER_COLS = (
     "cluster_id, commodity, block_name, district_name, total_members, max_span_km, "
-    "centroid_lat, centroid_lon, pashu_sakhi, block_coordinator, finalized, locked, dashboard"
+    "centroid_lat, centroid_lon, pashu_sakhi, block_coordinator, finalized, locked, "
+    "provisional, dashboard"
 )
 
 
@@ -204,6 +205,7 @@ def _row_to_cluster(row: Dict, villages: List[Dict]) -> Dict:
         "block_coordinator": row["block_coordinator"],
         "finalized": bool(row["finalized"]),
         "locked": bool(row.get("locked", False)),
+        "provisional": bool(row.get("provisional", False)),
         "dashboard": row["dashboard"],
         "villages": villages,
         "village_indices": [v["village_index"] for v in villages if v.get("village_index") is not None],
@@ -313,6 +315,7 @@ def _insert_clusters(cur, clusters: List[Dict]) -> None:
             c.get("pashu_sakhi"), c.get("block_coordinator"),
             bool(c.get("finalized", False)),
             bool(c.get("locked", False)),
+            bool(c.get("provisional", False)),
             Json(c["dashboard"]) if c.get("dashboard") is not None else None,
         )
         for c in clusters

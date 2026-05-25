@@ -16,6 +16,9 @@ CREATE TABLE IF NOT EXISTS clusters (
     -- TRUE when a human owns this cluster (CSV upload or manual edit). Locked
     -- scopes are never auto-regenerated, so smart-refresh can't wipe edits.
     locked            BOOLEAN NOT NULL DEFAULT FALSE,
+    -- TRUE for below-floor groups surfaced for review (not fundable). Shown in
+    -- the UI with a "provisional" badge and excluded from fundable counts.
+    provisional       BOOLEAN NOT NULL DEFAULT FALSE,
     dashboard         JSONB,
     created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()

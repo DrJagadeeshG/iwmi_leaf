@@ -24,31 +24,50 @@ def test_single_village_with_huge_count_becomes_its_own_cluster(sample_villages_
     assert giant.max_span_km == 0.0
 
 
-def test_orphan_village_merges_into_nearest_cluster(sample_villages_df):
-    """The lone 3-member dairy village near the tight cluster should be
-    absorbed by the orphan-merge post-pass (Faiz #19, 2026-05-09)."""
+def test_orphan_merge_respects_village_and_span_caps(sample_villages_df):
+    """Orphan-merge must never break the village-count or span caps (#S2,
+    2026-05-25). The fixture's tight cluster is already at the 4-village cap, so
+    Village_Orphan cannot be stapled on - that was the BARTANGLA bug where the
+    orphan-merge produced a 6-village / 5.139 km cluster."""
+    p = clustering.DEFAULT_PARAMS
     clusters = clustering.cluster_block_commodity(
         sample_villages_df, "TESTBLK", "Dairy",
     )
-    # The orphan must end up in *some* cluster - not floating free.
-    found_in = [c for c in clusters
-                if any(v["vill_name"] == "Village_Orphan" for v in c.villages)]
-    assert found_in, "Village_Orphan should be merged into a cluster"
-    host = found_in[0]
-    # And specifically the tight cluster, not the Giant standalone.
-    village_names = {v["vill_name"] for v in host.villages}
-    assert "Village_A" in village_names, (
-        "Orphan should join the nearby tight cluster, "
-        f"not the Giant (got {village_names})"
+    for c in clusters:
+        if c.provisional:
+            continue
+        assert len(c.villages) <= p["max_villages_per_cluster"], (
+            f"{c.cluster_id} has {len(c.villages)} villages (cap {p['max_villages_per_cluster']})"
+        )
+        assert c.max_span_km <= p["max_radius_km"], (
+            f"{c.cluster_id} span {c.max_span_km} exceeds {p['max_radius_km']} km"
+        )
+    # The orphan is NOT crammed into the full tight cluster.
+    for c in clusters:
+        names = {v["vill_name"] for v in c.villages}
+        if "Village_A" in names:
+            assert "Village_Orphan" not in names, (
+                "Orphan should not be force-merged into the full 4-village cluster"
+            )
+
+
+def test_orphan_surfaced_as_provisional_when_enabled(sample_villages_df):
+    """With emit_provisional on, an orphan that fits no valid cluster is surfaced
+    as a flagged provisional cluster (Pass D) rather than silently dropped."""
+    clusters = clustering.cluster_block_commodity(
+        sample_villages_df, "TESTBLK", "Dairy", params={"emit_provisional": True},
     )
+    found = [c for c in clusters
+             if any(v["vill_name"] == "Village_Orphan" for v in c.villages)]
+    assert found, "Village_Orphan should be surfaced, not dropped"
+    assert found[0].provisional is True, "the surfaced orphan cluster must be flagged provisional"
 
 
-def test_orphan_merge_respects_soft_cap():
-    """Orphans should not be merged when doing so would exceed
-    3 * max_cluster_members - prevents runaway absorption. Uses an
-    explicit max=50 override so the cap (150) is easy to trip with a
-    120-member orphan; with the production default (150) the cap is
-    450 and the same scenario gets handled by Pass A instead."""
+def test_oversized_orphan_not_absorbed():
+    """A village that is itself >= max_cluster_members must not be crammed into
+    an existing cluster. It becomes its own single-village cluster via Pass A,
+    and the cap-respecting orphan-merge would refuse it anyway (it would blow the
+    member cap). Uses max=50 so a 120-member village trips the threshold."""
     import pandas as pd
     rows = [
         # Two normal villages forming a cluster at max_cluster_members=50
