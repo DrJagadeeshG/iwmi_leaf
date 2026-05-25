@@ -890,13 +890,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#api-information" class="md-nav__link">
+  <a href="#validate-config-sheets-guardrails" class="md-nav__link">
     <span class="md-ellipsis">
-      API Information
+      Validate Config Sheets (Guardrails)
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="API Information">
+    <nav class="md-nav" aria-label="Validate Config Sheets (Guardrails)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -909,7 +909,49 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#checks-performed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Checks performed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#example_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Information
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API Information">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#response_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Response
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example_4" class="md-nav__link">
     <span class="md-ellipsis">
       Example
     </span>
@@ -933,7 +975,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#response_4" class="md-nav__link">
+  <a href="#response_5" class="md-nav__link">
     <span class="md-ellipsis">
       Response
     </span>
@@ -942,7 +984,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#example_4" class="md-nav__link">
+  <a href="#example_5" class="md-nav__link">
     <span class="md-ellipsis">
       Example
     </span>
@@ -1268,13 +1310,13 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#api-information" class="md-nav__link">
+  <a href="#validate-config-sheets-guardrails" class="md-nav__link">
     <span class="md-ellipsis">
-      API Information
+      Validate Config Sheets (Guardrails)
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="API Information">
+    <nav class="md-nav" aria-label="Validate Config Sheets (Guardrails)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
@@ -1287,7 +1329,49 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#checks-performed" class="md-nav__link">
+    <span class="md-ellipsis">
+      Checks performed
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#example_3" class="md-nav__link">
+    <span class="md-ellipsis">
+      Example
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#api-information" class="md-nav__link">
+    <span class="md-ellipsis">
+      API Information
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="API Information">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#response_4" class="md-nav__link">
+    <span class="md-ellipsis">
+      Response
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#example_4" class="md-nav__link">
     <span class="md-ellipsis">
       Example
     </span>
@@ -1311,7 +1395,7 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#response_4" class="md-nav__link">
+  <a href="#response_5" class="md-nav__link">
     <span class="md-ellipsis">
       Response
     </span>
@@ -1320,7 +1404,7 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#example_4" class="md-nav__link">
+  <a href="#example_5" class="md-nav__link">
     <span class="md-ellipsis">
       Example
     </span>
@@ -1704,62 +1788,115 @@
 <p>Geometries are simplified (tolerance 0.005) for web performance. For high-resolution boundaries, access the raw shapefile at <code>leaf_flask/data/protected_areas/Protected_Area_India_Final.shp</code>.</p>
 </div>
 <hr />
-<h2 id="api-information">API Information<a class="headerlink" href="#api-information" title="Permanent link">&para;</a></h2>
-<p>Returns a structured listing of all available API endpoints. Useful for programmatic API discovery.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>GET /api
+<h2 id="validate-config-sheets-guardrails">Validate Config Sheets (Guardrails)<a class="headerlink" href="#validate-config-sheets-guardrails" title="Permanent link">&para;</a></h2>
+<p>Runs structural guardrail checks on the Google Sheets that power the dashboard, so problems an editor might introduce are caught before they break anything. Read-only. The same result is also returned in the <code>validation</code> field of <code>POST /api/config/refresh</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a>GET /api/config/validate
 </code></pre></div>
 <h3 id="response_3">Response<a class="headerlink" href="#response_3" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="p">{</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nt">&quot;info&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;LEAF DSS API v1.0&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">  </span><span class="nt">&quot;endpoints&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span><span class="nt">&quot;blocks&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">      </span><span class="nt">&quot;GET /api/blocks&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get all blocks as GeoJSON&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">      </span><span class="nt">&quot;GET /api/blocks/geojson&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get all blocks as GeoJSON (alias)&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="w">      </span><span class="nt">&quot;GET /api/blocks/&lt;block_id&gt;&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get block by BLOCK_ID&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-8" name="__codelineno-15-8" href="#__codelineno-15-8"></a><span class="w">      </span><span class="nt">&quot;GET /api/blocks/by-name/&lt;block_name&gt;&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get block by name&quot;</span>
-<a id="__codelineno-15-9" name="__codelineno-15-9" href="#__codelineno-15-9"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-15-10" name="__codelineno-15-10" href="#__codelineno-15-10"></a><span class="w">    </span><span class="nt">&quot;locations&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="w">      </span><span class="nt">&quot;GET /api/locations&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get hierarchical list of districts, blocks, and GPs&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="w">      </span><span class="nt">&quot;GET /api/districts&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get list of all districts with metadata&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-13" name="__codelineno-15-13" href="#__codelineno-15-13"></a><span class="w">      </span><span class="nt">&quot;GET /api/districts/&lt;district&gt;/blocks&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get all blocks in a district&quot;</span>
-<a id="__codelineno-15-14" name="__codelineno-15-14" href="#__codelineno-15-14"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-15-15" name="__codelineno-15-15" href="#__codelineno-15-15"></a><span class="w">    </span><span class="nt">&quot;config&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-15-16" name="__codelineno-15-16" href="#__codelineno-15-16"></a><span class="w">      </span><span class="nt">&quot;GET /api/config&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get app configuration&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-17" name="__codelineno-15-17" href="#__codelineno-15-17"></a><span class="w">      </span><span class="nt">&quot;GET /api/levels&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get available data levels&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-18" name="__codelineno-15-18" href="#__codelineno-15-18"></a><span class="w">      </span><span class="nt">&quot;GET /api/protected-areas/geojson&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get protected areas as GeoJSON&quot;</span>
-<a id="__codelineno-15-19" name="__codelineno-15-19" href="#__codelineno-15-19"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-15-20" name="__codelineno-15-20" href="#__codelineno-15-20"></a><span class="w">    </span><span class="nt">&quot;health&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-15-21" name="__codelineno-15-21" href="#__codelineno-15-21"></a><span class="w">      </span><span class="nt">&quot;GET /health&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Health check&quot;</span>
-<a id="__codelineno-15-22" name="__codelineno-15-22" href="#__codelineno-15-22"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-15-23" name="__codelineno-15-23" href="#__codelineno-15-23"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-15-24" name="__codelineno-15-24" href="#__codelineno-15-24"></a><span class="p">}</span>
+<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a><span class="w">  </span><span class="nt">&quot;ok&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a><span class="w">  </span><span class="nt">&quot;issues&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
+<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;sheet&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;block_values&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;severity&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;error&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Duplicate BLOCK_ID value(s): 42. Each block must have a unique ID.&quot;</span><span class="w"> </span><span class="p">},</span>
+<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;sheet&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;dss_input&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;severity&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;message&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;I_variable code(s) not found in the block values sheet: ZZZ.&quot;</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-15-7" name="__codelineno-15-7" href="#__codelineno-15-7"></a><span class="p">}</span>
 </code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ok</code></td>
+<td>boolean</td>
+<td><code>false</code> if any <strong>error</strong>-severity issue was found</td>
+</tr>
+<tr>
+<td><code>issues[].sheet</code></td>
+<td>string</td>
+<td><code>block_values</code> or <code>dss_input</code></td>
+</tr>
+<tr>
+<td><code>issues[].severity</code></td>
+<td>string</td>
+<td><code>error</code> (will break the dashboard) or <code>warning</code> (worth a look)</td>
+</tr>
+<tr>
+<td><code>issues[].message</code></td>
+<td>string</td>
+<td>Plain-language description of the problem</td>
+</tr>
+</tbody>
+</table>
+<h3 id="checks-performed">Checks performed<a class="headerlink" href="#checks-performed" title="Permanent link">&para;</a></h3>
+<ul>
+<li><strong>Block values:</strong> required ID columns present (not renamed/removed), unique <code>BLOCK_ID</code>, non-empty <code>Block_name</code>, and stray non-numeric text in otherwise-numeric columns.</li>
+<li><strong>Intervention config:</strong> required columns present, intervention rows have an <code>I_variable</code>, <code>range_min</code> ≤ <code>range_max</code>, and every <code>I_variable</code> exists as a block-values column.</li>
+</ul>
 <h3 id="example_3">Example<a class="headerlink" href="#example_3" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>curl<span class="w"> </span>https://iwmi-leaf.onrender.com/api<span class="w"> </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>json.tool
+<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a>curl<span class="w"> </span>https://iwmi-leaf.onrender.com/api/config/validate
+</code></pre></div>
+<hr />
+<h2 id="api-information">API Information<a class="headerlink" href="#api-information" title="Permanent link">&para;</a></h2>
+<p>Returns a structured listing of all available API endpoints. Useful for programmatic API discovery.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>GET /api
+</code></pre></div>
+<h3 id="response_4">Response<a class="headerlink" href="#response_4" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="p">{</span>
+<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span><span class="nt">&quot;info&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;LEAF DSS API v1.0&quot;</span><span class="p">,</span>
+<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="w">  </span><span class="nt">&quot;endpoints&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a><span class="w">    </span><span class="nt">&quot;blocks&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a><span class="w">      </span><span class="nt">&quot;GET /api/blocks&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get all blocks as GeoJSON&quot;</span><span class="p">,</span>
+<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="w">      </span><span class="nt">&quot;GET /api/blocks/geojson&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get all blocks as GeoJSON (alias)&quot;</span><span class="p">,</span>
+<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a><span class="w">      </span><span class="nt">&quot;GET /api/blocks/&lt;block_id&gt;&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get block by BLOCK_ID&quot;</span><span class="p">,</span>
+<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a><span class="w">      </span><span class="nt">&quot;GET /api/blocks/by-name/&lt;block_name&gt;&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get block by name&quot;</span>
+<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a><span class="w">    </span><span class="nt">&quot;locations&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-18-11" name="__codelineno-18-11" href="#__codelineno-18-11"></a><span class="w">      </span><span class="nt">&quot;GET /api/locations&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get hierarchical list of districts, blocks, and GPs&quot;</span><span class="p">,</span>
+<a id="__codelineno-18-12" name="__codelineno-18-12" href="#__codelineno-18-12"></a><span class="w">      </span><span class="nt">&quot;GET /api/districts&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get list of all districts with metadata&quot;</span><span class="p">,</span>
+<a id="__codelineno-18-13" name="__codelineno-18-13" href="#__codelineno-18-13"></a><span class="w">      </span><span class="nt">&quot;GET /api/districts/&lt;district&gt;/blocks&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get all blocks in a district&quot;</span>
+<a id="__codelineno-18-14" name="__codelineno-18-14" href="#__codelineno-18-14"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-18-15" name="__codelineno-18-15" href="#__codelineno-18-15"></a><span class="w">    </span><span class="nt">&quot;config&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-18-16" name="__codelineno-18-16" href="#__codelineno-18-16"></a><span class="w">      </span><span class="nt">&quot;GET /api/config&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get app configuration&quot;</span><span class="p">,</span>
+<a id="__codelineno-18-17" name="__codelineno-18-17" href="#__codelineno-18-17"></a><span class="w">      </span><span class="nt">&quot;GET /api/levels&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get available data levels&quot;</span><span class="p">,</span>
+<a id="__codelineno-18-18" name="__codelineno-18-18" href="#__codelineno-18-18"></a><span class="w">      </span><span class="nt">&quot;GET /api/protected-areas/geojson&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get protected areas as GeoJSON&quot;</span>
+<a id="__codelineno-18-19" name="__codelineno-18-19" href="#__codelineno-18-19"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-18-20" name="__codelineno-18-20" href="#__codelineno-18-20"></a><span class="w">    </span><span class="nt">&quot;health&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-18-21" name="__codelineno-18-21" href="#__codelineno-18-21"></a><span class="w">      </span><span class="nt">&quot;GET /health&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Health check&quot;</span>
+<a id="__codelineno-18-22" name="__codelineno-18-22" href="#__codelineno-18-22"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-18-23" name="__codelineno-18-23" href="#__codelineno-18-23"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-18-24" name="__codelineno-18-24" href="#__codelineno-18-24"></a><span class="p">}</span>
+</code></pre></div>
+<h3 id="example_4">Example<a class="headerlink" href="#example_4" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>curl<span class="w"> </span>https://iwmi-leaf.onrender.com/api<span class="w"> </span><span class="p">|</span><span class="w"> </span>python<span class="w"> </span>-m<span class="w"> </span>json.tool
 </code></pre></div>
 <hr />
 <h2 id="health-check">Health Check<a class="headerlink" href="#health-check" title="Permanent link">&para;</a></h2>
 <p>Returns service health status. Use this for uptime monitoring and load balancer health checks.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a>GET /health
+<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a>GET /health
 </code></pre></div>
-<h3 id="response_4">Response<a class="headerlink" href="#response_4" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="p">{</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a><span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;healthy&quot;</span>
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a><span class="p">}</span>
+<h3 id="response_5">Response<a class="headerlink" href="#response_5" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-21-1" name="__codelineno-21-1" href="#__codelineno-21-1"></a><span class="p">{</span>
+<a id="__codelineno-21-2" name="__codelineno-21-2" href="#__codelineno-21-2"></a><span class="w">  </span><span class="nt">&quot;status&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;healthy&quot;</span>
+<a id="__codelineno-21-3" name="__codelineno-21-3" href="#__codelineno-21-3"></a><span class="p">}</span>
 </code></pre></div>
-<h3 id="example_4">Example<a class="headerlink" href="#example_4" title="Permanent link">&para;</a></h3>
+<h3 id="example_5">Example<a class="headerlink" href="#example_5" title="Permanent link">&para;</a></h3>
 <div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">cURL</label><label for="__tabbed_4_2">Python</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-19-1" name="__codelineno-19-1" href="#__codelineno-19-1"></a>curl<span class="w"> </span>https://iwmi-leaf.onrender.com/health
+<div class="highlight"><pre><span></span><code><a id="__codelineno-22-1" name="__codelineno-22-1" href="#__codelineno-22-1"></a>curl<span class="w"> </span>https://iwmi-leaf.onrender.com/health
 </code></pre></div>
 </div>
 <div class="tabbed-block">
-<div class="highlight"><pre><span></span><code><a id="__codelineno-20-1" name="__codelineno-20-1" href="#__codelineno-20-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
-<a id="__codelineno-20-2" name="__codelineno-20-2" href="#__codelineno-20-2"></a>
-<a id="__codelineno-20-3" name="__codelineno-20-3" href="#__codelineno-20-3"></a><span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;https://iwmi-leaf.onrender.com/health&quot;</span><span class="p">)</span>
-<a id="__codelineno-20-4" name="__codelineno-20-4" href="#__codelineno-20-4"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Status: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-20-5" name="__codelineno-20-5" href="#__codelineno-20-5"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;HTTP: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a><span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;https://iwmi-leaf.onrender.com/health&quot;</span><span class="p">)</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Status: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()[</span><span class="s1">&#39;status&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;HTTP: </span><span class="si">{</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
 </div>
 </div>

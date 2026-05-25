@@ -409,6 +409,19 @@
         <h2 class="page-title"><i class="bi bi-cloud-arrow-down"></i> Data Update</h2>
         <p class="page-subtitle">Manage the Google Sheets that power the LEAF DSS. Edit the sheet, then refresh to see changes live.</p>
 
+        <!-- Guardrails: structural checks on the sheets (LEAF-60) -->
+        <div class="card" id="validation-card" style="border-left: 4px solid var(--iwmi-sky-blue);">
+            <div class="card-header">
+                <div class="card-title"><i class="bi bi-shield-check"></i> Data checks</div>
+                <span id="validation-badge" class="badge badge-none"><i class="bi bi-hourglass"></i> Checking…</span>
+            </div>
+            <p style="color:#666; font-size:0.85rem; margin-bottom:0.75rem;">
+                Automatic guardrails flag structural problems (renamed ID columns, duplicate block IDs,
+                text in numeric cells, bad ranges, unknown variable codes) before they reach the dashboard.
+            </p>
+            <div id="validation-list"></div>
+        </div>
+
         <div class="two-col">
 
         <!-- ==================== LEFT COLUMN ==================== -->
@@ -725,7 +738,46 @@
 
     <script>
         // Load status on page load
-        document.addEventListener('DOMContentLoaded', loadStatus);
+        document.addEventListener('DOMContentLoaded', () => { loadStatus(); loadValidation(); });
+
+        async function loadValidation() {
+            try {
+                const resp = await fetch('/api/config/validate');
+                renderValidation(await resp.json());
+            } catch (e) {
+                renderValidation({ ok: false, issues: [{ sheet: '', severity: 'error', message: 'Could not run data checks.' }] });
+            }
+        }
+
+        function renderValidation(v) {
+            const badge = document.getElementById('validation-badge');
+            const list = document.getElementById('validation-list');
+            const issues = (v && v.issues) || [];
+            const errors = issues.filter(i => i.severity === 'error');
+            const warnings = issues.filter(i => i.severity === 'warning');
+
+            if (!issues.length) {
+                badge.className = 'badge badge-ok';
+                badge.innerHTML = '<i class="bi bi-check-circle-fill"></i> All checks passed';
+                list.innerHTML = '<div class="tip" style="margin-top:0;">No structural problems found in the sheets.</div>';
+                return;
+            }
+            if (errors.length) {
+                badge.className = 'badge badge-stale';
+                badge.innerHTML = `<i class="bi bi-x-octagon-fill"></i> ${errors.length} error${errors.length > 1 ? 's' : ''}`;
+            } else {
+                badge.className = 'badge badge-stale';
+                badge.innerHTML = `<i class="bi bi-exclamation-triangle-fill"></i> ${warnings.length} warning${warnings.length > 1 ? 's' : ''}`;
+            }
+            const box = (i) => {
+                const isErr = i.severity === 'error';
+                const cls = isErr ? 'warning' : 'tip';
+                const style = isErr ? 'background:#fee2e2;border-left-color:#dc2626;color:#991b1b;' : '';
+                const label = i.sheet ? `<strong>${i.sheet === 'block_values' ? 'Block values' : 'Intervention config'}:</strong> ` : '';
+                return `<div class="${cls}" style="${style}">${label}${i.message}</div>`;
+            };
+            list.innerHTML = errors.map(box).join('') + warnings.map(box).join('');
+        }
 
         async function loadStatus() {
             try {
@@ -785,6 +837,7 @@
                 if (data.refreshed && data.refreshed.dss_input) {
                     showToast('Data refreshed successfully from Google Sheets!', 'success');
                     updateStatusUI(data.status);
+                    if (data.validation) renderValidation(data.validation);
                 } else {
                     showToast('Refresh failed - using cached data. Check that the sheet is published.', 'error');
                 }

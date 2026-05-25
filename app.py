@@ -1504,12 +1504,16 @@ def api_config_refresh():
             status:
               type: object
               description: Current cache status after refresh
+            validation:
+              type: object
+              description: Guardrail validation result (ok flag + list of issues)
     """
-    from google_sheets import refresh, get_status
+    from google_sheets import refresh, get_status, validate_sheets
     results = refresh()
     return jsonify({
         'refreshed': results,
         'status': get_status(),
+        'validation': validate_sheets(),
     })
 
 
@@ -1529,6 +1533,44 @@ def api_sheets_status():
     """
     from google_sheets import get_status
     return jsonify(get_status())
+
+
+@app.route('/api/config/validate')
+def api_config_validate():
+    """Validate the config sheets (guardrails).
+    ---
+    tags:
+      - Config
+    summary: Validate Google Sheets structure
+    description: >
+      Runs structural guardrail checks (LEAF-60) on the intervention config and
+      block values sheets - missing/renamed ID columns, duplicate BLOCK_IDs,
+      non-numeric values in numeric columns, range_min > range_max, and
+      I_variable codes that do not exist in the block values sheet. Read-only.
+    responses:
+      200:
+        description: Validation result
+        schema:
+          type: object
+          properties:
+            ok:
+              type: boolean
+              description: false if any error-severity issue was found
+            issues:
+              type: array
+              items:
+                type: object
+                properties:
+                  sheet:
+                    type: string
+                  severity:
+                    type: string
+                    enum: [error, warning]
+                  message:
+                    type: string
+    """
+    from google_sheets import validate_sheets
+    return jsonify(validate_sheets())
 
 
 # =============================================================================
