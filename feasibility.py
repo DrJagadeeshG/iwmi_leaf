@@ -29,14 +29,13 @@ def calculate_criteria_match(gdf, column, min_val, max_val):
     return match
 
 
-def calculate_feasibility(gdf, criteria, logic="AND"):
+def calculate_feasibility(gdf, criteria):
     """
     Calculate feasibility percentage (0-100) for each block.
 
     Args:
         gdf: GeoDataFrame with block data
         criteria: List of dicts with column, min_val, max_val, weight
-        logic: "AND" or "OR"
 
     Returns:
         Series with feasibility percentages (0-100)
@@ -115,7 +114,7 @@ def get_feasibility_color(value):
     return FEASIBILITY_COLORS.get(category, FEASIBILITY_COLORS['no_data'])
 
 
-def add_feasibility_to_gdf(gdf, criteria, logic="AND"):
+def add_feasibility_to_gdf(gdf, criteria):
     """
     Add feasibility score and classification to GeoDataFrame.
 
@@ -127,7 +126,7 @@ def add_feasibility_to_gdf(gdf, criteria, logic="AND"):
     """
     gdf = gdf.copy()
 
-    gdf['feasibility'] = calculate_feasibility(gdf, criteria, logic)
+    gdf['feasibility'] = calculate_feasibility(gdf, criteria)
 
     classifications = gdf['feasibility'].apply(classify_feasibility)
     gdf['feasibility_class'] = classifications.apply(lambda x: x[0])
@@ -176,18 +175,17 @@ def get_feasibility_stats(gdf):
     }
 
 
-def calculate_and_get_geojson(gdf, criteria, logic="AND", district=None):
+def calculate_and_get_geojson(gdf, criteria, district=None):
     """
     Calculate feasibility and return as GeoJSON with statistics.
 
     Args:
         gdf: GeoDataFrame with block data
         criteria: List of filter criteria
-        logic: "AND" or "OR"
         district: Optional district ID to filter statistics
     """
     # Add feasibility scores to all blocks
-    gdf_with_feas = add_feasibility_to_gdf(gdf, criteria, logic)
+    gdf_with_feas = add_feasibility_to_gdf(gdf, criteria)
 
     # Filter by district for statistics if specified
     if district:

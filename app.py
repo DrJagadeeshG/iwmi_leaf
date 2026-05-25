@@ -199,12 +199,19 @@ def update_page():
                            colors=COLORS)
 
 
+@app.route('/about')
+@app.route('/about/')
+def about_page():
+    """About page - describes the LEAF DSS, its features, data and partners."""
+    return render_template('about.html')
+
+
 @app.route('/<district>')
 def district_view(district):
     """District level view (shows all blocks in district)."""
     from flask import redirect, url_for
     # Reserved paths - let their own routes handle them
-    if district in ('documentation', 'docs', 'api', 'static', 'health', 'update', 'clustering'):
+    if district in ('documentation', 'docs', 'api', 'static', 'health', 'update', 'clustering', 'about'):
         return redirect(f'/{district}/')
     gdf = load_shapefile()
     valid_districts = gdf['Dist_Name'].dropna().unique().tolist()
@@ -1098,11 +1105,6 @@ def api_calculate_feasibility():
               description: Custom filter criteria
               items:
                 $ref: '#/definitions/FilterCriteria'
-            logic:
-              type: string
-              enum: [AND, OR]
-              default: AND
-              description: How to combine multiple filters
             district:
               type: string
               description: Optional district ID to filter statistics
@@ -1121,7 +1123,6 @@ def api_calculate_feasibility():
 
         intervention = data.get('intervention')
         filters = data.get('filters', [])
-        logic = data.get('logic', 'AND')
         district = data.get('district')
 
         # If intervention specified but no filters, use default intervention config
@@ -1140,7 +1141,7 @@ def api_calculate_feasibility():
 
         # Load data and calculate
         gdf = load_shapefile()
-        result = calculate_and_get_geojson(gdf, filters, logic, district)
+        result = calculate_and_get_geojson(gdf, filters, district)
 
         return jsonify(result)
 
@@ -1384,10 +1385,6 @@ def api_export_csv():
               type: array
               items:
                 $ref: '#/definitions/FilterCriteria'
-            logic:
-              type: string
-              enum: [AND, OR]
-              default: AND
     responses:
       200:
         description: CSV file download
@@ -1403,7 +1400,6 @@ def api_export_csv():
 
         intervention = data.get('intervention')
         filters = data.get('filters', [])
-        logic = data.get('logic', 'AND')
 
         # If intervention specified but no filters, use default
         if intervention and not filters:
@@ -1423,7 +1419,7 @@ def api_export_csv():
         gdf = load_shapefile()
 
         if filters:
-            gdf = add_feasibility_to_gdf(gdf, filters, logic)
+            gdf = add_feasibility_to_gdf(gdf, filters)
 
         # Remove geometry for CSV export
         df = gdf.drop(columns=['geometry'])
@@ -1822,10 +1818,6 @@ def api_gp_calculate_feasibility():
               type: array
               items:
                 $ref: '#/definitions/FilterCriteria'
-            logic:
-              type: string
-              enum: [AND, OR]
-              default: AND
             block:
               type: string
               description: Optional block name to filter GPs
@@ -1847,7 +1839,6 @@ def api_gp_calculate_feasibility():
         data = request.get_json()
 
         filters = data.get('filters', [])
-        logic = data.get('logic', 'AND')
         block = data.get('block')  # Optional block filter
 
         gdf = load_gp_shapefile()
@@ -1858,7 +1849,7 @@ def api_gp_calculate_feasibility():
         if block:
             gdf = gdf[gdf['Block_Name'] == block].copy()
 
-        result = calculate_and_get_geojson(gdf, filters, logic, district=None)
+        result = calculate_and_get_geojson(gdf, filters, district=None)
 
         return jsonify(result)
 
@@ -2027,6 +2018,7 @@ from villages import (
     aggregate_villages,
     get_clusters,
     get_cluster,
+    get_or_regenerate,
     regenerate_clusters,
     replace_clusters_from_records,
     clusters_to_csv,
@@ -2065,8 +2057,17 @@ def _cluster_params_from_request():
                 src[k] = body[k]
     out = {}
     for k, default in DEFAULT_PARAMS.items():
-        if k in src:
-            out[k] = float(src[k]) if isinstance(default, float) else int(src[k])
+        if k not in src:
+            continue
+        v = src[k]
+        # bool must be checked before int (bool is an int subclass). Accept the
+        # usual truthy strings from query params, and real bools from JSON.
+        if isinstance(default, bool):
+            out[k] = v in (True, 1) or (isinstance(v, str) and v.strip().lower() in ("1", "true", "yes", "on"))
+        elif isinstance(default, float):
+            out[k] = float(v)
+        else:
+            out[k] = int(v)
     return out
 
 
@@ -2240,10 +2241,12 @@ def api_cluster_params():
       - Clusters
     summary: Default clustering parameters
     description: |
-      Returns the tunable parameters used by the clustering engine. All four can be
+      Returns the tunable parameters used by the clustering engine. All can be
       overridden per-request on `/api/clusters` (POST) and `/api/clusters/regenerate`.
-      The 30/50 member range and 5 km radius reflect government criteria (per IWMI
+      The 30/150 member range and 5 km radius reflect government criteria (per IWMI
       requirements call, 2026-04-23) and may be adjusted before final freeze.
+      `emit_provisional` surfaces below-floor village groups as provisional
+      clusters (flagged, not fundable) instead of dropping them.
     responses:
       200:
         description: Parameter map
@@ -2256,6 +2259,8 @@ def api_cluster_params():
             min_villages_per_cluster: {type: integer}
             max_villages_per_cluster: {type: integer}
             max_radius_km: {type: number}
+            emit_provisional: {type: boolean}
+            provisional_min_members: {type: integer}
             commodities:
               type: array
               items: {type: string}
@@ -2271,12 +2276,16 @@ def api_clusters_list():
       - Clusters
     summary: List clusters
     description: |
-      Returns clusters previously generated and stored on the server. Use the
-      filters to scope to a block, district, or commodity. If a `block` is
-      provided and no clusters are stored yet for that scope, the algorithm is
-      run lazily (single block, optionally one commodity) and the results are
-      persisted before returning — so the first call on a freshly ingested
-      block doesn't require an explicit `POST /api/clusters/regenerate`.
+      Returns stored clusters, scoped by `block`, `district`, or `commodity`.
+
+      **Smart auto-refresh:** when a `block` is given, each in-scope
+      (block, commodity) is transparently regenerated *only* when it is stale —
+      i.e. the algorithm version, params, or underlying village data changed
+      since it was last generated — **and** the scope is not locked (no
+      finalized clusters and no uploaded-CSV edits). Fresh or human-owned scopes
+      are served as-is, so reloads never wipe edits and unchanged scopes aren't
+      needlessly rebuilt. No explicit `POST /api/clusters/regenerate` is needed
+      for routine viewing.
     parameters:
       - name: block
         in: query
@@ -2301,21 +2310,23 @@ def api_clusters_list():
         block = request.args.get('block')
         commodity = request.args.get('commodity')
         district = request.args.get('district')
-        clusters = get_clusters(
-            block_name=block,
-            commodity=commodity,
-            district_name=district,
-        )
-        # Lazy materialise: scope is empty → run the algorithm now and persist,
-        # so freshly ingested blocks don't need a manual Regenerate click.
-        # Skipped when no block is given (would trigger a full-corpus run).
-        # If a user ever uploads a CSV that intentionally empties a scope, this
-        # path will overwrite that emptiness on the next read — add a per-scope
-        # "last_run" marker if that workflow becomes real.
-        if not clusters and block:
-            clusters = regenerate_clusters(block_name=block, commodity=commodity)
-            if district:
-                clusters = [c for c in clusters if c.get('district_name') == district]
+        params = _cluster_params_from_request()
+        if block:
+            # Smart-refresh: regenerate stale, unlocked scopes only (see
+            # villages.get_or_regenerate). Skipped without a block to avoid a
+            # full-corpus run on an unscoped read.
+            clusters = get_or_regenerate(
+                block_name=block,
+                commodity=commodity,
+                district_name=district,
+                params=params or None,
+            )
+        else:
+            clusters = get_clusters(
+                block_name=block,
+                commodity=commodity,
+                district_name=district,
+            )
         return jsonify(clusters)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
