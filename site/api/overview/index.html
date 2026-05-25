@@ -538,15 +538,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#logic-modes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Logic Modes
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#error-handling" class="md-nav__link">
     <span class="md-ellipsis">
       Error Handling
@@ -1179,15 +1170,6 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#logic-modes" class="md-nav__link">
-    <span class="md-ellipsis">
-      Logic Modes
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#error-handling" class="md-nav__link">
     <span class="md-ellipsis">
       Error Handling
@@ -1464,29 +1446,6 @@
 </tr>
 </tbody>
 </table>
-<h3 id="logic-modes">Logic Modes<a class="headerlink" href="#logic-modes" title="Permanent link">&para;</a></h3>
-<p>When multiple filters are provided, you can choose how they combine:</p>
-<table>
-<thead>
-<tr>
-<th>Mode</th>
-<th>Behavior</th>
-<th>Use Case</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>AND</code> (default)</td>
-<td>Block must meet <strong>all</strong> criteria to score highly</td>
-<td>Strict screening - only blocks meeting every requirement</td>
-</tr>
-<tr>
-<td><code>OR</code></td>
-<td>Block scores based on <strong>any</strong> criteria met</td>
-<td>Lenient screening - blocks meeting at least one requirement</td>
-</tr>
-</tbody>
-</table>
 <h3 id="error-handling">Error Handling<a class="headerlink" href="#error-handling" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
@@ -1564,13 +1523,12 @@
 <a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="w">  </span><span class="nx">method</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;POST&#39;</span><span class="p">,</span>
 <a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="w">  </span><span class="nx">headers</span><span class="o">:</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="s1">&#39;Content-Type&#39;</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;application/json&#39;</span><span class="w"> </span><span class="p">},</span>
 <a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="w">  </span><span class="nx">body</span><span class="o">:</span><span class="w"> </span><span class="nb">JSON</span><span class="p">.</span><span class="nx">stringify</span><span class="p">({</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="nx">intervention</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Organic Farming&#39;</span><span class="p">,</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">    </span><span class="nx">logic</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;AND&#39;</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="w">  </span><span class="p">})</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="p">});</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">json</span><span class="p">();</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`Mean score: </span><span class="si">${</span><span class="nx">result</span><span class="p">.</span><span class="nx">statistics</span><span class="p">.</span><span class="nx">mean_score</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`High feasibility blocks: </span><span class="si">${</span><span class="nx">result</span><span class="p">.</span><span class="nx">statistics</span><span class="p">.</span><span class="nx">high_count</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="w">    </span><span class="nx">intervention</span><span class="o">:</span><span class="w"> </span><span class="s1">&#39;Organic Farming&#39;</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="w">  </span><span class="p">})</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="p">});</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">json</span><span class="p">();</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`Mean score: </span><span class="si">${</span><span class="nx">result</span><span class="p">.</span><span class="nx">statistics</span><span class="p">.</span><span class="nx">mean_score</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`High feasibility blocks: </span><span class="si">${</span><span class="nx">result</span><span class="p">.</span><span class="nx">statistics</span><span class="p">.</span><span class="nx">high_count</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
 </code></pre></div>
 <h3 id="load-into-geopandas-python">Load into GeoPandas (Python)<a class="headerlink" href="#load-into-geopandas-python" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">requests</span>

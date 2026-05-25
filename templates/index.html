@@ -33,6 +33,7 @@
                 </div>
             </a>
             <div class="logo-section">
+                <a href="/about" class="header-nav-link"><i class="bi bi-info-circle"></i> About</a>
                 <!-- <img src="{{ url_for('static', filename='giz_logo.jpg') }}" alt="GIZ Logo" class="logo giz-logo" onerror="this.style.display='none'"> -->
                 <img src="{{ url_for('static', filename='images/cgiar_logo.png') }}" alt="CGIAR Logo" class="logo" onerror="this.style.display='none'">
             </div>
@@ -67,17 +68,18 @@
             <select id="intervention-select">
                 <option value="">Select Intervention</option>
                 {% for key, val in interventions.items() %}
+                {% if not val.parent %}
                 <option value="{{ key }}">{{ val.name }}</option>
+                {% endif %}
                 {% endfor %}
             </select>
         </div>
 
-        <div class="filter-group">
-            <label>Logic</label>
-            <div class="logic-toggle">
-                <button id="logic-and" class="logic-btn active">AND</button>
-                <button id="logic-or" class="logic-btn">OR</button>
-            </div>
+        <div class="filter-group" id="subcategory-filter-group" style="display: none;">
+            <label for="subcategory-select">Sub-category</label>
+            <select id="subcategory-select">
+                <option value="">All</option>
+            </select>
         </div>
 
         <div class="filter-group">
@@ -86,6 +88,10 @@
 
         <div class="filter-group">
             <button id="export-btn" class="btn-export"><i class="bi bi-download"></i> CSV</button>
+        </div>
+
+        <div class="filter-group">
+            <button id="summary-btn" class="btn-export" title="Download a summary report for the current view"><i class="bi bi-file-earmark-text"></i> Summary</button>
         </div>
 
         <div class="filter-group">
@@ -216,13 +222,17 @@
             </div>
         </div>
 
-        <!-- Block Detail Grid -->
-        <div class="block-detail-grid">
-            <!-- Location Card with Mini Map -->
-            <div class="detail-card">
+        <!-- Block Detail Grid: 50/50 split - map (left) + info cards (right) -->
+        <div class="block-detail-grid detail-5050">
+            <!-- Left half: Location Card with Mini Map (spatial UI) -->
+            <div class="detail-left">
+            <div class="detail-card detail-card-map">
                 <div class="detail-card-header">
                     <span><i class="bi bi-geo-alt"></i> <span id="location-card-title">Location</span></span>
                     <div class="header-right-group">
+                        <select id="block-cluster-select" class="block-gp-dropdown" style="display: none;">
+                            <option value="">All clusters</option>
+                        </select>
                         <select id="block-gp-select" class="block-gp-dropdown" style="display: none;">
                             <option value="">All GPs</option>
                         </select>
@@ -233,7 +243,10 @@
                     <div id="block-mini-map" class="mini-map"></div>
                 </div>
             </div>
+            </div>
 
+            <!-- Right half: info cards -->
+            <div class="detail-right">
             <!-- Land & Agriculture Card -->
             <div class="detail-card" id="card-land-agri">
                 <div class="detail-card-header">
@@ -288,6 +301,10 @@
                     <!-- Dynamic metrics -->
                 </div>
             </div>
+
+            <!-- Cluster detail cards (LEAF-53): shown when a cluster is picked -->
+            <div id="cluster-cards" class="cluster-cards" style="display: none;"></div>
+            </div><!-- /.detail-right -->
         </div>
     </main>
 

@@ -71,6 +71,26 @@ body {
     gap: 1rem;
 }
 
+.header-nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--iwmi-dark-blue);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.45rem 0.9rem;
+    border: 1px solid var(--iwmi-light-grey);
+    border-radius: 6px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.header-nav-link:hover {
+    background: var(--iwmi-teal);
+    color: white;
+    border-color: var(--iwmi-teal);
+}
+
 .logo {
     height: 45px;
     width: auto;
@@ -130,32 +150,6 @@ body {
 .filter-group select:focus {
     outline: none;
     border-color: var(--iwmi-teal);
-}
-
-.logic-toggle {
-    display: flex;
-    border: 1px solid var(--iwmi-light-grey);
-    border-radius: 6px;
-    overflow: hidden;
-}
-
-.logic-btn {
-    padding: 0.5rem 1rem;
-    border: none;
-    background: white;
-    cursor: pointer;
-    font-size: 0.85rem;
-    font-weight: 600;
-    transition: all 0.2s;
-}
-
-.logic-btn.active {
-    background: var(--iwmi-teal);
-    color: white;
-}
-
-.logic-btn:hover:not(.active) {
-    background: var(--iwmi-light-grey);
 }
 
 /* Level Toggle (Block/GP) */
@@ -2038,6 +2032,38 @@ body {
     gap: 1.5rem;
 }
 
+/* 50/50 layout (LEAF-54): map on the left half, info cards flow on the right */
+.block-detail-grid.detail-5050 {
+    grid-template-columns: 1fr 1fr;
+    align-items: start;
+}
+.detail-5050 .detail-left {
+    position: sticky;
+    top: 1rem;
+}
+.detail-5050 .detail-right {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+}
+/* Tall spatial map on the left, filling the column height */
+.detail-5050 .detail-card-map .detail-card-body {
+    height: calc(100vh - 250px);
+    min-height: 380px;
+    padding-bottom: 1rem;
+}
+.detail-5050 .detail-card-map .mini-map {
+    height: 100%;
+}
+/* Cluster cards (LEAF-53) fill the right panel and lay out in 2 columns */
+.cluster-cards {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    align-content: start;
+}
+
 /* Detail Card */
 .detail-card {
     background: white;
@@ -2847,6 +2873,13 @@ body {
     border-radius: 50%;
     background: rgba(40, 83, 125, 0.10);
     border: 2px solid #28537D;
+}
+.legend-swatch-provisional {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: rgba(232, 131, 58, 0.08);
+    border: 2px dashed #E8833A;
 }
 .legend-marker {
     display: inline-flex;

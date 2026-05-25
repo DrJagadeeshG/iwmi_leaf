@@ -4,15 +4,28 @@
  */
 
 // =============================================================================
+// Feature Flags
+// =============================================================================
+
+// LEAF-55: Gram Panchayat (GP) level is switched off for now. All GP code,
+// routes and views are kept intact - flip this to true to re-enable the feature.
+const GP_FEATURE_ENABLED = false;
+
+// =============================================================================
 // Global State
 // =============================================================================
 
 const state = {
     map: null,
     geojsonLayer: null,
-    currentIntervention: null,
+    currentIntervention: null,      // main dropdown value (top-level or parent)
+    currentSubcategory: null,       // sub-filter value (a child of the parent) or null
+    interventionsByKey: {},         // name -> { parent, children, ... } hierarchy (LEAF-49/50/51)
+    blockClusters: [],              // clusters for the current block+commodity (LEAF-53)
+    currentViewLevel: 'state',      // state | district | block | cluster (for Download Summary, LEAF-58)
+    districtAggProps: null,         // last district aggregate props (for the summary report)
+    currentCluster: null,           // last selected cluster object (for the summary report)
     currentFilters: [],
-    logic: 'AND',
     interventionConfig: null,
     chart: null,
     currentBlock: null,
@@ -175,6 +188,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     initInfotip();
     initMap();
     initEventListeners();
+    await loadInterventionsHierarchy();
     await loadLocationDropdowns();
 
     // Load initial block map data
@@ -250,7 +264,7 @@ async function applyInitialState() {
     filterMapByLocation();
 
     // Check if GP level (URL has /district/block/gp)
-    const isGPLevel = initial.level === 'gp' && initial.block && initial.gp;
+    const isGPLevel = GP_FEATURE_ENABLED && initial.level === 'gp' && initial.block && initial.gp;
 
     if (isGPLevel) {
         // Switch to GP mode for this block
@@ -300,6 +314,10 @@ async function applyInitialState() {
                 }
             });
         }
+    } else if (initial.district) {
+        // District-level aggregated card view (LEAF-52)
+        await new Promise(resolve => setTimeout(resolve, 300));
+        showDistrictDetailView(initial.district);
     }
 
     // Re-enable URL updates
@@ -554,12 +572,17 @@ function initEventListeners() {
     // Intervention change
     document.getElementById('intervention-select').addEventListener('change', handleInterventionChange);
 
-    // Logic toggle
-    document.getElementById('logic-and').addEventListener('click', () => setLogic('AND'));
-    document.getElementById('logic-or').addEventListener('click', () => setLogic('OR'));
+    // Livestock sub-category change (LEAF-49/50/51)
+    document.getElementById('subcategory-select').addEventListener('change', handleSubcategoryChange);
 
     // Block detail GP dropdown
     document.getElementById('block-gp-select').addEventListener('change', handleBlockGPSelect);
+
+    // Block detail cluster dropdown (LEAF-53)
+    document.getElementById('block-cluster-select').addEventListener('change', handleBlockClusterSelect);
+
+    // Download Summary report (LEAF-58)
+    document.getElementById('summary-btn').addEventListener('click', downloadSummaryReport);
 
     // Configure button
     document.getElementById('configure-btn').addEventListener('click', openConfigModal);
@@ -755,7 +778,7 @@ async function loadLocationDropdowns() {
         const levelsData = await levelsResponse.json();
 
         const gpLevel = levelsData.levels.find(l => l.id === 'gp');
-        if (gpLevel && gpLevel.available) {
+        if (GP_FEATURE_ENABLED && gpLevel && gpLevel.available) {
             state.gpAvailable = true;
             // Now supports multiple districts with GP data
             state.gpDistricts = gpLevel.districts || [];
@@ -868,11 +891,19 @@ async function handleDistrictChange() {
             filterMapByLocation();
         }
     } else if (state.currentIntervention) {
-        calculateFeasibility();
+        await calculateFeasibility();
     } else {
         filterMapByLocation();
     }
     state.previousLevel = state.currentLevel;
+
+    // District-level card view (LEAF-52): a specific district shows aggregated
+    // cards like a block; "All Districts" keeps the state-level overview.
+    if (selectedDistrict) {
+        showDistrictDetailView(selectedDistrict);
+    } else {
+        showOverviewView();
+    }
 
     // Update URL
     updateURL();
@@ -915,6 +946,9 @@ async function handleBlockChange() {
             } else {
                 filterMapByLocation();
             }
+        } else if (state.currentDistrict) {
+            // Back to district-level aggregated cards (LEAF-52)
+            showDistrictDetailView(state.currentDistrict);
         } else {
             showOverviewView();
             filterMapByLocation();
@@ -976,14 +1010,59 @@ function filterMapByLocation() {
 // Intervention Handling
 // =============================================================================
 
+// Load the intervention hierarchy (top-level + parents/children) so the UI
+// can show the livestock sub-category dropdown (LEAF-49/50/51).
+async function loadInterventionsHierarchy() {
+    try {
+        const resp = await fetch('/api/interventions');
+        const data = await resp.json();
+        state.interventionsByKey = {};
+        (data.interventions || []).forEach(i => { state.interventionsByKey[i.key] = i; });
+    } catch (e) {
+        console.error('Error loading interventions hierarchy:', e);
+        state.interventionsByKey = {};
+    }
+}
+
+// Populate + show/hide the sub-category dropdown based on the selected
+// intervention's children. Returns true if a sub-filter is shown.
+function updateSubcategoryDropdown(interventionKey) {
+    const group = document.getElementById('subcategory-filter-group');
+    const select = document.getElementById('subcategory-select');
+    const info = state.interventionsByKey[interventionKey];
+    const children = (info && info.children) || [];
+    select.innerHTML = '';
+    if (!children.length) {
+        group.style.display = 'none';
+        const opt = document.createElement('option');
+        opt.value = ''; opt.textContent = 'All';
+        select.appendChild(opt);
+        return false;
+    }
+    const allOpt = document.createElement('option');
+    allOpt.value = ''; allOpt.textContent = 'All ' + interventionKey;
+    select.appendChild(allOpt);
+    children.forEach(c => {
+        const opt = document.createElement('option');
+        opt.value = c; opt.textContent = c;
+        select.appendChild(opt);
+    });
+    group.style.display = '';
+    return true;
+}
+
 async function handleInterventionChange() {
     const select = document.getElementById('intervention-select');
     const intervention = select.value;
+
+    // Reset any previous sub-category selection when the parent changes.
+    state.currentSubcategory = null;
 
     if (!intervention) {
         state.currentIntervention = null;
         state.interventionConfig = null;
         state.activeVariable = null;
+        updateSubcategoryDropdown('');
         updateActiveFilters([]);
         renderVariableToggles();
         restoreDefaultLegend();
@@ -991,10 +1070,27 @@ async function handleInterventionChange() {
     }
 
     state.currentIntervention = intervention;
+    // Show the sub-category dropdown if this intervention has children. The
+    // parent itself shows its combined config until a child is picked.
+    updateSubcategoryDropdown(intervention);
 
-    // Fetch intervention config
+    await applyIntervention(intervention);
+}
+
+// React to a livestock sub-category choice: load that child's config, or fall
+// back to the parent's combined config when "All" is selected (LEAF-50).
+async function handleSubcategoryChange() {
+    const sub = document.getElementById('subcategory-select').value;
+    state.currentSubcategory = sub || null;
+    const effective = state.currentSubcategory || state.currentIntervention;
+    if (effective) await applyIntervention(effective);
+}
+
+// Load an intervention's variable config and recalculate feasibility. `name`
+// is the effective intervention (a sub-category when one is selected).
+async function applyIntervention(name) {
     try {
-        const response = await fetch(`/api/intervention/${encodeURIComponent(intervention)}/config`);
+        const response = await fetch(`/api/intervention/${encodeURIComponent(name)}/config`);
         const data = await response.json();
 
         // At GP level, filter to only variables available in GP data
@@ -1033,19 +1129,6 @@ async function handleInterventionChange() {
     }
 }
 
-function setLogic(logic) {
-    state.logic = logic;
-
-    // Update UI
-    document.getElementById('logic-and').classList.toggle('active', logic === 'AND');
-    document.getElementById('logic-or').classList.toggle('active', logic === 'OR');
-
-    // Recalculate if we have filters
-    if (state.currentFilters.length > 0) {
-        calculateFeasibility();
-    }
-}
-
 // =============================================================================
 // Feasibility Calculation
 // =============================================================================
@@ -1060,7 +1143,6 @@ async function calculateFeasibility() {
         const payload = {
             intervention: state.currentIntervention || null,
             filters: state.currentFilters,
-            logic: state.logic,
             district: state.currentDistrict || null,
         };
 
@@ -1671,6 +1753,122 @@ function downloadAIRecommendation() {
     setTimeout(() => printWindow.print(), 300);
 }
 
+// =============================================================================
+// Download Summary report (LEAF-58): a table-based, print-to-PDF summary for
+// the current view (state / district / block / cluster), consistent format.
+// =============================================================================
+
+function downloadSummaryReport() {
+    const level = state.currentViewLevel || 'state';
+    const intervention = state.currentIntervention || '—';
+    const sub = state.currentSubcategory ? ` › ${state.currentSubcategory}` : '';
+    const now = new Date().toLocaleString();
+
+    const levelLabel = { state: 'State', district: 'District', block: 'Block', cluster: 'Cluster' }[level] || 'Summary';
+    let scopeLabel = 'Assam (all districts)';
+    let props = null;
+    let bodyHtml = '';
+
+    if (level === 'block') {
+        const p = state.blockFeature ? state.blockFeature.properties : {};
+        scopeLabel = `${p.Dist_Name || ''} / ${state.currentBlock || ''}`;
+        props = p;
+    } else if (level === 'district') {
+        scopeLabel = `${state.currentDistrict} (all blocks)`;
+        props = state.districtAggProps;
+    } else if (level === 'cluster' && state.currentCluster) {
+        const c = state.currentCluster;
+        scopeLabel = `${c.block_name || state.currentBlock || ''} / Cluster ${c.cluster_num != null ? c.cluster_num : c.cluster_id}`;
+        bodyHtml = buildClusterReportBody(c);
+    } else {
+        const feats = [];
+        if (state.geojsonLayer) state.geojsonLayer.eachLayer(l => feats.push(l.feature));
+        props = feats.length ? aggregateBlockProps(feats, 'All districts') : null;
+    }
+
+    if (level !== 'cluster') {
+        const rows = (state.currentFilters || []).map(f => {
+            const v = props ? Number(props[f.column]) : NaN;
+            const val = Number.isFinite(v) ? v.toFixed(1) : '—';
+            const inRange = Number.isFinite(v) && v >= f.min_val && v <= f.max_val;
+            const status = !Number.isFinite(v) ? '—' : (inRange ? 'In range' : 'Out of range');
+            const cls = !Number.isFinite(v) ? '' : (inRange ? 'in-range' : 'out-range');
+            return `<tr class="${cls}"><td>${escapeText(f.label || f.column)}</td><td>${val}</td><td>${f.min_val}–${f.max_val}</td><td>${status}</td></tr>`;
+        }).join('');
+        const feas = props && Number.isFinite(Number(props.feasibility)) ? Number(props.feasibility).toFixed(1) + '%' : 'N/A';
+        const aggNote = level === 'district' ? ' Values are averaged across all blocks in the district.'
+            : level === 'state' ? ' Values are averaged across all blocks in the state.' : '';
+        bodyHtml = `
+            <p>This summary shows how <strong>${escapeText(scopeLabel)}</strong> performs against the selected
+            <strong>${escapeText(intervention)}${escapeText(sub)}</strong> criteria. Overall feasibility is
+            <strong>${feas}</strong>.${aggNote} Indicators marked <em>Out of range</em> fall outside the target band and
+            point to where conditions are less suitable and may need targeted support.</p>
+            <table>
+                <thead><tr><th>Indicator</th><th>Value</th><th>Target range</th><th>Status</th></tr></thead>
+                <tbody>${rows || '<tr><td colspan="4">No indicators selected — pick an intervention to populate this table.</td></tr>'}</tbody>
+            </table>`;
+    }
+
+    const printContent = `
+        <!DOCTYPE html><html><head><title>LEAF DSS - ${levelLabel} Summary</title>
+        <style>
+            body { font-family: Arial, sans-serif; padding: 40px; max-width: 800px; margin: 0 auto; font-size: 11px; line-height: 1.6; color: #222; }
+            h1 { color: #28537D; font-size: 17px; border-bottom: 2px solid #0297A6; padding-bottom: 10px; margin-bottom: 5px; }
+            h2 { color: #0297A6; font-size: 13px; margin-top: 22px; border-left: 3px solid #0297A6; padding-left: 8px; }
+            .header-info { background: #f0fdfa; padding: 12px; border-radius: 6px; margin: 12px 0 4px; }
+            .header-info p { margin: 3px 0; } .header-info strong { color: #28537D; }
+            table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 10px; }
+            th { background: #28537D; color: white; padding: 7px 8px; text-align: left; }
+            td { padding: 7px 8px; border-bottom: 1px solid #ddd; }
+            tr.in-range { border-left: 3px solid #10b981; } tr.out-range { border-left: 3px solid #ef4444; }
+            .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 9px; color: #666; }
+            @media print { body { padding: 20px; } }
+        </style></head><body>
+            <h1>LEAF DSS — ${levelLabel} Summary</h1>
+            <div class="header-info">
+                <p><strong>Scope:</strong> ${escapeText(scopeLabel)}</p>
+                <p><strong>Intervention:</strong> ${escapeText(intervention)}${escapeText(sub)}</p>
+                <p><strong>Generated:</strong> ${now}</p>
+            </div>
+            <h2>Summary</h2>
+            ${bodyHtml}
+            <div class="footer">
+                <p><strong>LEAF DSS</strong> — Landscape Evaluation &amp; Assessment Framework</p>
+                <p>IWMI — International Water Management Institute</p>
+            </div>
+        </body></html>`;
+
+    const w = window.open('', '_blank');
+    w.document.write(printContent);
+    w.document.close();
+    setTimeout(() => w.print(), 300);
+}
+
+// Cluster summary body: facts + member-village table (LEAF-58).
+function buildClusterReportBody(c) {
+    const villages = c.villages || [];
+    const memberRows = villages.map(v =>
+        `<tr><td>${escapeText(v.vill_name || 'Village')}</td><td>${escapeText(v.gp_name || '')}</td><td>${Number(v.members || 0).toLocaleString()}</td></tr>`).join('');
+    const statusTxt = c.finalized ? 'Finalised (published to production tool)' : 'Proposed (not yet published)';
+    return `
+        <p>This cluster groups <strong>${villages.length}</strong> nearby villages for
+        <strong>${escapeText(c.commodity || '')}</strong> with a combined <strong>${Number(c.total_members || 0).toLocaleString()}</strong>
+        interested members (max span ${c.max_span_km != null ? c.max_span_km + ' km' : '—'}). Status: <strong>${statusTxt}</strong>.</p>
+        <table>
+            <thead><tr><th>Total members</th><th>Villages</th><th>Max span</th><th>Status</th></tr></thead>
+            <tbody><tr><td>${Number(c.total_members || 0).toLocaleString()}</td><td>${villages.length}</td><td>${c.max_span_km != null ? c.max_span_km + ' km' : '—'}</td><td>${c.finalized ? 'Finalised' : 'Proposed'}</td></tr></tbody>
+        </table>
+        <h2>Member villages</h2>
+        <table>
+            <thead><tr><th>Village</th><th>Gram Panchayat</th><th>Members</th></tr></thead>
+            <tbody>${memberRows || '<tr><td colspan="3">No villages.</td></tr>'}</tbody>
+        </table>
+        ${(c.pashu_sakhi || c.block_coordinator) ? `<h2>Assignment</h2><div class="header-info">
+            ${c.pashu_sakhi ? `<p><strong>Pashu Sakhi:</strong> ${escapeText(c.pashu_sakhi)}</p>` : ''}
+            ${c.block_coordinator ? `<p><strong>Block coordinator:</strong> ${escapeText(c.block_coordinator)}</p>` : ''}
+        </div>` : ''}`;
+}
+
 function applyConfig() {
     const form = document.getElementById('config-form');
     const rows = form.querySelectorAll('.config-row');
@@ -2050,6 +2248,7 @@ function showOverviewView() {
     document.getElementById('gpDetailView').style.display = 'none';
     state.currentBlock = null;
     state.currentGP = null;
+    state.currentViewLevel = 'state';
 
     // Destroy block mini map if exists
     if (state.blockMiniMap) {
@@ -2093,6 +2292,7 @@ function showBlockDetailView(feature) {
     const props = feature.properties;
     state.currentBlock = props.Block_name || '';
     state.blockFeature = feature;
+    state.currentViewLevel = 'block';
 
     renderBlockDetail(feature);
     initBlockMiniMap(feature);
@@ -2110,6 +2310,113 @@ function showGPDetailView(feature) {
 
     renderGPDetail(feature);
     initBlockMiniMap(feature);
+}
+
+// =============================================================================
+// District Detail (LEAF-52): aggregated card view for a whole district,
+// reusing the block detail layout (50/50 map + cards).
+// =============================================================================
+
+// Classify a feasibility percentage into a label + colour, mirroring the
+// backend thresholds in config.py.
+function classifyFeasibilityFE(value) {
+    if (value === null || value === undefined || !Number.isFinite(value)) {
+        return { cls: 'no_data', label: 'No Data', color: FEASIBILITY_COLORS.no_data };
+    }
+    let cls, label;
+    if (value >= 100) { cls = 'very_high'; label = '100%'; }
+    else if (value >= 75) { cls = 'high'; label = '75-100%'; }
+    else if (value >= 50) { cls = 'moderate_high'; label = '50-75%'; }
+    else if (value >= 25) { cls = 'moderate'; label = '25-50%'; }
+    else if (value >= 1) { cls = 'low'; label = '1-25%'; }
+    else { cls = 'very_low'; label = '0%'; }
+    return { cls, label, color: FEASIBILITY_COLORS[cls] || FEASIBILITY_COLORS.no_data };
+}
+
+// Average all numeric block properties across a district into a single
+// synthetic "district" props object the card renderer can consume.
+function aggregateBlockProps(feats, districtName) {
+    const sums = {}, counts = {};
+    feats.forEach(f => {
+        const p = f.properties || {};
+        Object.keys(p).forEach(k => {
+            const v = Number(p[k]);
+            if (Number.isFinite(v)) { sums[k] = (sums[k] || 0) + v; counts[k] = (counts[k] || 0) + 1; }
+        });
+    });
+    const props = { Dist_Name: districtName, Block_name: 'All blocks', is_district_aggregate: true };
+    Object.keys(sums).forEach(k => { props[k] = sums[k] / counts[k]; });
+    return props;
+}
+
+function showDistrictDetailView(districtName) {
+    // Gather this district's block features from the current map layer.
+    const feats = [];
+    if (state.geojsonLayer) {
+        state.geojsonLayer.eachLayer(l => {
+            const p = (l.feature && l.feature.properties) || {};
+            if ((p.Dist_Name || '') === districtName) feats.push(l.feature);
+        });
+    }
+    if (!feats.length) { showOverviewView(); return; }
+
+    document.getElementById('overviewView').style.display = 'none';
+    document.getElementById('blockDetailView').style.display = 'block';
+    document.getElementById('gpDetailView').style.display = 'none';
+    state.currentBlock = null;
+
+    const aggProps = aggregateBlockProps(feats, districtName);
+    state.districtAggProps = aggProps;
+    state.currentViewLevel = 'district';
+    renderDistrictDetail(aggProps, feats);
+    updateURL();
+}
+
+function renderDistrictDetail(props, feats) {
+    const feas = Number.isFinite(props.feasibility) ? props.feasibility : null;
+    const { label, color } = classifyFeasibilityFE(feas);
+    props.feasibility_label = label;
+    props.feasibility_color = color;
+
+    document.getElementById('feasibility-badges').innerHTML = `
+        <span class="feasibility-badge" style="background: ${color}">
+            <i class="bi bi-check-circle"></i> ${label} (${feas !== null ? feas.toFixed(1) : 'N/A'}%)
+        </span>`;
+
+    document.getElementById('location-card-title').innerHTML =
+        `<strong>${props.Dist_Name}</strong> / All blocks (${feats.length})`;
+
+    // No GP dropdown / recommendations at district level.
+    document.getElementById('block-gp-select').style.display = 'none';
+    const rec = document.getElementById('block-recommendations');
+    if (rec) rec.innerHTML = '';
+
+    const totalOutside = renderActiveMetricsByGroup(props);
+    const totalCountEl = document.getElementById('total-outside-count');
+    totalCountEl.innerHTML = totalOutside > 0 ? `${totalOutside} outside range (avg)` : '';
+
+    initDistrictMiniMap(feats);
+}
+
+// Draw all of a district's blocks on the left-hand map.
+function initDistrictMiniMap(feats) {
+    if (state.blockMiniMap) { state.blockMiniMap.remove(); state.blockMiniMap = null; }
+    state.blockMiniMap = L.map('block-mini-map', { zoomControl: false, attributionControl: false });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 })
+        .addTo(state.blockMiniMap);
+
+    const layer = L.geoJSON({ type: 'FeatureCollection', features: feats }, {
+        style: f => ({
+            fillColor: (f.properties && f.properties.feasibility_color) || '#0297A6',
+            color: '#28537D',
+            weight: 1.2,
+            fillOpacity: 0.4,
+        }),
+    }).addTo(state.blockMiniMap);
+
+    const refit = () => { try { state.blockMiniMap.fitBounds(layer.getBounds(), { padding: [20, 20] }); } catch (e) {} };
+    refit();
+    setTimeout(() => { if (state.blockMiniMap) { state.blockMiniMap.invalidateSize(); refit(); } }, 150);
 }
 
 // =============================================================================
@@ -2164,8 +2471,161 @@ function renderBlockDetail(feature) {
         totalCountEl.innerHTML = '';
     }
 
+    // Reset to block view (hide any cluster cards) and refresh the cluster
+    // dropdown for this block + active commodity (LEAF-53).
+    setClusterMode(false);
+    updateBlockClusterDropdown(blockName);
+
     // Render recommendations (pass feature for map)
     renderRecommendations(props, feature);
+}
+
+// =============================================================================
+// Cluster level inside the dashboard (LEAF-53)
+// =============================================================================
+
+// Toggle between the block's category cards and the cluster cards.
+function setClusterMode(on) {
+    document.querySelectorAll('.detail-right > .detail-card').forEach(c => {
+        c.style.display = on ? 'none' : '';
+    });
+    const cc = document.getElementById('cluster-cards');
+    if (cc) cc.style.display = on ? '' : 'none';
+}
+
+// Populate the cluster dropdown for a block, scoped to the active livestock
+// sub-category (the clustering commodity). Hidden when no commodity is active
+// or the block+commodity has no clusters.
+async function updateBlockClusterDropdown(blockName) {
+    const sel = document.getElementById('block-cluster-select');
+    const commodity = state.currentSubcategory;  // e.g. Goatery / Piggery / Dairy
+    state.blockClusters = [];
+    if (!commodity || !blockName) {
+        sel.style.display = 'none';
+        sel.innerHTML = '<option value="">All clusters</option>';
+        return;
+    }
+    try {
+        const r = await fetch(`/api/clusters?block=${encodeURIComponent(blockName)}&commodity=${encodeURIComponent(commodity)}`);
+        const clusters = await r.json();
+        state.blockClusters = Array.isArray(clusters) ? clusters : [];
+    } catch (e) {
+        state.blockClusters = [];
+    }
+    if (!state.blockClusters.length) {
+        sel.style.display = 'none';
+        sel.innerHTML = '<option value="">All clusters</option>';
+        return;
+    }
+    sel.innerHTML = '';
+    const all = document.createElement('option');
+    all.value = ''; all.textContent = `All clusters (${state.blockClusters.length})`;
+    sel.appendChild(all);
+    state.blockClusters.forEach(c => {
+        const o = document.createElement('option');
+        o.value = c.cluster_id;
+        o.textContent = `Cluster ${c.cluster_num != null ? c.cluster_num : c.cluster_id} · ${c.total_members} members`;
+        sel.appendChild(o);
+    });
+    sel.style.display = '';
+}
+
+function handleBlockClusterSelect() {
+    const id = document.getElementById('block-cluster-select').value;
+    if (!id) {
+        // Back to the block's category cards + block boundary map.
+        setClusterMode(false);
+        state.currentCluster = null;
+        state.currentViewLevel = 'block';
+        if (state.blockFeature) {
+            renderActiveMetricsByGroup(state.blockFeature.properties);
+            initBlockMiniMap(state.blockFeature);
+        }
+        return;
+    }
+    const c = (state.blockClusters || []).find(x => String(x.cluster_id) === String(id));
+    if (c) showClusterDetailView(c);
+}
+
+function showClusterDetailView(c) {
+    state.currentCluster = c;
+    state.currentViewLevel = 'cluster';
+    const villages = (c.villages || []);
+    const status = c.finalized
+        ? '<span style="color:#22AD7A;font-weight:600"><i class="bi bi-check-circle-fill"></i> Finalised</span>'
+        : '<span style="color:#888">Proposed</span>';
+    const memberRows = villages.map(v =>
+        `<div class="metric-row"><span class="metric-label">${escapeText(v.vill_name || 'Village')}</span>` +
+        `<span class="metric-value">${Number(v.members || 0).toLocaleString()}</span></div>`).join('');
+    const coord = (c.pashu_sakhi || c.block_coordinator)
+        ? `<div class="detail-card">
+              <div class="detail-card-header"><span><i class="bi bi-person-badge"></i> Assignment</span></div>
+              <div class="detail-card-body"><div class="metrics-scroll-wrapper">
+                ${c.pashu_sakhi ? `<div class="metric-row"><span class="metric-label">Pashu Sakhi</span><span class="metric-value">${escapeText(c.pashu_sakhi)}</span></div>` : ''}
+                ${c.block_coordinator ? `<div class="metric-row"><span class="metric-label">Block coordinator</span><span class="metric-value">${escapeText(c.block_coordinator)}</span></div>` : ''}
+              </div></div>
+           </div>`
+        : '';
+
+    document.getElementById('cluster-cards').innerHTML = `
+        <div class="detail-card">
+            <div class="detail-card-header"><span><i class="bi bi-diagram-3"></i> Cluster ${c.cluster_num != null ? c.cluster_num : c.cluster_id}</span></div>
+            <div class="detail-card-body"><div class="metrics-scroll-wrapper">
+                <div class="metric-row"><span class="metric-label">Commodity</span><span class="metric-value">${escapeText(c.commodity || '')}</span></div>
+                <div class="metric-row"><span class="metric-label">Total members</span><span class="metric-value">${Number(c.total_members || 0).toLocaleString()}</span></div>
+                <div class="metric-row"><span class="metric-label">Villages</span><span class="metric-value">${villages.length}</span></div>
+                <div class="metric-row"><span class="metric-label">Max span</span><span class="metric-value">${c.max_span_km != null ? c.max_span_km + ' km' : '—'}</span></div>
+                <div class="metric-row"><span class="metric-label">Status</span><span class="metric-value">${status}</span></div>
+            </div></div>
+        </div>
+        <div class="detail-card">
+            <div class="detail-card-header"><span><i class="bi bi-pin-map"></i> Member villages (${villages.length})</span></div>
+            <div class="detail-card-body"><div class="metrics-scroll-wrapper">${memberRows || '<p class="no-filters">No villages.</p>'}</div></div>
+        </div>
+        ${coord}`;
+
+    document.getElementById('location-card-title').innerHTML =
+        `${escapeText(c.block_name || state.currentBlock || '')} / <strong>Cluster ${c.cluster_num != null ? c.cluster_num : c.cluster_id}</strong>`;
+
+    setClusterMode(true);
+    initClusterMiniMap(c);
+}
+
+// Plot a cluster's member villages on the left-hand map.
+function initClusterMiniMap(c) {
+    if (state.blockMiniMap) { state.blockMiniMap.remove(); state.blockMiniMap = null; }
+    state.blockMiniMap = L.map('block-mini-map', { zoomControl: false, attributionControl: false });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 })
+        .addTo(state.blockMiniMap);
+
+    const pts = [];
+    (c.villages || []).forEach(v => {
+        const lat = Number(v.lat), lng = Number(v.long);
+        if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+        pts.push([lat, lng]);
+        L.circleMarker([lat, lng], {
+            radius: Math.max(5, Math.min(14, 4 + Math.sqrt(Number(v.members) || 0) * 1.2)),
+            color: '#243240', weight: 1, fillColor: '#0297A6', fillOpacity: 0.85,
+        }).addTo(state.blockMiniMap).bindTooltip(
+            `${escapeText(v.vill_name || 'Village')} · ${Number(v.members || 0)} members`,
+            { direction: 'top' });
+    });
+
+    const fit = () => {
+        try {
+            if (pts.length > 1) state.blockMiniMap.fitBounds(L.latLngBounds(pts), { padding: [30, 30] });
+            else if (pts.length === 1) state.blockMiniMap.setView(pts[0], 13);
+        } catch (e) {}
+    };
+    fit();
+    setTimeout(() => { if (state.blockMiniMap) { state.blockMiniMap.invalidateSize(); fit(); } }, 150);
+}
+
+// Minimal HTML-escape for text inserted via innerHTML.
+function escapeText(s) {
+    return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
 }
 
 function renderActiveMetricsByGroup(props) {
@@ -2794,6 +3254,15 @@ function initBlockMiniMap(feature) {
     // Fit bounds
     state.blockMiniMap.fitBounds(blockLayer.getBounds(), { padding: [20, 20] });
 
+    // The 50/50 layout gives the map a tall container that may have been
+    // display:none at creation - resize + refit once it's laid out (LEAF-54).
+    setTimeout(() => {
+        if (state.blockMiniMap) {
+            state.blockMiniMap.invalidateSize();
+            try { state.blockMiniMap.fitBounds(blockLayer.getBounds(), { padding: [20, 20] }); } catch (e) {}
+        }
+    }, 150);
+
     // For GP-enabled districts, load GP polygons inside this block
     const props = feature.properties;
     const blockName = props.Block_name || '';
@@ -2825,7 +3294,6 @@ async function loadGPPolygonsInMiniMap(blockName) {
                 body: JSON.stringify({
                     intervention: state.currentIntervention || null,
                     filters: state.currentFilters,
-                    logic: state.logic,
                     block: blockName,
                 }),
             });
@@ -3190,7 +3658,6 @@ async function exportCSV() {
             body: JSON.stringify({
                 intervention: state.currentIntervention,
                 filters: state.currentFilters,
-                logic: state.logic,
             }),
         });
 

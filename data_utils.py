@@ -165,20 +165,55 @@ def _is_valid_cluster(name):
 def get_interventions():
     """
     Auto-detect interventions from CSV Cluster column.
-    Returns dict: { "Organic Farming": { "key": "...", "name": "...", "description": "..." } }
+
+    Supports an optional ``parent`` column (the sub-filter, LEAF-49/50/51): a
+    row whose ``Cluster`` is a sub-category (e.g. "Goatery") can declare its
+    parent (e.g. "Livestock"). Parents group their children; selecting a parent
+    shows its own combined config, selecting a child shows the child's config.
+    When the ``parent`` column is absent the hierarchy is simply flat.
+
+    Returns dict keyed by intervention name:
+        { "key", "name", "description", "parent": <name or None>, "children": [names] }
     """
     df = load_metadata()
-    interventions = {}
+    has_parent_col = 'parent' in df.columns
 
-    for cluster in df['Cluster'].dropna().unique():
-        if not _is_valid_cluster(cluster):
+    # Map each real cluster to its parent name (first non-empty wins).
+    parent_of = {}
+    for _, r in df.iterrows():
+        c = r.get('Cluster')
+        if pd.isna(c) or not _is_valid_cluster(str(c)):
             continue
-        cluster = str(cluster).strip()
-        interventions[cluster] = {
-            'key': cluster,
-            'name': cluster,
-            'description': f"{cluster} focuses on sustainable agricultural practices tailored to local conditions.",
+        c = str(c).strip()
+        if c in parent_of:
+            continue
+        p = r.get('parent') if has_parent_col else None
+        parent_of[c] = str(p).strip() if (p is not None and pd.notna(p) and str(p).strip()) else None
+
+    def _entry(name, parent):
+        return {
+            'key': name,
+            'name': name,
+            'description': f"{name} focuses on sustainable agricultural practices tailored to local conditions.",
+            'parent': parent,
+            'children': [],
         }
+
+    interventions = {}
+    for cluster, parent in parent_of.items():
+        interventions[cluster] = _entry(cluster, parent)
+
+    # A parent referenced by a child but having no rows of its own still needs
+    # an entry so it can appear in the main dropdown.
+    for cluster, parent in parent_of.items():
+        if parent and parent not in interventions:
+            interventions[parent] = _entry(parent, None)
+
+    # Attach children to their parents.
+    for cluster, info in interventions.items():
+        p = info['parent']
+        if p and p in interventions:
+            interventions[p]['children'].append(cluster)
 
     return interventions
 

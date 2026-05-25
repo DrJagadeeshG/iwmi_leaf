@@ -855,7 +855,12 @@ def api_interventions():
     tags:
       - Interventions
     summary: Get all interventions
-    description: Returns the list of available agricultural interventions auto-detected from the CSV configuration.
+    description: >
+      Returns the list of available agricultural interventions auto-detected from
+      the CSV configuration. Interventions may form a one-level hierarchy via the
+      optional `parent` column: a sub-category (e.g. Goatery) carries `parent`
+      (e.g. Livestock), and a parent lists its `children`. Top-level interventions
+      have `parent: null`.
     responses:
       200:
         description: List of interventions
@@ -873,6 +878,14 @@ def api_interventions():
                     type: string
                   description:
                     type: string
+                  parent:
+                    type: string
+                    description: Parent intervention name, or null for top-level
+                  children:
+                    type: array
+                    items:
+                      type: string
+                    description: Sub-category names (only on parents)
       500:
         description: Server error
         schema:
@@ -884,7 +897,9 @@ def api_interventions():
             {
                 'key': val['key'],
                 'name': val['name'],
-                'description': val['description']
+                'description': val['description'],
+                'parent': val.get('parent'),
+                'children': val.get('children', []),
             }
             for val in interventions.values()
         ]
