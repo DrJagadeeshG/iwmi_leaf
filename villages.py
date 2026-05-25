@@ -126,6 +126,19 @@ def list_blocks_with_villages() -> List[Dict]:
     return grouped.to_dict(orient="records")
 
 
+def _canonical_block(block_name: Optional[str]) -> Optional[str]:
+    """Resolve any-case block input to the exact casing used in the village
+    master, so cluster DB lookups / stores key consistently. The frontend sends
+    MMUA display case (e.g. "Bhergaon") while the master is upper ("BHERGAON");
+    without this, case-sensitive cluster queries silently return nothing.
+    Returns the input unchanged if the block isn't in the master."""
+    if not block_name:
+        return block_name
+    df = load_villages()
+    hit = df[df["block_name"].astype(str).str.upper() == str(block_name).upper()]
+    return str(hit["block_name"].iloc[0]) if not hit.empty else block_name
+
+
 def villages_for_block(block_name: str) -> pd.DataFrame:
     df = load_villages()
     # Case-insensitive: Kobo data lands as ALL-CAPS but dropdown values can
@@ -224,6 +237,7 @@ def get_clusters(
     commodity: Optional[str] = None,
     district_name: Optional[str] = None,
 ) -> List[Dict]:
+    block_name = _canonical_block(block_name)
     where, params = [], []
     if block_name:
         where.append("block_name = %s")
@@ -402,6 +416,7 @@ def get_or_regenerate(
 ) -> List[Dict]:
     """Serve stored clusters, auto-regenerating each in-scope (block, commodity)
     only when it is stale and unlocked. Always returns the current stored set."""
+    block_name = _canonical_block(block_name)
     commodities = [commodity] if commodity else list(COMMODITIES)
     for com in commodities:
         if scope_is_locked(block_name, com):
@@ -420,6 +435,7 @@ def regenerate_clusters(
     """Run the algorithm and replace stored clusters for the given scope.
     Records a generation fingerprint per (block, commodity) so smart-refresh
     can tell later whether the scope is still current."""
+    block_name = _canonical_block(block_name)
     df = load_villages()
     blocks = [block_name] if block_name else sorted(df["block_name"].dropna().unique().tolist())
     new_clusters: List[Cluster] = []
@@ -451,14 +467,14 @@ def replace_clusters_from_records(records: List[Dict], scope: Dict) -> int:
     """
     from clustering import _max_pairwise_km
 
-    block_name = scope.get("block_name")
+    block_name = _canonical_block(scope.get("block_name"))
     commodity = scope.get("commodity")
     if not block_name:
         raise ValueError("scope.block_name is required")
 
     cleaned: List[Dict] = []
     for r in records:
-        if r.get("block_name") != block_name:
+        if str(r.get("block_name") or "").upper() != str(block_name).upper():
             continue
         if commodity and r.get("commodity") != commodity:
             continue

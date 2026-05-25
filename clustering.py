@@ -118,9 +118,14 @@ def cluster_block_commodity(
 
     p = _params(params)
 
-    block_df = df[df["block_name"] == block_name].copy()
+    # Case-insensitive block match: callers (frontend, API) may pass the block
+    # in MMUA display case (e.g. "Bhergaon") while the village master is upper
+    # ("BHERGAON"). Canonicalise block_name to the master casing so stored
+    # block_name and cluster_id are consistent regardless of input case.
+    block_df = df[df["block_name"].astype(str).str.upper() == str(block_name).upper()].copy()
     if block_df.empty or commodity not in block_df.columns:
         return []
+    block_name = str(block_df["block_name"].iloc[0])
 
     candidates = (
         block_df[block_df[commodity] >= p["min_members_per_village"]]
