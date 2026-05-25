@@ -19,6 +19,11 @@ from typing import List, Dict, Optional
 
 import pandas as pd
 
+# Bump whenever the clustering LOGIC changes (a change params/data don't
+# capture). The smart-refresh fingerprint includes this, so bumping it forces
+# every unlocked scope to regenerate on its next read.
+ALGO_VERSION = 3
+
 COMMODITIES = [
     "Dairy",
     "Goatery",

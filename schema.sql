@@ -13,6 +13,9 @@ CREATE TABLE IF NOT EXISTS clusters (
     pashu_sakhi       TEXT,
     block_coordinator TEXT,
     finalized         BOOLEAN NOT NULL DEFAULT FALSE,
+    -- TRUE when a human owns this cluster (CSV upload or manual edit). Locked
+    -- scopes are never auto-regenerated, so smart-refresh can't wipe edits.
+    locked            BOOLEAN NOT NULL DEFAULT FALSE,
     dashboard         JSONB,
     created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
     updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
@@ -20,6 +23,20 @@ CREATE TABLE IF NOT EXISTS clusters (
 CREATE INDEX IF NOT EXISTS idx_clusters_block     ON clusters(block_name);
 CREATE INDEX IF NOT EXISTS idx_clusters_commodity ON clusters(commodity);
 CREATE INDEX IF NOT EXISTS idx_clusters_district  ON clusters(district_name);
+
+-- Per-scope generation record for smart auto-refresh. One row per
+-- (block_name, commodity). `fingerprint` captures the algorithm version,
+-- params and village data used; a scope is regenerated on read only when the
+-- current fingerprint differs (stale) AND the scope isn't locked/finalized.
+-- Exists even for scopes that yield zero clusters, so empty results aren't
+-- rebuilt on every load.
+CREATE TABLE IF NOT EXISTS cluster_generation (
+    block_name   TEXT NOT NULL,
+    commodity    TEXT NOT NULL,
+    fingerprint  TEXT NOT NULL,
+    generated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+    PRIMARY KEY (block_name, commodity)
+);
 
 CREATE TABLE IF NOT EXISTS cluster_villages (
     id            BIGSERIAL PRIMARY KEY,

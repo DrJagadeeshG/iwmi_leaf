@@ -9,6 +9,8 @@ Village data loader and cluster persistence for LEAF DSS.
   routes do not need to change.
 """
 
+import hashlib
+import json
 from functools import lru_cache
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -17,6 +19,7 @@ import pandas as pd
 from psycopg2.extras import Json, execute_values
 
 from clustering import (
+    ALGO_VERSION,
     Cluster,
     COMMODITIES,
     DEFAULT_PARAMS,
@@ -170,7 +173,7 @@ def aggregate_villages(level: str, district: Optional[str] = None) -> List[Dict]
 
 CLUSTER_COLS = (
     "cluster_id, commodity, block_name, district_name, total_members, max_span_km, "
-    "centroid_lat, centroid_lon, pashu_sakhi, block_coordinator, finalized, dashboard"
+    "centroid_lat, centroid_lon, pashu_sakhi, block_coordinator, finalized, locked, dashboard"
 )
 
 
@@ -187,6 +190,7 @@ def _row_to_cluster(row: Dict, villages: List[Dict]) -> Dict:
         "pashu_sakhi": row["pashu_sakhi"],
         "block_coordinator": row["block_coordinator"],
         "finalized": bool(row["finalized"]),
+        "locked": bool(row.get("locked", False)),
         "dashboard": row["dashboard"],
         "villages": villages,
         "village_indices": [v["village_index"] for v in villages if v.get("village_index") is not None],
@@ -294,6 +298,7 @@ def _insert_clusters(cur, clusters: List[Dict]) -> None:
             c.get("centroid_lat", 0.0), c.get("centroid_lon", 0.0),
             c.get("pashu_sakhi"), c.get("block_coordinator"),
             bool(c.get("finalized", False)),
+            bool(c.get("locked", False)),
             Json(c["dashboard"]) if c.get("dashboard") is not None else None,
         )
         for c in clusters
@@ -326,26 +331,114 @@ def _insert_clusters(cur, clusters: List[Dict]) -> None:
         )
 
 
+# =============================================================================
+# Smart auto-refresh: regenerate a scope on read only when it is STALE
+# (fingerprint changed) and NOT locked/finalized (no human edits to protect).
+# =============================================================================
+
+def _effective_params(params: Optional[Dict]) -> Dict:
+    p = dict(DEFAULT_PARAMS)
+    if params:
+        for k, v in params.items():
+            if k in p and v is not None:
+                p[k] = v
+    return p
+
+
+def scope_fingerprint(block_name: str, commodity: str, params: Optional[Dict] = None) -> str:
+    """Stable hash of everything that should force a regeneration: the algorithm
+    version, the effective params, and the village data (name/lat/long/members)
+    for this (block, commodity). Identical inputs -> identical fingerprint."""
+    df = villages_for_block(block_name)
+    if commodity in df.columns:
+        sub = df[df[commodity] >= 1][["vill_name", "lat", "long", commodity]].copy()
+        data_blob = sub.sort_values("vill_name").to_csv(index=False)
+    else:
+        data_blob = ""
+    payload = json.dumps(
+        {"algo": ALGO_VERSION, "params": _effective_params(params), "data": data_blob},
+        sort_keys=True, default=str,
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _get_generation_fp(block_name: str, commodity: str) -> Optional[str]:
+    with get_cursor(commit=False) as cur:
+        cur.execute(
+            "SELECT fingerprint FROM cluster_generation WHERE block_name = %s AND commodity = %s",
+            (block_name, commodity),
+        )
+        row = cur.fetchone()
+    return row["fingerprint"] if row else None
+
+
+def _set_generation_fp(cur, block_name: str, commodity: str, fingerprint: str) -> None:
+    cur.execute(
+        "INSERT INTO cluster_generation (block_name, commodity, fingerprint, generated_at) "
+        "VALUES (%s, %s, %s, now()) "
+        "ON CONFLICT (block_name, commodity) "
+        "DO UPDATE SET fingerprint = EXCLUDED.fingerprint, generated_at = now()",
+        (block_name, commodity, fingerprint),
+    )
+
+
+def scope_is_locked(block_name: str, commodity: str) -> bool:
+    """True if any cluster in scope is finalized or locked (human-owned). Such
+    scopes are never auto-regenerated so edits / uploaded CSVs survive reloads."""
+    with get_cursor(commit=False) as cur:
+        cur.execute(
+            "SELECT 1 FROM clusters WHERE block_name = %s AND commodity = %s "
+            "AND (finalized OR locked) LIMIT 1",
+            (block_name, commodity),
+        )
+        return cur.fetchone() is not None
+
+
+def get_or_regenerate(
+    block_name: str,
+    commodity: Optional[str] = None,
+    district_name: Optional[str] = None,
+    params: Optional[Dict] = None,
+) -> List[Dict]:
+    """Serve stored clusters, auto-regenerating each in-scope (block, commodity)
+    only when it is stale and unlocked. Always returns the current stored set."""
+    commodities = [commodity] if commodity else list(COMMODITIES)
+    for com in commodities:
+        if scope_is_locked(block_name, com):
+            continue  # protect human edits - never auto-regen
+        if _get_generation_fp(block_name, com) == scope_fingerprint(block_name, com, params):
+            continue  # fresh; also short-circuits known-empty scopes
+        regenerate_clusters(block_name=block_name, commodity=com, params=params)
+    return get_clusters(block_name=block_name, commodity=commodity, district_name=district_name)
+
+
 def regenerate_clusters(
     block_name: Optional[str] = None,
     commodity: Optional[str] = None,
     params: Optional[Dict] = None,
 ) -> List[Dict]:
-    """Run the algorithm and replace stored clusters for the given scope."""
+    """Run the algorithm and replace stored clusters for the given scope.
+    Records a generation fingerprint per (block, commodity) so smart-refresh
+    can tell later whether the scope is still current."""
     df = load_villages()
     blocks = [block_name] if block_name else sorted(df["block_name"].dropna().unique().tolist())
     new_clusters: List[Cluster] = []
+    scopes: List[tuple] = []  # (block, commodity) pairs actually regenerated
     for b in blocks:
         if commodity:
             new_clusters.extend(cluster_block_commodity(df, b, commodity, params))
+            scopes.append((b, commodity))
         else:
-            for cs in cluster_block_all(df, b, params).values():
+            for com, cs in cluster_block_all(df, b, params).items():
                 new_clusters.extend(cs)
+                scopes.append((b, com))
 
     payload = [c.to_dict() for c in new_clusters]
     with get_cursor(commit=True) as cur:
         _delete_clusters(cur, block_name=block_name, commodity=commodity)
         _insert_clusters(cur, payload)
+        for b, com in scopes:
+            _set_generation_fp(cur, b, com, scope_fingerprint(b, com, params))
     return payload
 
 
@@ -388,6 +481,8 @@ def replace_clusters_from_records(records: List[Dict], scope: Dict) -> int:
             "pashu_sakhi": r.get("pashu_sakhi"),
             "block_coordinator": r.get("block_coordinator"),
             "finalized": False,
+            # Human-owned: an uploaded CSV must survive smart-refresh reloads.
+            "locked": True,
         })
 
     with get_cursor(commit=True) as cur:
