@@ -1778,7 +1778,7 @@ function downloadSummaryReport() {
         props = state.districtAggProps;
     } else if (level === 'cluster' && state.currentCluster) {
         const c = state.currentCluster;
-        scopeLabel = `${c.block_name || state.currentBlock || ''} / Cluster ${c.cluster_num != null ? c.cluster_num : c.cluster_id}`;
+        scopeLabel = `${c.block_name || state.currentBlock || ''} / Cluster ${c.cluster_label != null ? c.cluster_label : (c.cluster_num != null ? c.cluster_num : c.cluster_id)}`;
         bodyHtml = buildClusterReportBody(c);
     } else {
         const feats = [];
@@ -2524,7 +2524,7 @@ async function updateBlockClusterDropdown(blockName) {
     state.blockClusters.forEach(c => {
         const o = document.createElement('option');
         o.value = c.cluster_id;
-        o.textContent = `Cluster ${c.cluster_num != null ? c.cluster_num : c.cluster_id} · ${c.total_members} members`;
+        o.textContent = `Cluster ${c.cluster_label != null ? c.cluster_label : (c.cluster_num != null ? c.cluster_num : c.cluster_id)} · ${c.total_members} members`;
         sel.appendChild(o);
     });
     sel.style.display = '';
@@ -2569,7 +2569,7 @@ function showClusterDetailView(c) {
 
     document.getElementById('cluster-cards').innerHTML = `
         <div class="detail-card">
-            <div class="detail-card-header"><span><i class="bi bi-diagram-3"></i> Cluster ${c.cluster_num != null ? c.cluster_num : c.cluster_id}</span></div>
+            <div class="detail-card-header"><span><i class="bi bi-diagram-3"></i> Cluster ${c.cluster_label != null ? c.cluster_label : (c.cluster_num != null ? c.cluster_num : c.cluster_id)}</span></div>
             <div class="detail-card-body"><div class="metrics-scroll-wrapper">
                 <div class="metric-row"><span class="metric-label">Commodity</span><span class="metric-value">${escapeText(c.commodity || '')}</span></div>
                 <div class="metric-row"><span class="metric-label">Total members</span><span class="metric-value">${Number(c.total_members || 0).toLocaleString()}</span></div>
@@ -2585,7 +2585,7 @@ function showClusterDetailView(c) {
         ${coord}`;
 
     document.getElementById('location-card-title').innerHTML =
-        `${escapeText(c.block_name || state.currentBlock || '')} / <strong>Cluster ${c.cluster_num != null ? c.cluster_num : c.cluster_id}</strong>`;
+        `${escapeText(c.block_name || state.currentBlock || '')} / <strong>Cluster ${c.cluster_label != null ? c.cluster_label : (c.cluster_num != null ? c.cluster_num : c.cluster_id)}</strong>`;
 
     setClusterMode(true);
     initClusterMiniMap(c);

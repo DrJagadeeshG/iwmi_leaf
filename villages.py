@@ -261,16 +261,24 @@ def get_clusters(
     villages_map = _fetch_villages([r["cluster_id"] for r in rows])
     clusters = [_row_to_cluster(r, villages_map.get(r["cluster_id"], [])) for r in rows]
     # Sequential numbering per (block, commodity) for the left-panel display
-    # and the CSV. Restarts each group; rows are already ordered by
-    # (block_name, commodity, cluster_id). Display-only - not persisted.
-    n, last_key = 0, None
+    # and the CSV. Fundable and provisional groups are numbered in SEPARATE
+    # sequences so a below-floor "review" group never reads like a peer of a
+    # fundable cluster (Faiz 2026-05-26: "Cluster 1 inside Cluster 11"). Fundable
+    # -> "1", "2", ...; provisional -> "P1", "P2", .... cluster_label carries the
+    # display string; cluster_num stays the within-tier integer. Restarts each
+    # (block, commodity); rows are already ordered by (block, commodity,
+    # cluster_id). Display-only - not persisted.
+    n_fund, n_prov, last_key = 0, 0, None
     for c in clusters:
         key = (c.get("block_name"), c.get("commodity"))
         if key != last_key:
-            n, last_key = 1, key
+            n_fund, n_prov, last_key = 0, 0, key
+        if c.get("provisional"):
+            n_prov += 1
+            c["cluster_num"], c["cluster_label"] = n_prov, f"P{n_prov}"
         else:
-            n += 1
-        c["cluster_num"] = n
+            n_fund += 1
+            c["cluster_num"], c["cluster_label"] = n_fund, str(n_fund)
     return clusters
 
 
@@ -282,15 +290,19 @@ def get_cluster(cluster_id: str) -> Optional[Dict]:
         return None
     villages_map = _fetch_villages([cluster_id])
     c = _row_to_cluster(row, villages_map.get(cluster_id, []))
-    # Derive cluster_num by counting earlier clusters in the same scope so
-    # single-cluster lookups match the numbering used in the list/CSV.
+    # Derive cluster_num/label by counting earlier clusters in the SAME tier
+    # (provisional vs fundable) so single-cluster lookups match the separate-tier
+    # numbering used in the list/CSV (see get_clusters).
+    prov = bool(c.get("provisional"))
     with get_cursor(commit=False) as cur:
         cur.execute(
             "SELECT COUNT(*) AS n FROM clusters "
-            "WHERE block_name = %s AND commodity = %s AND cluster_id < %s",
-            (c.get("block_name"), c.get("commodity"), cluster_id),
+            "WHERE block_name = %s AND commodity = %s AND provisional = %s "
+            "AND cluster_id < %s",
+            (c.get("block_name"), c.get("commodity"), prov, cluster_id),
         )
-        c["cluster_num"] = int(cur.fetchone()["n"]) + 1
+        n = int(cur.fetchone()["n"]) + 1
+    c["cluster_num"], c["cluster_label"] = n, (f"P{n}" if prov else str(n))
     return c
 
 
@@ -372,8 +384,16 @@ def scope_fingerprint(block_name: str, commodity: str, params: Optional[Dict] = 
         data_blob = sub.sort_values("vill_name").to_csv(index=False)
     else:
         data_blob = ""
+    eff = _effective_params(params)
+    # `rebalance` is OFF by default and a no-op when False, so merely adding it to
+    # DEFAULT_PARAMS must NOT invalidate every existing fingerprint and trigger a
+    # needless regen of all unlocked scopes. Only a TRUE rebalance changes output,
+    # so it only belongs in the fingerprint then. (Drop it when False -> the hash
+    # stays byte-identical to the pre-rebalance fingerprint.)
+    if not eff.get("rebalance"):
+        eff.pop("rebalance", None)
     payload = json.dumps(
-        {"algo": ALGO_VERSION, "params": _effective_params(params), "data": data_blob},
+        {"algo": ALGO_VERSION, "params": eff, "data": data_blob},
         sort_keys=True, default=str,
     )
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
@@ -549,7 +569,10 @@ def clusters_to_csv(clusters: List[Dict]) -> str:
     for c in clusters:
         for v in c.get("villages", []):
             rows.append({
-                "cluster_num": c.get("cluster_num"),
+                # Prefer the separate-tier display label ("1" / "P1") so
+                # provisional rows are unambiguous; fall back to the raw number
+                # for callers that haven't been through get_clusters numbering.
+                "cluster_num": c.get("cluster_label", c.get("cluster_num")),
                 "cluster_id": c.get("cluster_id"),
                 "commodity": c.get("commodity"),
                 "district_name": c.get("district_name"),

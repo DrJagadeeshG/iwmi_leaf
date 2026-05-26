@@ -46,6 +46,13 @@ DEFAULT_PARAMS = {
     # and excludes them from fundable counts).
     "emit_provisional": True,
     "provisional_min_members": 1,
+    # Pass E (post-pass rebalance). When on, a below-floor provisional group can
+    # become fundable by borrowing village(s) from an adjacent fundable cluster,
+    # but ONLY when every cap still holds and the donor stays valid. DEFAULT OFF:
+    # it changes output across ~18% of provisional groups, so it must be reviewed
+    # before enabling on prod (bump ALGO_VERSION when you do). See cluster
+    # follow-up notes / OPEN ITEM A.
+    "rebalance": False,
 }
 
 
@@ -299,6 +306,99 @@ def cluster_block_commodity(
             else:
                 for k in idxs:
                     assigned[k] = False
+
+    # Pass E (rebalance, OFF by default - OPEN ITEM A). Rescue below-floor
+    # provisional groups by borrowing village(s) from an adjacent fundable
+    # cluster. Conservative and deterministic by design:
+    #   - process provisional groups largest-first;
+    #   - a borrow commits only if P stays within all caps (<=4 villages,
+    #     <=5km span, <=150 members) AND the donor stays valid (>=min members,
+    #     >=min villages) AFTER losing the village;
+    #   - if P can't reach the floor within its remaining village budget, ALL
+    #     its tentative borrows are reverted (no churn);
+    #   - only the ORIGINAL fundable clusters may donate, and each village moves
+    #     at most once -> one rescue level, no cascade.
+    if p["rebalance"]:
+        def _local(c: Cluster) -> List[int]:
+            return [candidates.index.get_loc(idx) for idx in c.village_indices]
+
+        donors = [c for c in clusters if not c.provisional]
+        provis = sorted((c for c in clusters if c.provisional),
+                        key=lambda c: c.total_members, reverse=True)
+        donor_local = {c.cluster_id: _local(c) for c in donors}
+        donor_obj = {c.cluster_id: c for c in donors}
+        moved = set()  # candidate-local indices already borrowed
+
+        def _replace(old: Cluster, new: Cluster) -> None:
+            for j, x in enumerate(clusters):
+                if x is old:
+                    clusters[j] = new
+                    return
+
+        for pc in provis:
+            if pc.total_members >= p["min_cluster_members"]:
+                continue
+            cur_local = list(_local(pc))
+            plan: List[tuple] = []  # (donor_cluster_id, candidate-local idx)
+            while (
+                len(cur_local) < p["max_villages_per_cluster"]
+                and sum(members[k] for k in cur_local) < p["min_cluster_members"]
+            ):
+                best = None  # (sort_key, donor_id, local_idx); lowest key wins
+                for did, d_idx in donor_local.items():
+                    planned_here = [k for (d, k) in plan if d == did]
+                    remaining_base = [k for k in d_idx if k not in planned_here]
+                    for k in remaining_base:
+                        if k in moved:
+                            continue
+                        trial = cur_local + [k]
+                        if len(trial) > p["max_villages_per_cluster"]:
+                            continue
+                        new_total = sum(members[j] for j in trial)
+                        if new_total > p["max_cluster_members"]:
+                            continue
+                        span = _max_pairwise_km([coords[j] for j in trial])
+                        if span > p["max_radius_km"]:
+                            continue
+                        remaining = [x for x in remaining_base if x != k]
+                        if sum(members[j] for j in remaining) < p["min_cluster_members"]:
+                            continue
+                        if len(remaining) < p["min_villages_per_cluster"]:
+                            continue
+                        # Conservative borrow: take the SMALLEST move that clears
+                        # the floor (minimal overshoot keeps the donor as intact as
+                        # possible); only if no single borrow clears it do we take
+                        # the biggest member gain to make progress. Tighter span,
+                        # then lowest index, break ties -> fully deterministic.
+                        reaches = new_total >= p["min_cluster_members"]
+                        key = (0 if reaches else 1,
+                               new_total if reaches else -members[k],
+                               round(span, 6), k)
+                        if best is None or key < best[0]:
+                            best = (key, did, k)
+                if best is None:
+                    break
+                _, did, k = best
+                cur_local.append(k)
+                plan.append((did, k))
+
+            if plan and sum(members[k] for k in cur_local) >= p["min_cluster_members"]:
+                rescued = _emit_cluster(cur_local, provisional=False)
+                rescued.cluster_id = pc.cluster_id
+                rescued.pashu_sakhi = pc.pashu_sakhi
+                rescued.block_coordinator = pc.block_coordinator
+                _replace(pc, rescued)
+                for did, k in plan:
+                    donor_local[did] = [x for x in donor_local[did] if x != k]
+                    moved.add(k)
+                for did in {d for d, _ in plan}:
+                    old = donor_obj[did]
+                    rebuilt = _emit_cluster(donor_local[did])
+                    rebuilt.cluster_id = old.cluster_id
+                    rebuilt.pashu_sakhi = old.pashu_sakhi
+                    rebuilt.block_coordinator = old.block_coordinator
+                    _replace(old, rebuilt)
+                    donor_obj[did] = rebuilt
 
     return clusters
 

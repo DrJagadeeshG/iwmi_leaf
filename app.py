@@ -2303,7 +2303,11 @@ def api_cluster_params():
       The 30/150 member range and 5 km radius reflect government criteria (per IWMI
       requirements call, 2026-04-23) and may be adjusted before final freeze.
       `emit_provisional` surfaces below-floor village groups as provisional
-      clusters (flagged, not fundable) instead of dropping them.
+      clusters (flagged, not fundable) instead of dropping them. `rebalance`
+      (default false) lets a provisional group become fundable by borrowing a
+      village from an adjacent fundable cluster when every cap still holds and
+      the donor stays valid; it is OFF by default and changes output broadly, so
+      enable it deliberately.
     responses:
       200:
         description: Parameter map
@@ -2318,6 +2322,7 @@ def api_cluster_params():
             max_radius_km: {type: number}
             emit_provisional: {type: boolean}
             provisional_min_members: {type: integer}
+            rebalance: {type: boolean}
             commodities:
               type: array
               items: {type: string}

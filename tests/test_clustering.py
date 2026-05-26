@@ -94,6 +94,83 @@ def test_oversized_orphan_not_absorbed():
             )
 
 
+def _rebalance_fixture():
+    """A donor cluster pinned at the 4-village cap with an adjacent below-floor
+    provisional pair next to it - the miniature ATTAREEKHATLINE case. The main
+    pass fills the donor (D1..D4) first because those four are mutually closest,
+    stranding P1+P2 (22 mem) as a provisional group. A single safe borrow can
+    rescue them: donor 65->50 mem / 3 villages (still valid), provisional
+    22+15=37 mem / 3 villages (fundable)."""
+    import pandas as pd
+    rows = [
+        # Donor: four tight villages ~0.3 km apart -> fills the 4-village cap.
+        {"district_name": "D", "block_name": "B", "gp_name": "G",
+         "vill_name": "D1", "lat": 26.500, "long": 92.000, "Dairy": 20},
+        {"district_name": "D", "block_name": "B", "gp_name": "G",
+         "vill_name": "D2", "lat": 26.502, "long": 92.000, "Dairy": 15},
+        {"district_name": "D", "block_name": "B", "gp_name": "G",
+         "vill_name": "D3", "lat": 26.500, "long": 92.002, "Dairy": 15},
+        {"district_name": "D", "block_name": "B", "gp_name": "G",
+         "vill_name": "D4", "lat": 26.502, "long": 92.002, "Dairy": 15},
+        # Provisional pair ~2 km away (within the 5 km borrow span, but the donor
+        # was already full so the main pass couldn't take them).
+        {"district_name": "D", "block_name": "B", "gp_name": "G",
+         "vill_name": "P1", "lat": 26.520, "long": 92.000, "Dairy": 12},
+        {"district_name": "D", "block_name": "B", "gp_name": "G",
+         "vill_name": "P2", "lat": 26.522, "long": 92.000, "Dairy": 10},
+    ]
+    return pd.DataFrame(rows)
+
+
+def test_rebalance_off_by_default_leaves_provisional():
+    """Default params: rebalance is OFF, so the below-floor pair stays a
+    provisional group (the conservative, prod-safe baseline)."""
+    clusters = clustering.cluster_block_commodity(_rebalance_fixture(), "B", "Dairy")
+    pgroup = next((c for c in clusters
+                   if {"P1", "P2"} <= {v["vill_name"] for v in c.villages}), None)
+    assert pgroup is not None, "P1/P2 should be surfaced as a group"
+    assert pgroup.provisional is True
+    assert pgroup.total_members == 22  # below the 30 floor, not rescued
+
+
+def test_rebalance_rescues_provisional_with_safe_borrow():
+    """rebalance=True: the provisional pair borrows ONE village from the full
+    donor and becomes fundable, while the donor stays valid and no cap breaks."""
+    p = clustering.DEFAULT_PARAMS
+    clusters = clustering.cluster_block_commodity(
+        _rebalance_fixture(), "B", "Dairy", params={"rebalance": True})
+
+    pgroup = next((c for c in clusters
+                   if {"P1", "P2"} <= {v["vill_name"] for v in c.villages}), None)
+    assert pgroup is not None
+    assert pgroup.provisional is False, "the pair should be rescued to fundable"
+    assert pgroup.total_members >= p["min_cluster_members"]
+    assert len(pgroup.villages) <= p["max_villages_per_cluster"]
+    assert pgroup.max_span_km <= p["max_radius_km"]
+
+    # Every fundable cluster still respects all caps; the donor stays valid.
+    for c in clusters:
+        if c.provisional:
+            continue
+        assert len(c.villages) <= p["max_villages_per_cluster"]
+        assert c.max_span_km <= p["max_radius_km"]
+        assert c.total_members <= p["max_cluster_members"]
+        # Multi-village fundable clusters must clear both floors.
+        if len(c.villages) > 1:
+            assert c.total_members >= p["min_cluster_members"]
+            assert len(c.villages) >= p["min_villages_per_cluster"]
+
+
+def test_rebalance_is_deterministic():
+    """Two runs with rebalance on must yield identical cluster membership."""
+    def sig():
+        cs = clustering.cluster_block_commodity(
+            _rebalance_fixture(), "B", "Dairy", params={"rebalance": True})
+        return sorted((tuple(sorted(v["vill_name"] for v in c.villages)),
+                       c.total_members, c.provisional) for c in cs)
+    assert sig() == sig()
+
+
 def test_emit_cluster_centroid_and_span_are_recomputed(sample_villages_df):
     """_emit_cluster (now used by pre-pass, main loop, and orphan merge)
     must produce coherent centroid/max_span_km from the village list."""

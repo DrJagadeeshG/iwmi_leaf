@@ -612,11 +612,22 @@
         });
     }
 
+    // User-facing cluster name. Fundable -> "Cluster 1"; provisional (below-floor
+    // review groups) are numbered in a SEPARATE sequence on the backend and carry
+    // a "P" prefix -> "Cluster P1", so they never read as a peer of a fundable
+    // cluster (Faiz 2026-05-26: "Cluster 1 inside Cluster 11"). The amber
+    // Provisional badge still rides alongside. Falls back to cluster_num, then
+    // cluster_id, for older payloads.
+    function clusterLabel(c) {
+        const lbl = c.cluster_label != null ? c.cluster_label
+                  : (c.cluster_num != null ? String(c.cluster_num) : null);
+        return lbl == null ? c.cluster_id : `Cluster ${lbl}`;
+    }
+
     function clusterHoverHTML(c) {
-        // Brief, non-interactive hover hint. cluster_num is the user-friendly
-        // sequential label (per Faiz, 2026-05-09); cluster_id stays as a faint
-        // subtitle so devs/CSV editors can still cross-reference.
-        const label = c.cluster_num != null ? `Cluster ${c.cluster_num}` : c.cluster_id;
+        // Brief, non-interactive hover hint. cluster_id stays as a faint subtitle
+        // so devs/CSV editors can still cross-reference.
+        const label = clusterLabel(c);
         const provBadge = c.provisional
             ? ' <span style="background:#E8833A;color:#fff;border-radius:3px;padding:0 5px;font-size:11px">Provisional</span>'
             : '';
@@ -634,7 +645,7 @@
         const status = c.finalized
             ? '<span style="color:#22AD7A; font-weight: 600">✓ Finalised - published to production tool</span>'
             : '<span style="color:#888">Proposed - not yet published</span>';
-        const label = c.cluster_num != null ? `Cluster ${c.cluster_num}` : c.cluster_id;
+        const label = clusterLabel(c);
         return `<div class="cluster-popup" style="min-width: 260px; max-width: 360px; font-size: 14px;">
             <div style="font-weight: 600; font-size: 15px;">${label}${c.cluster_num != null ? `<small style="color:#888;font-weight:400"> · ${c.cluster_id}</small>` : ''}</div>
             <small style="color: #666;">${COMMODITY_LABEL[c.commodity] || c.commodity} · ${c.block_name} · ${c.district_name || ''}</small>
@@ -753,9 +764,10 @@
             return;
         }
         const layers = [];
-        // Registry for the search box AND the jump-to dropdown: keyed by
-        // numeric cluster_num and (lower-cased) cluster_id so users can use
-        // either path.
+        // Registry for the search box AND the jump-to dropdown: keyed by the
+        // (lower-cased) display label - "1" / "p1" - and the (lower-cased)
+        // cluster_id, so users can reach a cluster by either path. The label is
+        // lower-cased to match findCluster(), which lower-cases the query.
         local.clusterRegistry = {};
         local.clusterList = clusters;
         clusters.forEach(c => {
@@ -772,7 +784,9 @@
                 // straight to the side panel and the village highlight.
                 shape.on('click', () => selectCluster(c, { pan: false }));
                 layers.push(shape);
-                if (c.cluster_num != null) local.clusterRegistry[String(c.cluster_num)] = { cluster: c, shape };
+                const regKey = c.cluster_label != null ? c.cluster_label
+                             : (c.cluster_num != null ? String(c.cluster_num) : null);
+                if (regKey != null) local.clusterRegistry[regKey.toLowerCase()] = { cluster: c, shape };
                 if (c.cluster_id) local.clusterRegistry[String(c.cluster_id).toLowerCase()] = { cluster: c, shape };
             }
             const m = statusMarker(c);
@@ -903,7 +917,7 @@
         if (!sel) return;
         sel.innerHTML = '<option value="">Jump to cluster...</option>' +
             clusters.map(c => {
-                const num = c.cluster_num != null ? `Cluster ${c.cluster_num}` : c.cluster_id;
+                const num = clusterLabel(c);
                 const v = (c.villages || []).length;
                 const m = c.total_members || 0;
                 return `<option value="${escapeHtml(c.cluster_id)}">${escapeHtml(num)} - ${m} m / ${v} v</option>`;
@@ -1214,7 +1228,7 @@
             <button type="button" class="cluster-side-back" id="cluster-side-back-btn">
                 <i class="bi bi-arrow-left"></i> Back to block summary
             </button>
-            <h3><i class="bi bi-diagram-3"></i> ${c.cluster_num != null ? `Cluster ${c.cluster_num}` : escapeHtml(c.cluster_id)}${c.provisional ? ' <span style="background:#E8833A;color:#fff;border-radius:3px;padding:1px 6px;font-size:11px;vertical-align:middle">Provisional</span>' : ''}</h3>
+            <h3><i class="bi bi-diagram-3"></i> ${escapeHtml(clusterLabel(c))}${c.provisional ? ' <span style="background:#E8833A;color:#fff;border-radius:3px;padding:1px 6px;font-size:11px;vertical-align:middle">Provisional</span>' : ''}</h3>
             <div class="cluster-side-sub">${escapeHtml(COMMODITY_LABEL[c.commodity] || c.commodity)} · ${escapeHtml(c.block_name)}${c.cluster_num != null ? ` · <span style="color:#888">${escapeHtml(c.cluster_id)}</span>` : ''}</div>
             <div class="cluster-side-section">Cluster</div>
             ${row('Members', (c.total_members || 0).toLocaleString())}
