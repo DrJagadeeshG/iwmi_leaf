@@ -34,7 +34,12 @@ COMMODITIES = [
 ]
 
 DEFAULT_PARAMS = {
-    "min_members_per_village": 1,
+    # LEAF-42 (Faiz 2026-05-21): villages with <=5 interested members are too
+    # small to anchor a cluster and should be hidden from the map. The candidate
+    # filter (~line 139) keeps rows with members >= this value, so 6 means
+    # "<=5 excluded, >=6 kept". Per-commodity, so a village with 0 dairy
+    # interest but 50 goatery still shows on the goatery view.
+    "min_members_per_village": 6,
     "min_cluster_members": 30,
     "max_cluster_members": 150,
     "min_villages_per_cluster": 2,

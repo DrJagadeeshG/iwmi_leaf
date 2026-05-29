@@ -171,6 +171,31 @@ def test_rebalance_is_deterministic():
     assert sig() == sig()
 
 
+def test_min_members_per_village_excludes_below_threshold():
+    """LEAF-42: villages with <=5 interested members must not enter the
+    candidate pool, so they cannot appear in any cluster (fundable or
+    provisional). At the default of 6, members=5 is excluded and members=6
+    is kept."""
+    import pandas as pd
+    rows = [
+        # Two anchor villages with healthy member counts.
+        {"district_name": "D", "block_name": "B", "gp_name": "G",
+         "vill_name": "Anchor1", "lat": 26.500, "long": 92.000, "Dairy": 20},
+        {"district_name": "D", "block_name": "B", "gp_name": "G",
+         "vill_name": "Anchor2", "lat": 26.501, "long": 92.001, "Dairy": 15},
+        # Boundary cases: 5 must be excluded, 6 must be kept.
+        {"district_name": "D", "block_name": "B", "gp_name": "G",
+         "vill_name": "Tiny5", "lat": 26.502, "long": 92.002, "Dairy": 5},
+        {"district_name": "D", "block_name": "B", "gp_name": "G",
+         "vill_name": "Edge6", "lat": 26.503, "long": 92.003, "Dairy": 6},
+    ]
+    df = pd.DataFrame(rows)
+    clusters = clustering.cluster_block_commodity(df, "B", "Dairy")
+    seen = {v["vill_name"] for c in clusters for v in c.villages}
+    assert "Tiny5" not in seen, "members=5 must be excluded by the LEAF-42 default"
+    assert "Edge6" in seen, "members=6 must remain a candidate"
+
+
 def test_emit_cluster_centroid_and_span_are_recomputed(sample_villages_df):
     """_emit_cluster (now used by pre-pass, main loop, and orphan merge)
     must produce coherent centroid/max_span_km from the village list."""

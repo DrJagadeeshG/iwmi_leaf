@@ -161,6 +161,12 @@
         villageLayer: null,
         clusterLayer: null,
         villageFeatures: null,
+        // LEAF-42: minimum interested members per village for the active commodity
+        // before the village is rendered (and clustered). Mirrors the backend
+        // DEFAULT_PARAMS["min_members_per_village"] (clustering.py). Refreshed
+        // from /api/clusters/params on init so a server-side change propagates
+        // without a frontend redeploy.
+        minMembersPerVillage: 6,
     };
 
     const $ = (id) => document.getElementById(id);
@@ -501,6 +507,15 @@
         if (local.villageLayer) local.modalMap.removeLayer(local.villageLayer);
 
         local.villageLayer = L.geoJSON(local.villageFeatures, {
+            // LEAF-42: when a commodity is selected, hide villages with
+            // fewer than min_members_per_village interested members for that
+            // commodity - they can't anchor a cluster anyway. When no
+            // commodity is selected, every village shows (master view).
+            filter: (feat) => {
+                if (!local.currentCommodity) return true;
+                const members = memberKeyForCurrent(feat.properties || {});
+                return members >= local.minMembersPerVillage;
+            },
             pointToLayer: (feat, latlng) => {
                 const p = feat.properties || {};
                 const members = memberKeyForCurrent(p);
@@ -1652,6 +1667,18 @@
             const observer = new MutationObserver(() => refreshOpenButton());
             observer.observe(target, { childList: true, subtree: true });
         }
+        // LEAF-42: pull the server's min_members_per_village so the village
+        // layer's hide threshold tracks DEFAULT_PARAMS without a frontend
+        // redeploy. Fire-and-forget; if it fails we stick with the local
+        // default of 6, which matches the current server value.
+        fetch('/api/clusters/params')
+            .then(r => r.ok ? r.json() : null)
+            .then(p => {
+                const v = p && Number(p.min_members_per_village);
+                if (Number.isFinite(v) && v > 0) local.minMembersPerVillage = v;
+            })
+            .catch(() => {});
+
         if (isPageMode()) {
             // Standalone /clustering page - bypass the open-button flow entirely.
             autoMountPageMode();
