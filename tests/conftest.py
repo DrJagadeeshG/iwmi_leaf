@@ -41,9 +41,12 @@ def sample_villages_df():
         # Standalone giant - 200 members, must trigger single-village exception
         {"district_name": "TESTDIST", "block_name": "TESTBLK", "gp_name": "GP-C",
          "vill_name": "Village_Giant", "lat": 26.600, "long": 92.200, "Dairy": 200},
-        # Orphan near the tight cluster (within 2x default 5km radius)
+        # Orphan near the tight cluster (within 2x default 5km radius). Member
+        # count is exactly at the LEAF-42 min_members_per_village (6) so the
+        # village still qualifies as a candidate and the orphan-merge / provisional
+        # passes can exercise it.
         {"district_name": "TESTDIST", "block_name": "TESTBLK", "gp_name": "GP-A",
-         "vill_name": "Village_Orphan", "lat": 26.540, "long": 92.030, "Dairy": 3},
+         "vill_name": "Village_Orphan", "lat": 26.540, "long": 92.030, "Dairy": 6},
     ]
     return pd.DataFrame(rows)
 

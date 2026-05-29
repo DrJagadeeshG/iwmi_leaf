@@ -554,16 +554,17 @@ def set_cluster_dashboard(cluster_id: str, payload: Dict) -> Optional[Dict]:
 
 _CSV_COLUMNS = [
     "cluster_num", "cluster_id", "commodity", "district_name", "block_name",
-    "gp_name", "vill_name", "members", "pashu_sakhi", "block_coordinator",
+    "gp_name", "vill_name", "lat", "long", "members", "pashu_sakhi", "block_coordinator",
 ]
 
 
 def clusters_to_csv(clusters: List[Dict]) -> str:
     """Flatten clusters to a row-per-village CSV string for download/edit/upload.
 
-    Schema per Faiz (2026-05-09): cluster_num + cluster_id, then district /
-    block / GP / village / members and the assignment fields. Lat/long are
-    omitted - they're recomputed on upload by looking up the village master.
+    Schema (LEAF-44, 2026-05-29): lat/long are emitted so a user can add a
+    brand-new village inline by appending a row with its coordinates. When
+    a user-added vill_name doesn't exist in the village master, the parser
+    uses the CSV's lat/long instead of failing the upload.
     """
     rows = []
     for c in clusters:
@@ -579,6 +580,8 @@ def clusters_to_csv(clusters: List[Dict]) -> str:
                 "block_name": c.get("block_name"),
                 "gp_name": v.get("gp_name"),
                 "vill_name": v.get("vill_name"),
+                "lat": v.get("lat"),
+                "long": v.get("long"),
                 "members": v.get("members"),
                 "pashu_sakhi": c.get("pashu_sakhi"),
                 "block_coordinator": c.get("block_coordinator"),
@@ -618,10 +621,12 @@ def _village_coord_lookup(block_name: Optional[str]) -> Dict[str, Dict[str, floa
 def csv_text_to_records(csv_text: str) -> List[Dict]:
     """Parse a clusters CSV (row-per-village) back into nested cluster records.
 
-    Accepts the current schema (no lat/long) and the legacy schema (with
-    lat/long). When lat/long are absent, looks them up from the village master
-    by (block_name, vill_name). Unknown villages produce a ValueError so the
-    upload fails fast and the user sees which row needs attention.
+    Accepts the current schema (lat/long included, LEAF-44) and the legacy
+    schema (no lat/long). When a row provides lat/long, those values win and
+    a vill_name unknown to the master is accepted as a newly-surveyed village.
+    When a row omits lat/long, the parser looks them up from the master by
+    (block_name, vill_name); an unknown name then fails fast with a message
+    pointing at the row.
     """
     from io import StringIO
     df = pd.read_csv(StringIO(csv_text))
