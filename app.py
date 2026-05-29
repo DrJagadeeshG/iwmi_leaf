@@ -2535,10 +2535,14 @@ def api_clusters_export_csv():
       - Clusters
     summary: Export clusters CSV
     description: |
-      Produces a CSV with one row per (cluster, village). Editors can change
-      villages, member counts, or fill in `pashu_sakhi` / `block_coordinator`,
-      then re-upload via `POST /api/clusters/import` to update the stored
-      clusters. Same edit-via-CSV pattern as the existing LEAF data update flow.
+      Produces a CSV with one row per (cluster, village). Columns: cluster_num,
+      cluster_id, commodity, district_name, block_name, gp_name, vill_name,
+      lat, long, members, pashu_sakhi, block_coordinator. Editors can change
+      villages, member counts, fill in `pashu_sakhi` / `block_coordinator`, or
+      append a row for a brand-new village discovered in the field by supplying
+      its lat/long inline. Re-upload via `POST /api/clusters/import` to update
+      the stored clusters. Same edit-via-CSV pattern as the existing LEAF data
+      update flow.
     parameters:
       - name: block
         in: query
@@ -2596,7 +2600,11 @@ def api_clusters_import():
       `/api/clusters/export.csv`. Required scope: `block` (and optionally
       `commodity`). All existing clusters within scope are replaced by the
       uploaded rows; derived fields (total_members, max_span_km, centroid) are
-      recomputed. Re-upload as many times as needed.
+      recomputed. When a row's `vill_name` is unknown to the village master,
+      the row's `lat`/`long` are accepted as the coordinates for that new
+      village (LEAF-44); when `lat`/`long` are omitted, the parser still backfills
+      from the master for known villages, and fails fast with a clear error if
+      it can't (legacy schema). Re-upload as many times as needed.
     consumes:
       - multipart/form-data
       - text/csv
