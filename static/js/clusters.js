@@ -1129,11 +1129,13 @@
     // update both. Also tunable per-block via the params API, but the demo
     // flow uses defaults.
     const CLUSTER_RULES = {
-        min_members_per_village: 1,
+        // Mirrors clustering.DEFAULT_PARAMS for the "Why this is a cluster"
+        // panel. LEAF-42: min_members_per_village = 6. LEAF-43: the
+        // village-count band is gone; clusters are bounded by member range
+        // + 5 km span only.
+        min_members_per_village: 6,
         min_cluster_members: 30,
         max_cluster_members: 150,
-        min_villages_per_cluster: 2,
-        max_villages_per_cluster: 4,
         max_radius_km: 5.0,
     };
 
@@ -1183,12 +1185,6 @@
                     && members <= CLUSTER_RULES.max_cluster_members,
                 text: `Total members <b>${members.toLocaleString()}</b> sits in the funding band ` +
                       `[${CLUSTER_RULES.min_cluster_members}-${CLUSTER_RULES.max_cluster_members}]`,
-            },
-            {
-                ok: villageCount >= CLUSTER_RULES.min_villages_per_cluster
-                    && villageCount <= CLUSTER_RULES.max_villages_per_cluster,
-                text: `Village count <b>${villageCount}</b> sits in ` +
-                      `[${CLUSTER_RULES.min_villages_per_cluster}-${CLUSTER_RULES.max_villages_per_cluster}]`,
             },
             {
                 ok: span <= CLUSTER_RULES.max_radius_km,

@@ -2317,8 +2317,6 @@ def api_cluster_params():
             min_members_per_village: {type: integer}
             min_cluster_members: {type: integer}
             max_cluster_members: {type: integer}
-            min_villages_per_cluster: {type: integer}
-            max_villages_per_cluster: {type: integer}
             max_radius_km: {type: number}
             emit_provisional: {type: boolean}
             provisional_min_members: {type: integer}
@@ -2494,8 +2492,6 @@ def api_clusters_regenerate():
             min_members_per_village: {type: integer}
             min_cluster_members: {type: integer}
             max_cluster_members: {type: integer}
-            min_villages_per_cluster: {type: integer}
-            max_villages_per_cluster: {type: integer}
             max_radius_km: {type: number}
     responses:
       200:

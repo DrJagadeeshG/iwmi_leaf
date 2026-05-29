@@ -16,8 +16,10 @@ def test_clustering_module_imports_and_defaults_sane():
     # Sanity-check the defaults the side panel's rule explanation depends on.
     p = clustering.DEFAULT_PARAMS
     assert p['min_cluster_members'] < p['max_cluster_members']
-    assert p['min_villages_per_cluster'] <= p['max_villages_per_cluster']
     assert p['max_radius_km'] > 0
+    # LEAF-43: village-count band removed; both keys must be gone.
+    assert 'min_villages_per_cluster' not in p
+    assert 'max_villages_per_cluster' not in p
 
 
 def test_villages_csv_helpers_present():

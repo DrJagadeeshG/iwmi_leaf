@@ -5,8 +5,10 @@ Per-commodity spatial cluster generator for LEAF DSS.
 Forms contiguous clusters of villages within a block, honouring:
   - per-village minimum interest in the commodity
   - cluster total member range (min/max)
-  - cluster village count range (min/max)
   - maximum pairwise radius across the cluster
+A cluster's village count is no longer capped (LEAF-43): if N villages
+fall within max_radius_km of each other and the member band still holds,
+that is a valid cluster.
 Algorithm: greedy seed-and-grow. Largest unassigned village seeds a cluster;
 nearest unassigned candidates are added while constraints hold. Discards
 under-size clusters at the end.
@@ -42,8 +44,10 @@ DEFAULT_PARAMS = {
     "min_members_per_village": 6,
     "min_cluster_members": 30,
     "max_cluster_members": 150,
-    "min_villages_per_cluster": 2,
-    "max_villages_per_cluster": 4,
+    # LEAF-43 (Faiz 2026-05-21): the village-count band (was 2-4) is dropped.
+    # A cluster is valid by member range + 5 km span alone; "if six villages
+    # fall within 5 km and satisfy member limits, that is a valid cluster."
+    # min_villages_per_cluster / max_villages_per_cluster removed.
     "max_radius_km": 5.0,
     # When on, villages that never clear the min_cluster_members floor are
     # surfaced as PROVISIONAL clusters (relaxed floor) instead of being dropped
@@ -204,10 +208,9 @@ def cluster_block_commodity(
         idxs = [seed]
         total = members[seed]
         assigned[seed] = True
-        while (
-            len(idxs) < p["max_villages_per_cluster"]
-            and total < p["max_cluster_members"]
-        ):
+        # LEAF-43: no upper village-count gate. Growth stops when no remaining
+        # village fits the member ceiling AND the 5 km pairwise span.
+        while total < p["max_cluster_members"]:
             seed_lat, seed_lon = coords[idxs[0]]
             best_i, best_d = None, float("inf")
             for j in range(len(candidates)):
@@ -235,25 +238,22 @@ def cluster_block_commodity(
         if assigned[seed]:
             continue
         idxs, total = _grow(seed)
-        if (
-            total < p["min_cluster_members"]
-            or len(idxs) < p["min_villages_per_cluster"]
-        ):
+        # LEAF-43: village-count floor dropped. Discard only if the cluster
+        # fails the 30-member floor; a single-village cluster with 30+ members
+        # is a valid cluster.
+        if total < p["min_cluster_members"]:
             for k in idxs:
                 assigned[k] = False
             continue
         clusters.append(_emit_cluster(idxs))
 
-    # Post-pass (Faiz 2026-05-09 #19, fixed 2026-05-25 #S2): orphan villages the
-    # main loop left unassigned get merged into the nearest existing cluster -
-    # but ONLY if the merge keeps the cluster fully valid. The earlier version
-    # checked just a loose member soft-cap and so produced clusters that broke
-    # the 4-village and 5km-span rules (e.g. CHARANPARA/DULIAPARA stapled onto
-    # BARTANGLA -> 6 villages, 5.139 km). Now every cap is re-checked, so an
-    # orphan is absorbed only when the result still satisfies max_villages,
-    # max_radius span and max_cluster_members. Orphans that fit nowhere valid are
-    # left for the provisional pass to surface (Pass D) rather than corrupting a
-    # good cluster. Centroid distance is just a prefilter / tie-break.
+    # Post-pass (Faiz 2026-05-09 #19, fixed 2026-05-25 #S2, simplified
+    # 2026-05-29 LEAF-43): orphan villages the main loop left unassigned get
+    # merged into the nearest existing cluster - but ONLY if the merge keeps
+    # every remaining cap intact. The pre-LEAF-43 caps were max_villages,
+    # max_cluster_members, max_radius span; LEAF-43 drops the village-count
+    # cap, so today the merge re-checks just max_cluster_members and the
+    # 5 km pairwise span. Orphans that don't fit are left for Pass D.
     merge_radius_km = 2 * p["max_radius_km"]
     for i in range(len(candidates)):
         if assigned[i]:
@@ -265,8 +265,6 @@ def cluster_block_commodity(
             if d > merge_radius_km:
                 continue
             c_idxs = [candidates.index.get_loc(idx) for idx in c.village_indices]
-            if len(c_idxs) + 1 > p["max_villages_per_cluster"]:
-                continue
             if c.total_members + members[i] > p["max_cluster_members"]:
                 continue
             if _max_pairwise_km([coords[k] for k in c_idxs] + [coords[i]]) > p["max_radius_km"]:
@@ -345,10 +343,10 @@ def cluster_block_commodity(
                 continue
             cur_local = list(_local(pc))
             plan: List[tuple] = []  # (donor_cluster_id, candidate-local idx)
-            while (
-                len(cur_local) < p["max_villages_per_cluster"]
-                and sum(members[k] for k in cur_local) < p["min_cluster_members"]
-            ):
+            # LEAF-43: no village-count gate on the borrower; only the
+            # member ceiling and 5 km span bound the borrow. The donor still
+            # has to stay at >=min_cluster_members after losing the village.
+            while sum(members[k] for k in cur_local) < p["min_cluster_members"]:
                 best = None  # (sort_key, donor_id, local_idx); lowest key wins
                 for did, d_idx in donor_local.items():
                     planned_here = [k for (d, k) in plan if d == did]
@@ -357,8 +355,6 @@ def cluster_block_commodity(
                         if k in moved:
                             continue
                         trial = cur_local + [k]
-                        if len(trial) > p["max_villages_per_cluster"]:
-                            continue
                         new_total = sum(members[j] for j in trial)
                         if new_total > p["max_cluster_members"]:
                             continue
@@ -367,8 +363,6 @@ def cluster_block_commodity(
                             continue
                         remaining = [x for x in remaining_base if x != k]
                         if sum(members[j] for j in remaining) < p["min_cluster_members"]:
-                            continue
-                        if len(remaining) < p["min_villages_per_cluster"]:
                             continue
                         # Conservative borrow: take the SMALLEST move that clears
                         # the floor (minimal overshoot keeps the donor as intact as

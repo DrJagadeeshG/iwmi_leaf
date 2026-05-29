@@ -24,11 +24,11 @@ def test_single_village_with_huge_count_becomes_its_own_cluster(sample_villages_
     assert giant.max_span_km == 0.0
 
 
-def test_orphan_merge_respects_village_and_span_caps(sample_villages_df):
-    """Orphan-merge must never break the village-count or span caps (#S2,
-    2026-05-25). The fixture's tight cluster is already at the 4-village cap, so
-    Village_Orphan cannot be stapled on - that was the BARTANGLA bug where the
-    orphan-merge produced a 6-village / 5.139 km cluster."""
+def test_orphan_merge_respects_member_and_span_caps(sample_villages_df):
+    """Orphan-merge must never break the member ceiling or span cap (#S2,
+    2026-05-25; village-count cap removed by LEAF-43). The member ceiling
+    does NOT apply to Pass-A singletons - they are the explicit single-village
+    exception for villages >=max_cluster_members that the greedy loop can't grow."""
     p = clustering.DEFAULT_PARAMS
     clusters = clustering.cluster_block_commodity(
         sample_villages_df, "TESTBLK", "Dairy",
@@ -36,19 +36,15 @@ def test_orphan_merge_respects_village_and_span_caps(sample_villages_df):
     for c in clusters:
         if c.provisional:
             continue
-        assert len(c.villages) <= p["max_villages_per_cluster"], (
-            f"{c.cluster_id} has {len(c.villages)} villages (cap {p['max_villages_per_cluster']})"
-        )
+        # Pass-A singletons may legitimately exceed max_cluster_members; the
+        # ceiling applies only to grown / merged clusters.
+        if len(c.villages) > 1:
+            assert c.total_members <= p["max_cluster_members"], (
+                f"{c.cluster_id} has {c.total_members} members (cap {p['max_cluster_members']})"
+            )
         assert c.max_span_km <= p["max_radius_km"], (
             f"{c.cluster_id} span {c.max_span_km} exceeds {p['max_radius_km']} km"
         )
-    # The orphan is NOT crammed into the full tight cluster.
-    for c in clusters:
-        names = {v["vill_name"] for v in c.villages}
-        if "Village_A" in names:
-            assert "Village_Orphan" not in names, (
-                "Orphan should not be force-merged into the full 4-village cluster"
-            )
 
 
 def test_orphan_surfaced_as_provisional_when_enabled(sample_villages_df):
@@ -95,25 +91,26 @@ def test_oversized_orphan_not_absorbed():
 
 
 def _rebalance_fixture():
-    """A donor cluster pinned at the 4-village cap with an adjacent below-floor
-    provisional pair next to it - the miniature ATTAREEKHATLINE case. The main
-    pass fills the donor (D1..D4) first because those four are mutually closest,
-    stranding P1+P2 (22 mem) as a provisional group. A single safe borrow can
-    rescue them: donor 65->50 mem / 3 villages (still valid), provisional
-    22+15=37 mem / 3 villages (fundable)."""
+    """A donor cluster pinned at the 150-member ceiling next to a below-floor
+    provisional pair - the post-LEAF-43 ATTAREEKHATLINE case. The main pass
+    fills the donor (D1..D4 totalling 150 = the ceiling), so Pass C can't
+    absorb P1/P2 (12+10=22) because adding either blows the member ceiling.
+    P1+P2 stay provisional unless Pass E rescues. A safe borrow exists:
+    P borrows D2 (15 mem), donor falls to 135 mem (still valid), P jumps to
+    37 mem (fundable)."""
     import pandas as pd
     rows = [
-        # Donor: four tight villages ~0.3 km apart -> fills the 4-village cap.
+        # Donor at the member ceiling so Pass C can't absorb P1/P2.
         {"district_name": "D", "block_name": "B", "gp_name": "G",
-         "vill_name": "D1", "lat": 26.500, "long": 92.000, "Dairy": 20},
+         "vill_name": "D1", "lat": 26.500, "long": 92.000, "Dairy": 70},
         {"district_name": "D", "block_name": "B", "gp_name": "G",
          "vill_name": "D2", "lat": 26.502, "long": 92.000, "Dairy": 15},
         {"district_name": "D", "block_name": "B", "gp_name": "G",
-         "vill_name": "D3", "lat": 26.500, "long": 92.002, "Dairy": 15},
+         "vill_name": "D3", "lat": 26.500, "long": 92.002, "Dairy": 35},
         {"district_name": "D", "block_name": "B", "gp_name": "G",
-         "vill_name": "D4", "lat": 26.502, "long": 92.002, "Dairy": 15},
-        # Provisional pair ~2 km away (within the 5 km borrow span, but the donor
-        # was already full so the main pass couldn't take them).
+         "vill_name": "D4", "lat": 26.502, "long": 92.002, "Dairy": 30},
+        # Provisional pair ~2 km away. Within the 5 km borrow span, but the
+        # donor is already at 150 mem so Pass C can't absorb them.
         {"district_name": "D", "block_name": "B", "gp_name": "G",
          "vill_name": "P1", "lat": 26.520, "long": 92.000, "Dairy": 12},
         {"district_name": "D", "block_name": "B", "gp_name": "G",
@@ -145,20 +142,16 @@ def test_rebalance_rescues_provisional_with_safe_borrow():
     assert pgroup is not None
     assert pgroup.provisional is False, "the pair should be rescued to fundable"
     assert pgroup.total_members >= p["min_cluster_members"]
-    assert len(pgroup.villages) <= p["max_villages_per_cluster"]
     assert pgroup.max_span_km <= p["max_radius_km"]
 
-    # Every fundable cluster still respects all caps; the donor stays valid.
+    # Every fundable cluster still respects the surviving caps; the donor stays
+    # valid. Village-count caps removed by LEAF-43.
     for c in clusters:
         if c.provisional:
             continue
-        assert len(c.villages) <= p["max_villages_per_cluster"]
         assert c.max_span_km <= p["max_radius_km"]
         assert c.total_members <= p["max_cluster_members"]
-        # Multi-village fundable clusters must clear both floors.
-        if len(c.villages) > 1:
-            assert c.total_members >= p["min_cluster_members"]
-            assert len(c.villages) >= p["min_villages_per_cluster"]
+        assert c.total_members >= p["min_cluster_members"]
 
 
 def test_rebalance_is_deterministic():
@@ -194,6 +187,50 @@ def test_min_members_per_village_excludes_below_threshold():
     seen = {v["vill_name"] for c in clusters for v in c.villages}
     assert "Tiny5" not in seen, "members=5 must be excluded by the LEAF-42 default"
     assert "Edge6" in seen, "members=6 must remain a candidate"
+
+
+def test_five_villages_within_5km_form_one_cluster():
+    """LEAF-43: with the village-count cap removed, five villages that all
+    sit within max_radius_km of each other and whose members sum to a
+    valid funding band MUST land in one cluster (was two clusters of 2+3
+    under the old 2-4 village rule, or a chopped first-4 + 1 orphan)."""
+    import pandas as pd
+    # Five tight villages ~0.3 km apart, member counts sum to 65 (in band).
+    rows = [
+        {"district_name": "D", "block_name": "B", "gp_name": "G",
+         "vill_name": "V1", "lat": 26.500, "long": 92.000, "Dairy": 15},
+        {"district_name": "D", "block_name": "B", "gp_name": "G",
+         "vill_name": "V2", "lat": 26.502, "long": 92.000, "Dairy": 13},
+        {"district_name": "D", "block_name": "B", "gp_name": "G",
+         "vill_name": "V3", "lat": 26.500, "long": 92.002, "Dairy": 13},
+        {"district_name": "D", "block_name": "B", "gp_name": "G",
+         "vill_name": "V4", "lat": 26.502, "long": 92.002, "Dairy": 12},
+        {"district_name": "D", "block_name": "B", "gp_name": "G",
+         "vill_name": "V5", "lat": 26.501, "long": 92.001, "Dairy": 12},
+    ]
+    clusters = clustering.cluster_block_commodity(pd.DataFrame(rows), "B", "Dairy")
+    fundables = [c for c in clusters if not c.provisional]
+    assert len(fundables) == 1, f"expected one fundable cluster, got {len(fundables)}"
+    c = fundables[0]
+    assert len(c.villages) == 5, f"expected five villages in the cluster, got {len(c.villages)}"
+    assert c.total_members == 65
+    assert c.max_span_km <= 5.0
+
+
+def test_single_village_30_member_cluster_is_fundable():
+    """LEAF-43: a single village with members in the funding band is itself a
+    valid fundable cluster (was rejected by the old 2-village floor; Pass A
+    only handled >=150-member singletons)."""
+    import pandas as pd
+    rows = [
+        {"district_name": "D", "block_name": "B", "gp_name": "G",
+         "vill_name": "LoneBig", "lat": 26.500, "long": 92.000, "Dairy": 80},
+    ]
+    clusters = clustering.cluster_block_commodity(pd.DataFrame(rows), "B", "Dairy")
+    fundables = [c for c in clusters if not c.provisional]
+    assert len(fundables) == 1
+    assert fundables[0].villages[0]["vill_name"] == "LoneBig"
+    assert fundables[0].total_members == 80
 
 
 def test_emit_cluster_centroid_and_span_are_recomputed(sample_villages_df):
