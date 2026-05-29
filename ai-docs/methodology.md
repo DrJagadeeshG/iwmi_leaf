@@ -30,11 +30,16 @@ The LEAF DSS AI Recommendation System uses Retrieval-Augmented Generation (RAG) 
 
 ### 1. Document Processing
 
-**Source Documents:**
+**Source Documents:** every `*.pdf` file dropped into `leaf_flask/ai-docs/` is picked up automatically (LEAF-57, 2026-05-29). The current set covers:
+
 - `Advisory_organic_village_clusters 1.pdf` - Guidelines for organic village clusters
-- `Farm Livelihoods Interventions Under DAY NRLM.pdf` - DAY-NRLM farm livelihood schemes
+- `Farm Livelihoods Interventions Under DAY NRLM.pdf` - DAY-NRLM farm livelihood schemes (covers livestock SHGs)
 - `Guidelines_on_promotion_IFC_under_DAY_NRLM 1.pdf` - Integrated Farming Cluster guidelines
 - `Natural_farming_training_combined.pdf` - Natural farming training materials
+
+**Adding new docs** (e.g. livestock-specific guidance for dairy / goatery / piggery / poultry / fishery): drop the PDF into `leaf_flask/ai-docs/`, delete `leaf_flask/data/vectorstore/`, and the next `/api/ai-recommendation` call rebuilds the index with the new doc included. Filename appears as the citation source in the response.
+
+**Livestock-specific retrieval:** when the selected intervention is `Livestock`, `Dairy`, `Goatery`, `Piggery`, `Backyard_Poultry`, `Duckery`, or `Fishery_Activity`, the retrieval query is augmented with animal-husbandry vocabulary (veterinary clinics, fodder, milk collection, Pashu Sakhi support, SHG livestock activities, convergence with DAY-NRLM livestock schemes) so chunks about livestock surface alongside the general intervention text.
 
 **Processing Steps:**
 1. PDFs are loaded using PyPDF loader
