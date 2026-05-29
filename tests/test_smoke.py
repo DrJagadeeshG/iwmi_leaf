@@ -42,3 +42,51 @@ def test_flask_routes_registered():
         '/api/clusters/import',
     ):
         assert any(path in r for r in routes), f"route {path} not registered"
+
+
+def test_user_update_overlay_is_no_op_when_unconfigured(monkeypatch):
+    """LEAF-59: when the user_update sheet URL is empty (Faiz hasn't published
+    yet), get_block_values_overlaid must return the coded block_values sheet
+    unmodified — the rest of the pipeline keeps working until the sheet exists."""
+    import pandas as pd
+    import google_sheets as gs
+
+    fake_bv = pd.DataFrame([
+        {"Block_name": "BHERGAON", "BF": 12, "BG": 3},
+        {"Block_name": "KHOWANG",  "BF": 0,  "BG": 0},
+    ])
+    monkeypatch.setattr(gs, "get_sheet",
+                        lambda key: fake_bv if key == "block_values" else None)
+    out = gs.get_block_values_overlaid()
+    assert out is not None
+    assert list(out["Block_name"]) == ["BHERGAON", "KHOWANG"]
+    assert list(out["BF"]) == [12, 0]
+
+
+def test_user_update_overlay_overlays_friendly_columns(monkeypatch):
+    """LEAF-59: friendly columns in the user_update sheet overwrite the
+    matching coded columns in block_values, joined case-insensitively on
+    Block_name. Other rows / columns are untouched."""
+    import pandas as pd
+    import google_sheets as gs
+
+    fake_bv = pd.DataFrame([
+        {"Block_name": "BHERGAON", "BF": 0, "BI": 5, "BX": 100},
+        {"Block_name": "KHOWANG",  "BF": 0, "BI": 0, "BX": 50},
+    ])
+    fake_user = pd.DataFrame([
+        # Mixed-case Block_name should still join.
+        {"Block_name": "Bhergaon",
+         "Cattle density (per 100 hectares)": 25,
+         "Goat density (per 100 hectares)":   18,
+         "Total households":                  150},
+    ])
+    monkeypatch.setattr(gs, "get_sheet",
+        lambda key: {"block_values": fake_bv, "user_update": fake_user}.get(key))
+
+    out = gs.get_block_values_overlaid()
+    bhergaon = out[out["Block_name"] == "BHERGAON"].iloc[0]
+    khowang  = out[out["Block_name"] == "KHOWANG"].iloc[0]
+    assert bhergaon["BF"] == 25 and bhergaon["BI"] == 18 and bhergaon["BX"] == 150
+    # KHOWANG was not in the user sheet — values untouched.
+    assert khowang["BF"] == 0 and khowang["BI"] == 0 and khowang["BX"] == 50
