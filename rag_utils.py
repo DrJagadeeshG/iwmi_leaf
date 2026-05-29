@@ -57,26 +57,26 @@ def load_vectorstore():
     print("Creating new vector store from PDFs...")
     documents = []
 
-    pdf_files = [
-        "Advisory_organic_village_clusters 1.pdf",
-        "Farm Livelihoods Interventions Under DAY NRLM.pdf",
-        "Guidelines_on_promotion_IFC_under_DAY_NRLM 1.pdf",
-        "Natural_farming_training_combined.pdf"
-    ]
+    # LEAF-57: glob *.pdf from ai-docs/ instead of a hard-coded list. Dropping
+    # a new livestock / dairy / poultry / aquaculture PDF into ai-docs/ is now
+    # plug-and-play — delete data/vectorstore/ to force a rebuild on the next
+    # /api/ai-recommendation call and the new doc joins the retrieval pool.
+    pdf_paths = sorted(AI_DOCS_DIR.glob("*.pdf"))
+    if not pdf_paths:
+        raise ValueError(f"No PDF documents found in {AI_DOCS_DIR}")
 
-    for pdf_file in pdf_files:
-        pdf_path = AI_DOCS_DIR / pdf_file
-        if pdf_path.exists():
-            print(f"  Loading: {pdf_file}")
-            try:
-                loader = PyPDFLoader(str(pdf_path))
-                docs = loader.load()
-                # Add source metadata
-                for doc in docs:
-                    doc.metadata["source_file"] = pdf_file
-                documents.extend(docs)
-            except Exception as e:
-                print(f"  Error loading {pdf_file}: {e}")
+    for pdf_path in pdf_paths:
+        pdf_file = pdf_path.name
+        print(f"  Loading: {pdf_file}")
+        try:
+            loader = PyPDFLoader(str(pdf_path))
+            docs = loader.load()
+            # Add source metadata
+            for doc in docs:
+                doc.metadata["source_file"] = pdf_file
+            documents.extend(docs)
+        except Exception as e:
+            print(f"  Error loading {pdf_file}: {e}")
 
     if not documents:
         raise ValueError("No documents could be loaded from PDFs")
@@ -149,10 +149,31 @@ def generate_recommendation(
     failing_metrics = [m for m in metrics if not m.get("in_range", True)]
     passing_metrics = [m for m in metrics if m.get("in_range", True)]
 
+    # LEAF-57: when the intervention is a livestock commodity (or the parent
+    # Livestock category), enrich the retrieval query with livestock-relevant
+    # vocabulary so chunks about animal husbandry, veterinary services, fodder,
+    # SHG livestock activities, and Pashu Sakhi programmes surface alongside
+    # the general intervention text. Without this, the retriever often pulls
+    # generic farming chunks even when livestock docs are loaded.
+    LIVESTOCK_COMMODITIES = {
+        "Livestock", "Dairy", "Goatery", "Piggery",
+        "Backyard_Poultry", "Backyard Poultry",
+        "Duckery", "Fishery_Activity", "Fishery Activity", "Fishery",
+    }
+    is_livestock = intervention in LIVESTOCK_COMMODITIES
+    livestock_hint = ""
+    if is_livestock:
+        livestock_hint = (
+            f"\n    Animal husbandry context: cattle, buffalo, sheep, goat, pig, "
+            f"poultry density; veterinary clinic access; fodder cultivation; "
+            f"milk collection facilities; SHG-led livestock activities; "
+            f"Pashu Sakhi support; convergence with DAY-NRLM livestock schemes."
+        )
+
     context_query = f"""
     {intervention} intervention in {district_name}, Assam
     Key challenges: {', '.join([m['label'] for m in failing_metrics[:3]]) if failing_metrics else 'none identified'}
-    Strengths: {', '.join([m['label'] for m in passing_metrics[:3]]) if passing_metrics else 'none identified'}
+    Strengths: {', '.join([m['label'] for m in passing_metrics[:3]]) if passing_metrics else 'none identified'}{livestock_hint}
     """
 
     # Retrieve relevant policy context
@@ -168,10 +189,16 @@ def generate_recommendation(
     metrics_text = "\n".join(metrics_summary) if metrics_summary else "No metrics data available"
 
     # Create the prompt
-    system_prompt = """You are an agricultural development advisor for IWMI (International Water Management Institute)
+    system_prompt = """You are an agricultural and rural-livelihoods advisor for IWMI (International Water Management Institute)
 working on the LEAF DSS (Landscape Evaluation & Assessment Framework) in Assam, India.
 
-Your role is to provide actionable recommendations for agricultural interventions based on:
+The interventions you advise on include cropping-systems work (organic farming, natural farming,
+integrated farming clusters) AND livestock-based livelihoods (dairy, goatery, piggery, backyard
+poultry, duckery, fishery activity). For livestock interventions, recommendations should weigh
+animal-husbandry infrastructure (veterinary clinics, milk collection, fodder, Pashu Sakhi support)
+in addition to land/water indicators.
+
+Your role is to provide actionable recommendations for the chosen intervention based on:
 1. The block/area's current indicators and feasibility assessment
 2. Official government guidelines and policies (provided as context)
 
