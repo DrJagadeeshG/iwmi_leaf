@@ -24,7 +24,11 @@ import pandas as pd
 # Bump whenever the clustering LOGIC changes (a change params/data don't
 # capture). The smart-refresh fingerprint includes this, so bumping it forces
 # every unlocked scope to regenerate on its next read.
-ALGO_VERSION = 4
+# v5 (2026-05-29): LEAF-42 (min_members_per_village 1->6) + LEAF-43 (drop
+# min/max villages_per_cluster). The param-hash already changes for both,
+# but the bump is explicit so any locked scope reviewer can see the version
+# jump and so the cluster_generation table fingerprints all roll over together.
+ALGO_VERSION = 5
 
 COMMODITIES = [
     "Dairy",
