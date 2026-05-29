@@ -89,13 +89,18 @@ def _load_shapefile_geometry():
 
 
 def load_shapefile():
-    """Load block data: geometry from shapefile + values from Google Sheets."""
-    from google_sheets import get_sheet
+    """Load block data: geometry from shapefile + values from Google Sheets.
+
+    Values come from the coded block_values sheet with the end-user update
+    sheet (LEAF-59) overlaid on top when published — see
+    google_sheets.get_block_values_overlaid.
+    """
+    from google_sheets import get_block_values_overlaid
 
     geom_gdf = _load_shapefile_geometry()
 
-    # Try to get values from Google Sheets
-    values_df = get_sheet("block_values")
+    # Try to get values from Google Sheets (with user-update overlay applied).
+    values_df = get_block_values_overlaid()
 
     if values_df is not None and 'BLOCK_ID' in values_df.columns:
         # Drop ID/geometry cols from values to avoid duplicates on merge
