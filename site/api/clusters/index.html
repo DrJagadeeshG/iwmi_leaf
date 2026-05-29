@@ -1889,7 +1889,7 @@ query params to scope the staleness check.</p>
 </tbody>
 </table>
 <h3 id="csv-columns">CSV Columns<a class="headerlink" href="#csv-columns" title="Permanent link">&para;</a></h3>
-<p>Schema simplified per Faiz (2026-05-09 call): lat/long dropped, sequential cluster number added.</p>
+<p>Schema (LEAF-44, 2026-05-29): <code>lat</code> / <code>long</code> are emitted alongside <code>vill_name</code> so a user can append a row for a brand-new field-surveyed village by typing in its coordinates inline.</p>
 <table>
 <thead>
 <tr>
@@ -1916,7 +1916,11 @@ query params to scope the staleness check.</p>
 </tr>
 <tr>
 <td><code>gp_name</code>, <code>vill_name</code></td>
-<td>Village identification. <code>vill_name</code> must match the village master for the named block (lat/long is looked up from there on upload).</td>
+<td>Village identification.</td>
+</tr>
+<tr>
+<td><code>lat</code>, <code>long</code></td>
+<td>Village coordinates. For known villages these round-trip from the master. For a new village added via the CSV, supply the coordinates here.</td>
 </tr>
 <tr>
 <td><code>members</code></td>
@@ -1932,7 +1936,7 @@ query params to scope the staleness check.</p>
 </tr>
 </tbody>
 </table>
-<p>Legacy <code>lat</code> / <code>long</code> columns are still accepted on upload (if present they override the master lookup), so older CSVs continue to round-trip.</p>
+<p>Legacy CSVs without <code>lat</code>/<code>long</code> columns are still accepted: the parser backfills from the village master by <code>(block_name, vill_name)</code>. An unknown <code>vill_name</code> then fails fast with a message pointing at the row.</p>
 <hr />
 <h2 id="import-clusters-from-csv">Import Clusters from CSV<a class="headerlink" href="#import-clusters-from-csv" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a>POST /api/clusters/import?block=&lt;block&gt;[&amp;commodity=&lt;commodity&gt;]
