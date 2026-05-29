@@ -431,12 +431,11 @@
     </script>
 
     <!-- Custom JS -->
-    <!-- Cluster Planning Modal -->
-    <div id="cluster-modal" class="cluster-modal" style="display: none;">
-        <div class="cluster-modal-inner">
-            {% include '_cluster_planner.html' %}
-        </div>
-    </div>
+    <!-- Cluster planner lives at /clustering (and /<district>/<block>/clustering)
+         as a standalone page. The dashboard hosts the "Cluster Planning" link
+         in the block-detail header (id=open-cluster-planner) and only loads
+         clusters.js so that link's href is wired to the right block. The
+         planner UI itself is NOT embedded here (LEAF-48). -->
 
     <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     <script src="{{ url_for('static', filename='js/clusters.js') }}"></script>

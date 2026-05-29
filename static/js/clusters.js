@@ -1348,40 +1348,9 @@
         }
     }
 
-    async function openModal() {
-        const modal = $('cluster-modal');
-        if (!modal) return;
-        modal.style.display = 'flex';
-
-        await Promise.all([
-            ensureBlocksWithVillages(),
-            ensureBlocksGeojson(),
-            ensureAllLocations(),
-        ]);
-
-        const raw = activeBlockName();
-        const canonical = (await blockHasVillages(raw))
-            // Outer block has no village data: fall back to the first block that does.
-            || (local.blocksRich && local.blocksRich[0] && local.blocksRich[0].block_name);
-        if (!canonical) return;
-
-        local.currentBlock = canonical;
-        local.currentDistrict = districtForBlock(canonical);
-        populateModalDropdowns();
-        await loadBlockIntoModal(canonical);
-    }
-
-    function closeModal() {
-        const modal = $('cluster-modal');
-        if (modal) modal.style.display = 'none';
-        teardownMap();
-        local.currentBlock = null;
-        local.currentCommodity = '';
-        local.villageFeatures = null;
-        local.lastBlockSummary = null;
-        local.activeClusterId = null;
-        renderSidePanelEmpty();
-    }
+    // LEAF-48: the in-dashboard modal was removed; the planner lives only on
+    // /clustering and /<district>/<block>/clustering. openModal / closeModal
+    // and the modal-only ESC handler were dropped with it.
 
     // ---- Event handlers ----
 
@@ -1579,7 +1548,6 @@
 
     function init() {
         const openBtn = $('open-cluster-planner');
-        const closeBtn = $('close-cluster-planner');
         const sel = $('block-commodity-select');
         const upload = $('cluster-upload');
         const regen = $('cluster-regenerate');
@@ -1590,10 +1558,13 @@
         const workflowClose = $('close-workflow-help');
         const workflowOverlay = $('workflow-help-overlay');
 
-        // The "Cluster Planning" link is now an <a href> that navigates to
-        // /<district>/<block>/clustering - no JS click handler needed. The
-        // close button only exists in modal mode (the partial omits it in page mode).
-        if (closeBtn) closeBtn.addEventListener('click', closeModal);
+        // The "Cluster Planning" link in the block-detail header is an <a href>
+        // that navigates to /<district>/<block>/clustering - no JS click handler
+        // is needed. LEAF-48: the in-dashboard modal was removed, so the modal
+        // close button is gone too. The `modal` lookup above resolves on the
+        // /clustering page (where the container is reused as a layout shell)
+        // and returns null on the main dashboard - the listeners further down
+        // are null-checked accordingly.
         if (sel) sel.addEventListener('change', handleCommodityChange);
         if (upload) upload.addEventListener('change', handleUpload);
         if (regen) {
@@ -1640,21 +1611,19 @@
             });
         }
         if (modal) {
-            modal.addEventListener('click', (ev) => {
-                if (ev.target === modal) closeModal();
-            });
-            // Click delegation for the Finalise button rendered inside cluster tooltips.
+            // Click delegation for the Finalise button rendered inside cluster
+            // tooltips. The backdrop-to-close handler was removed with the
+            // modal (LEAF-48) - the standalone page is not closeable.
             modal.addEventListener('click', handleFinalizeClick);
         }
         document.addEventListener('keydown', (ev) => {
             if (ev.key !== 'Escape') return;
-            // Layered overlays: close the topmost one first, fall through.
+            // Layered overlays: close the topmost one. (No modal to close
+            // anymore — the planner only renders on its own page.)
             const upload = $('upload-dialog-overlay');
             if (upload && upload.style.display !== 'none') return closeUploadDialog();
             const help = $('workflow-help-overlay');
             if (help && help.style.display !== 'none') return closeWorkflowHelp();
-            const m = $('cluster-modal');
-            if (m && m.style.display !== 'none' && !isPageMode()) closeModal();
         });
 
         // Show/hide the open button as the user navigates between blocks.
