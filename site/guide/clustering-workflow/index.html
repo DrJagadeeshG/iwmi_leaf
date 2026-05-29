@@ -925,6 +925,24 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#pass-d-provisional-clusters-on-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pass D - Provisional clusters (on by default)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pass-e-rebalance-off-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pass E - Rebalance (off by default)
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1214,6 +1232,24 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#pass-d-provisional-clusters-on-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pass D - Provisional clusters (on by default)
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pass-e-rebalance-off-by-default" class="md-nav__link">
+    <span class="md-ellipsis">
+      Pass E - Rebalance (off by default)
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1461,21 +1497,28 @@
 <hr />
 <h2 id="4-clustering-what-the-algorithm-does">4. Clustering - what the algorithm does<a class="headerlink" href="#4-clustering-what-the-algorithm-does" title="Permanent link">&para;</a></h2>
 <p>Input filter (runs once, before any pass): villages with fewer than <code>min_members_per_village</code> interested members for the commodity are dropped from the candidate set. Every pass below operates on the filtered set.</p>
-<p>The pipeline then runs in three passes. Each addresses an edge case the previous one creates.</p>
+<p>The pipeline runs five passes. A and B do the main work; C, D, E each address an edge case the earlier passes leave behind.</p>
 <h3 id="pass-a-single-village-clusters-pre-pass">Pass A - Single-village clusters (pre-pass)<a class="headerlink" href="#pass-a-single-village-clusters-pre-pass" title="Permanent link">&para;</a></h3>
 <p>Before the greedy loop, any village whose member count for the commodity is already at or above <code>max_cluster_members</code> is emitted as its <strong>own one-village cluster</strong>. This bypasses both the "minimum 2 villages" rule and the upper member cap.</p>
-<p>Why: a 274-member dairy village cannot be paired with any neighbour without busting the 50-member cap, so the old greedy loop would silently drop it. After this pass, large standalone villages stay in the output as singletons.</p>
+<p>Why: a 274-member dairy village cannot be paired with any neighbour without busting the 150-member cap, so the greedy loop in Pass B would otherwise drop it. After this pass, large standalone villages stay in the output as singletons.</p>
 <h3 id="pass-b-greedy-seed-and-grow-main-pass">Pass B - Greedy seed-and-grow (main pass)<a class="headerlink" href="#pass-b-greedy-seed-and-grow-main-pass" title="Permanent link">&para;</a></h3>
 <p>For the remaining (unassigned) villages:</p>
 <ol>
 <li>Sort big-first by member count.</li>
-<li>Seed the next cluster with the biggest unassigned village; greedily add nearest neighbours that fit <strong>all</strong> four constraints: ≤ <code>max_radius_km</code> from the seed, ≤ <code>max_radius_km</code> max pairwise span, total members ≤ <code>max_cluster_members</code>, ≤ <code>max_villages_per_cluster</code> villages.</li>
+<li>Seed the next cluster with the biggest unassigned village; greedily add nearest neighbours that fit <strong>all</strong> four constraints: ≤ <code>max_radius_km</code> from the seed, ≤ <code>max_radius_km</code> max pairwise span across the whole trial cluster, total members ≤ <code>max_cluster_members</code>, ≤ <code>max_villages_per_cluster</code> villages.</li>
 <li>Discard the cluster if it ends up under floors (&lt; <code>min_cluster_members</code> or &lt; <code>min_villages_per_cluster</code>); release its villages back to the pool.</li>
 <li>Repeat for the next seed.</li>
 </ol>
+<p>The pairwise-span gate is what prevents a distant village from being stapled onto a cluster just because it's close to the seed — every existing member must also be within <code>max_radius_km</code>.</p>
 <h3 id="pass-c-orphan-merge-post-pass">Pass C - Orphan merge (post-pass)<a class="headerlink" href="#pass-c-orphan-merge-post-pass" title="Permanent link">&para;</a></h3>
-<p>Any village still unassigned after Pass B is merged into the <strong>nearest existing cluster within <code>2 * max_radius_km</code></strong> of the cluster's centroid. Soft cap: the merged cluster's total cannot exceed <code>3 * max_cluster_members</code>, so a flood of nearby orphans cannot inflate a cluster without bound.</p>
-<p>The merged cluster keeps its original <code>cluster_id</code>, <code>pashu_sakhi</code>, and <code>block_coordinator</code>; centroid, span, and total are recomputed. Orphans that cannot find any cluster within reach stay unassigned (and don't appear in the cluster output - they are still visible as village dots on the map).</p>
+<p>Any village still unassigned after Pass B is merged into the nearest existing cluster whose centroid is within <code>2 * max_radius_km</code> — but only if <strong>every cap still holds</strong> after the merge: <code>max_villages_per_cluster</code>, <code>max_cluster_members</code>, AND the recomputed <code>max_pairwise_km ≤ max_radius_km</code>. The earlier loose soft-cap version produced clusters that broke the 5 km span rule (e.g. BARTANGLA at 6 villages / 5.139 km); the current strict re-check rules that out.</p>
+<p>The merged cluster keeps its original <code>cluster_id</code>, <code>pashu_sakhi</code>, and <code>block_coordinator</code>; centroid, span, and total are recomputed. Orphans that don't fit any cluster cleanly are left for Pass D rather than corrupting a good cluster.</p>
+<h3 id="pass-d-provisional-clusters-on-by-default">Pass D - Provisional clusters (on by default)<a class="headerlink" href="#pass-d-provisional-clusters-on-by-default" title="Permanent link">&para;</a></h3>
+<p>Low-density blocks and pockets leave villages that never clear the <code>min_cluster_members</code> floor (KHOWANG/Dairy is the canonical example — 24 villages, no fundable cluster possible). When <code>emit_provisional</code> is on, each still-unassigned village seeds a <strong>provisional</strong> cluster using the same growth, radius, and size caps as Pass B, but with the member floor relaxed to <code>provisional_min_members</code> and the 2-village floor dropped so isolated villages still show on the map.</p>
+<p>Provisional clusters are flagged with <code>provisional=True</code> in the output. The UI renders them with a dashed amber ring + "Provisional" badge and excludes them from fundable counts, so reviewers can see what's there without confusing them with fundable clusters.</p>
+<h3 id="pass-e-rebalance-off-by-default">Pass E - Rebalance (off by default)<a class="headerlink" href="#pass-e-rebalance-off-by-default" title="Permanent link">&para;</a></h3>
+<p>Optional rescue pass. When <code>rebalance=True</code>, a below-floor provisional group can become fundable by borrowing village(s) from an adjacent fundable cluster — but a borrow commits only if the provisional group stays inside all caps AND the donor cluster stays valid (≥ <code>min_cluster_members</code> members, ≥ <code>min_villages_per_cluster</code> villages) after losing the village. If the group can't reach the floor within its remaining village budget, all its tentative borrows are reverted (no churn). Only original fundable clusters may donate, and each village moves at most once — one rescue level, no cascade. Largest provisional groups are processed first; ties are broken deterministically.</p>
+<p>Default is off because it changes output across ~20% of provisional groups, which is large enough to need human review before flipping on. Bump <code>ALGO_VERSION</code> when enabling so smart-refresh regenerates every stored scope.</p>
 <hr />
 <p>Block boundary is a hard wall - clusters never span two blocks. Each commodity is clustered independently, so one village can sit in many clusters (one per commodity it has interested members in).</p>
 <p>Trigger: <a href="../../api/clusters/#regenerate-clusters"><code>POST /api/clusters/regenerate</code></a> with <code>{block, commodity, ...overrides}</code>. Admin-only - pass <code>?admin=1</code> or the <code>X-Admin: 1</code> header. Empty overrides = government defaults (30-150 members, 2-4 villages, 5 km, ≥1 member/village).</p>
@@ -1561,8 +1604,8 @@
 </table>
 <p>Now contrast with two edge cases captured by Passes A and C:</p>
 <ul>
-<li><strong>Pass A example.</strong> If one Goatery village in a block had 274 interested members, Pass B would have rejected it (any neighbour would push the total past 50). Pass A produces a one-village cluster with <code>total_members = 274</code>, <code>village_count = 1</code>, <code>max_span_km = 0</code>. The "Why this is a cluster" panel flags the member-band check as <code>!</code> rather than <code>✓</code> and the comment in the cluster popup notes the single-village exception.</li>
-<li><strong>Pass C example.</strong> A 4-member Goatery village far from any seed is dropped by Pass B (would form a 4-member sub-floor cluster on its own). Pass C asks: is there a cluster centroid within <code>2 * 5 = 10 km</code>? If yes, the village is appended to that cluster and <code>total_members</code> jumps by 4. If no, the village is left unassigned and only shown as a dot.</li>
+<li><strong>Pass A example.</strong> If one Goatery village in a block had 274 interested members, Pass B would have rejected it (any neighbour would push the total past 150). Pass A produces a one-village cluster with <code>total_members = 274</code>, <code>village_count = 1</code>, <code>max_span_km = 0</code>. The "Why this is a cluster" panel flags the member-band check as <code>!</code> rather than <code>✓</code> and the comment in the cluster popup notes the single-village exception.</li>
+<li><strong>Pass C example.</strong> A 4-member Goatery village far from any seed is left over by Pass B. Pass C asks: is there a cluster centroid within <code>2 * 5 = 10 km</code> whose member, village-count, and recomputed pairwise span all still pass after absorbing this village? If yes, append and bump <code>total_members</code> by 4. If no, the village is handed to Pass D, which surfaces it as a provisional cluster (single-village, below the funding floor) so it still appears on the map for review.</li>
 </ul>
 <p>The whole cycle is visible in the Cluster Planning workspace - pick KHOWANG, Goatery, hover a ring to see the count, click for the rules panel.</p>
 <hr />
