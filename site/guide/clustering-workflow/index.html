@@ -1496,7 +1496,7 @@
 <p>The block scale is where the real work happens: village dots, optionally tinted by member count, with cluster groupings drawn around them.</p>
 <hr />
 <h2 id="4-clustering-what-the-algorithm-does">4. Clustering - what the algorithm does<a class="headerlink" href="#4-clustering-what-the-algorithm-does" title="Permanent link">&para;</a></h2>
-<p>Input filter (runs once, before any pass): villages with fewer than <code>min_members_per_village</code> interested members for the commodity are dropped from the candidate set. Every pass below operates on the filtered set.</p>
+<p>Input filter (runs once, before any pass): villages with fewer than <code>min_members_per_village</code> interested members for the commodity are dropped from the candidate set. <strong>Default <code>min_members_per_village</code> is 6 (LEAF-42, Faiz 2026-05-21)</strong> — a village with five or fewer interested members for the commodity is treated as "unassigned", excluded from clustering, and hidden from the cluster map when that commodity is selected. The filter is per-commodity, so a village with no dairy interest but fifty goatery members still appears on the goatery view. Every pass below operates on the filtered set.</p>
 <p>The pipeline runs five passes. A and B do the main work; C, D, E each address an edge case the earlier passes leave behind.</p>
 <h3 id="pass-a-single-village-clusters-pre-pass">Pass A - Single-village clusters (pre-pass)<a class="headerlink" href="#pass-a-single-village-clusters-pre-pass" title="Permanent link">&para;</a></h3>
 <p>Before the greedy loop, any village whose member count for the commodity is already at or above <code>max_cluster_members</code> is emitted as its <strong>own one-village cluster</strong>. This bypasses both the "minimum 2 villages" rule and the upper member cap.</p>
@@ -1505,19 +1505,19 @@
 <p>For the remaining (unassigned) villages:</p>
 <ol>
 <li>Sort big-first by member count.</li>
-<li>Seed the next cluster with the biggest unassigned village; greedily add nearest neighbours that fit <strong>all</strong> four constraints: ≤ <code>max_radius_km</code> from the seed, ≤ <code>max_radius_km</code> max pairwise span across the whole trial cluster, total members ≤ <code>max_cluster_members</code>, ≤ <code>max_villages_per_cluster</code> villages.</li>
-<li>Discard the cluster if it ends up under floors (&lt; <code>min_cluster_members</code> or &lt; <code>min_villages_per_cluster</code>); release its villages back to the pool.</li>
+<li>Seed the next cluster with the biggest unassigned village; greedily add nearest neighbours that fit <strong>all three</strong> constraints: ≤ <code>max_radius_km</code> from the seed, ≤ <code>max_radius_km</code> max pairwise span across the whole trial cluster, and total members ≤ <code>max_cluster_members</code>. The village-count band that used to gate growth (was 2-4) was removed in LEAF-43; six villages that satisfy member range + 5 km span are a valid cluster.</li>
+<li>Discard the cluster if it ends up under the member floor (&lt; <code>min_cluster_members</code>); release its villages back to the pool. A single-village cluster with members in the funding band is valid.</li>
 <li>Repeat for the next seed.</li>
 </ol>
 <p>The pairwise-span gate is what prevents a distant village from being stapled onto a cluster just because it's close to the seed — every existing member must also be within <code>max_radius_km</code>.</p>
 <h3 id="pass-c-orphan-merge-post-pass">Pass C - Orphan merge (post-pass)<a class="headerlink" href="#pass-c-orphan-merge-post-pass" title="Permanent link">&para;</a></h3>
-<p>Any village still unassigned after Pass B is merged into the nearest existing cluster whose centroid is within <code>2 * max_radius_km</code> — but only if <strong>every cap still holds</strong> after the merge: <code>max_villages_per_cluster</code>, <code>max_cluster_members</code>, AND the recomputed <code>max_pairwise_km ≤ max_radius_km</code>. The earlier loose soft-cap version produced clusters that broke the 5 km span rule (e.g. BARTANGLA at 6 villages / 5.139 km); the current strict re-check rules that out.</p>
+<p>Any village still unassigned after Pass B is merged into the nearest existing cluster whose centroid is within <code>2 * max_radius_km</code> — but only if <strong>every cap still holds</strong> after the merge: <code>max_cluster_members</code> AND the recomputed <code>max_pairwise_km ≤ max_radius_km</code>. (The village-count cap was removed in LEAF-43 — see Pass B above.) The earlier loose soft-cap version produced clusters that broke the 5 km span rule (e.g. BARTANGLA at 5.139 km); the current strict re-check rules that out.</p>
 <p>The merged cluster keeps its original <code>cluster_id</code>, <code>pashu_sakhi</code>, and <code>block_coordinator</code>; centroid, span, and total are recomputed. Orphans that don't fit any cluster cleanly are left for Pass D rather than corrupting a good cluster.</p>
 <h3 id="pass-d-provisional-clusters-on-by-default">Pass D - Provisional clusters (on by default)<a class="headerlink" href="#pass-d-provisional-clusters-on-by-default" title="Permanent link">&para;</a></h3>
-<p>Low-density blocks and pockets leave villages that never clear the <code>min_cluster_members</code> floor (KHOWANG/Dairy is the canonical example — 24 villages, no fundable cluster possible). When <code>emit_provisional</code> is on, each still-unassigned village seeds a <strong>provisional</strong> cluster using the same growth, radius, and size caps as Pass B, but with the member floor relaxed to <code>provisional_min_members</code> and the 2-village floor dropped so isolated villages still show on the map.</p>
+<p>Low-density blocks and pockets leave villages that never clear the <code>min_cluster_members</code> floor (KHOWANG/Dairy is the canonical example — 24 villages, no fundable cluster possible). When <code>emit_provisional</code> is on, each still-unassigned village seeds a <strong>provisional</strong> cluster using the same growth, radius, and size caps as Pass B, but with the member floor relaxed to <code>provisional_min_members</code> so isolated villages still show on the map.</p>
 <p>Provisional clusters are flagged with <code>provisional=True</code> in the output. The UI renders them with a dashed amber ring + "Provisional" badge and excludes them from fundable counts, so reviewers can see what's there without confusing them with fundable clusters.</p>
 <h3 id="pass-e-rebalance-off-by-default">Pass E - Rebalance (off by default)<a class="headerlink" href="#pass-e-rebalance-off-by-default" title="Permanent link">&para;</a></h3>
-<p>Optional rescue pass. When <code>rebalance=True</code>, a below-floor provisional group can become fundable by borrowing village(s) from an adjacent fundable cluster — but a borrow commits only if the provisional group stays inside all caps AND the donor cluster stays valid (≥ <code>min_cluster_members</code> members, ≥ <code>min_villages_per_cluster</code> villages) after losing the village. If the group can't reach the floor within its remaining village budget, all its tentative borrows are reverted (no churn). Only original fundable clusters may donate, and each village moves at most once — one rescue level, no cascade. Largest provisional groups are processed first; ties are broken deterministically.</p>
+<p>Optional rescue pass. When <code>rebalance=True</code>, a below-floor provisional group can become fundable by borrowing village(s) from an adjacent fundable cluster — but a borrow commits only if the provisional group stays inside the member + span caps AND the donor cluster stays valid (≥ <code>min_cluster_members</code> members) after losing the village. If the group can't reach the floor, all its tentative borrows are reverted (no churn). Only original fundable clusters may donate, and each village moves at most once — one rescue level, no cascade. Largest provisional groups are processed first; ties are broken deterministically. With LEAF-43 removing the village-count cap, Pass E mostly fires when Pass C is blocked by the member ceiling.</p>
 <p>Default is off because it changes output across ~20% of provisional groups, which is large enough to need human review before flipping on. Bump <code>ALGO_VERSION</code> when enabling so smart-refresh regenerates every stored scope.</p>
 <hr />
 <p>Block boundary is a hard wall - clusters never span two blocks. Each commodity is clustered independently, so one village can sit in many clusters (one per commodity it has interested members in).</p>
@@ -1583,25 +1583,20 @@
 <td>✓</td>
 </tr>
 <tr>
-<td>Village count in 2 – 4</td>
-<td>2 – 4</td>
-<td><strong>3</strong></td>
-<td>✓</td>
-</tr>
-<tr>
 <td>Max pairwise span ≤ radius cap</td>
 <td>≤ 5 km</td>
 <td><strong>1.398 km</strong></td>
 <td>✓</td>
 </tr>
 <tr>
-<td>Every village has ≥ 1 interested member</td>
-<td>≥ 1</td>
+<td>Every village has ≥ 6 interested members (LEAF-42)</td>
+<td>≥ 6</td>
 <td>smallest is <strong>8</strong></td>
 <td>✓</td>
 </tr>
 </tbody>
 </table>
+<p>The 2–4 village band was removed in LEAF-43 — a six-village cluster within 5 km and inside the funding band is now valid.</p>
 <p>Now contrast with two edge cases captured by Passes A and C:</p>
 <ul>
 <li><strong>Pass A example.</strong> If one Goatery village in a block had 274 interested members, Pass B would have rejected it (any neighbour would push the total past 150). Pass A produces a one-village cluster with <code>total_members = 274</code>, <code>village_count = 1</code>, <code>max_span_km = 0</code>. The "Why this is a cluster" panel flags the member-band check as <code>!</code> rather than <code>✓</code> and the comment in the cluster popup notes the single-village exception.</li>
@@ -1807,7 +1802,7 @@
 </table>
 <hr />
 <h2 id="11-configurable-parameters">11. Configurable parameters<a class="headerlink" href="#11-configurable-parameters" title="Permanent link">&para;</a></h2>
-<p>All four cluster constraints are server-side defaults but request-time overridable via the regenerate endpoint:</p>
+<p>The cluster constraints are server-side defaults but request-time overridable via the regenerate endpoint:</p>
 <table>
 <thead>
 <tr>
@@ -1819,8 +1814,8 @@
 <tbody>
 <tr>
 <td><code>min_members_per_village</code></td>
-<td>1</td>
-<td>LEAF</td>
+<td>6</td>
+<td>LEAF (LEAF-42) - "&lt;=5 excluded, &gt;=6 kept"</td>
 </tr>
 <tr>
 <td><code>min_cluster_members</code></td>
@@ -1833,22 +1828,13 @@
 <td>Government</td>
 </tr>
 <tr>
-<td><code>min_villages_per_cluster</code></td>
-<td>2</td>
-<td>Government</td>
-</tr>
-<tr>
-<td><code>max_villages_per_cluster</code></td>
-<td>4</td>
-<td>Government</td>
-</tr>
-<tr>
 <td><code>max_radius_km</code></td>
 <td>5.0</td>
 <td>Government</td>
 </tr>
 </tbody>
 </table>
+<p>The pre-LEAF-43 <code>min_villages_per_cluster</code> / <code>max_villages_per_cluster</code> band (2-4) was removed — clusters are bounded by member range + 5 km span alone.</p>
 <p>Government numbers come from the budgeting rule: each cluster will be allocated one trillion (recurring grant) so the band has a hard floor and ceiling. Faiz expects to iterate on these before final freeze.</p>
 <hr />
 <h2 id="12-whats-not-yet-implemented">12. What's not yet implemented<a class="headerlink" href="#12-whats-not-yet-implemented" title="Permanent link">&para;</a></h2>
