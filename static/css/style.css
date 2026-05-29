@@ -2032,9 +2032,14 @@ body {
     gap: 1.5rem;
 }
 
-/* 50/50 layout (LEAF-54): map on the left half, info cards flow on the right */
+/* 40/60 layout (LEAF-54 / LEAF-67): map on the left ~40%, info cards on
+ * the right ~60%. The right column hosts a 2-col card grid, so each card
+ * gets ~30% of the viewport instead of the 25% it had under the original
+ * 50/50 split - enough headroom for variable name + value to fit on most
+ * blocks without the horizontal scroll Faiz flagged on 2026-05-29. The
+ * <=1200px breakpoint below collapses everything to a single column. */
 .block-detail-grid.detail-5050 {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 2fr 3fr;
     align-items: start;
 }
 .detail-5050 .detail-left {
@@ -2446,6 +2451,11 @@ body {
     .block-detail-grid {
         grid-template-columns: repeat(2, 1fr);
     }
+    /* Below 1200px the 2fr/3fr split squeezes the right column; fall back
+     * to an even split so cards still get readable width. */
+    .block-detail-grid.detail-5050 {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 @media (max-width: 768px) {
@@ -2455,7 +2465,8 @@ body {
         gap: 1rem;
     }
 
-    .block-detail-grid {
+    .block-detail-grid,
+    .block-detail-grid.detail-5050 {
         grid-template-columns: 1fr;
     }
 
