@@ -1066,6 +1066,8 @@ async function handleInterventionChange() {
         updateActiveFilters([]);
         renderVariableToggles();
         restoreDefaultLegend();
+        // Clear the cluster dropdown too — no commodity is active (LEAF-53).
+        if (state.currentBlock) updateBlockClusterDropdown(state.currentBlock);
         return;
     }
 
@@ -1075,15 +1077,37 @@ async function handleInterventionChange() {
     updateSubcategoryDropdown(intervention);
 
     await applyIntervention(intervention);
+    // Switching intervention away from Livestock (or to a non-livestock parent
+    // before a sub-category is picked) leaves currentSubcategory null, so the
+    // cluster dropdown should hide. Refresh it (LEAF-53).
+    if (state.currentBlock) updateBlockClusterDropdown(state.currentBlock);
 }
 
 // React to a livestock sub-category choice: load that child's config, or fall
 // back to the parent's combined config when "All" is selected (LEAF-50).
+// Also refresh the block-level cluster dropdown (LEAF-53) so the available
+// clusters reflect the newly-picked commodity — the dropdown used to update
+// only when the block view first loaded, so changing sub-category mid-view
+// left the cluster list stale.
 async function handleSubcategoryChange() {
     const sub = document.getElementById('subcategory-select').value;
     state.currentSubcategory = sub || null;
     const effective = state.currentSubcategory || state.currentIntervention;
     if (effective) await applyIntervention(effective);
+    if (state.currentBlock) {
+        // If a cluster was being viewed, drop back to block view first so the
+        // user isn't stuck on a stale cluster detail from the old commodity.
+        if (state.currentCluster) {
+            setClusterMode(false);
+            state.currentCluster = null;
+            state.currentViewLevel = 'block';
+            if (state.blockFeature) {
+                renderActiveMetricsByGroup(state.blockFeature.properties);
+                initBlockMiniMap(state.blockFeature);
+            }
+        }
+        updateBlockClusterDropdown(state.currentBlock);
+    }
 }
 
 // Load an intervention's variable config and recalculate feasibility. `name`
