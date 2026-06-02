@@ -9,7 +9,7 @@ The LEAF DSS AI Recommendation System uses Retrieval-Augmented Generation (RAG) 
 ```
 ┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
 │  Policy PDFs    │────▶│  Text Extraction │────▶│  Text Chunks    │
-│  (4 documents)  │     │  & Chunking      │     │  (1000 chars)   │
+│  (5 documents)  │     │  & Chunking      │     │  (1000 chars)   │
 └─────────────────┘     └──────────────────┘     └────────┬────────┘
                                                           │
                                                           ▼
@@ -36,6 +36,7 @@ The LEAF DSS AI Recommendation System uses Retrieval-Augmented Generation (RAG) 
 - `Farm Livelihoods Interventions Under DAY NRLM.pdf` - DAY-NRLM farm livelihood schemes (covers livestock SHGs)
 - `Guidelines_on_promotion_IFC_under_DAY_NRLM 1.pdf` - Integrated Farming Cluster guidelines
 - `Natural_farming_training_combined.pdf` - Natural farming training materials
+- `National_Livestock_Mission_Guidelines_Jan2025.pdf` - National Livestock Mission (NLM) operational guidelines, Jan 2025 (cross-cutting livestock: dairy, goatery, piggery, poultry, fishery)
 
 **Adding new docs** (e.g. livestock-specific guidance for dairy / goatery / piggery / poultry / fishery): drop the PDF into `leaf_flask/ai-docs/`, delete `leaf_flask/data/vectorstore/`, and the next `/api/ai-recommendation` call rebuilds the index with the new doc included. Filename appears as the citation source in the response.
 
@@ -219,6 +220,7 @@ ai-docs/
 ├── Farm Livelihoods Interventions Under DAY NRLM.pdf
 ├── Guidelines_on_promotion_IFC_under_DAY_NRLM 1.pdf
 ├── Natural_farming_training_combined.pdf
+├── National_Livestock_Mission_Guidelines_Jan2025.pdf
 └── methodology.md        # This document
 ```
 
@@ -268,7 +270,7 @@ The system provides transparency through:
 
 ## Limitations
 
-1. Recommendations are constrained to the 4 loaded policy documents
+1. Recommendations are constrained to the 5 loaded policy documents
 2. Requires internet connection for OpenAI API
 3. Quality depends on relevance of retrieved chunks
 4. No real-time policy updates (requires manual document refresh)
