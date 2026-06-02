@@ -2660,6 +2660,7 @@ function renderActiveMetricsByGroup(props) {
         'Infrastructure': 'bi-building',
         'Livestock': 'bi-piggy-bank',
         'People': 'bi-people',
+        'MMUA Scheme': 'bi-clipboard-data',
         'Soil': 'bi-globe',
         'Climate': 'bi-cloud-sun',
         'Other': 'bi-grid'
@@ -2671,7 +2672,8 @@ function renderActiveMetricsByGroup(props) {
         'Water': 'water-metrics',
         'Infrastructure': 'infrastructure-metrics',
         'Livestock': 'livestock-metrics',
-        'People': 'people-metrics'
+        'People': 'people-metrics',
+        'MMUA Scheme': 'mmua-metrics'
     };
 
     // Count IDs mapping
@@ -2680,7 +2682,8 @@ function renderActiveMetricsByGroup(props) {
         'Water': 'count-water',
         'Infrastructure': 'count-infrastructure',
         'Livestock': 'count-livestock',
-        'People': 'count-people'
+        'People': 'count-people',
+        'MMUA Scheme': 'count-mmua'
     };
 
     // Clear all containers and counts first
@@ -2757,7 +2760,11 @@ function renderAllBlockMetrics(props, groupContainers) {
         'Water': ['B', 'C', 'D', 'E', 'BC', 'BD', 'AU'],
         'Infrastructure': ['G', 'H', 'I', 'K', 'L', 'S', 'T', 'U', 'V', 'W', 'X'],
         'Livestock': ['BF', 'BG', 'M', 'N', 'O', 'P', 'Q', 'R'],
-        'People': ['Y', 'Z', 'AA', 'AB', 'AC', 'F']
+        'People': ['Y', 'Z', 'AA', 'AB', 'AC', 'F'],
+        // LEAF-68: MMUA livelihood-activity participation (BYp..CEp) + Mahila
+        // Kisan scheme metrics (CSp, CTp, DFp). Faiz's new backdata variable,
+        // once added with its own field code, is appended to this list.
+        'MMUA Scheme': ['BYp', 'BZp', 'CAp', 'CBp', 'CCp', 'CDp', 'CEp', 'CSp', 'CTp', 'DFp']
     };
 
     // Show each group with its data
@@ -3542,7 +3549,8 @@ async function renderGPMetricsInBlockView(props) {
         'Water': 'water-metrics',
         'Infrastructure': 'infrastructure-metrics',
         'Livestock': 'livestock-metrics',
-        'People': 'people-metrics'
+        'People': 'people-metrics',
+        'MMUA Scheme': 'mmua-metrics'
     };
 
     const groupCounts = {
@@ -3550,7 +3558,8 @@ async function renderGPMetricsInBlockView(props) {
         'Water': 'count-water',
         'Infrastructure': 'count-infrastructure',
         'Livestock': 'count-livestock',
-        'People': 'count-people'
+        'People': 'count-people',
+        'MMUA Scheme': 'count-mmua'
     };
 
     // Clear all containers first
@@ -3579,6 +3588,7 @@ async function renderGPMetricsInBlockView(props) {
         'Infrastructure': 'Infrastructure',
         'Livestock': 'Livestock',
         'People': 'People',
+        'MMUA Scheme': 'MMUA Scheme',
         'Soil': 'Land & Agri',
         'Climate': 'Water',
     };
@@ -3589,7 +3599,8 @@ async function renderGPMetricsInBlockView(props) {
         'Water': [],
         'Infrastructure': [],
         'Livestock': [],
-        'People': []
+        'People': [],
+        'MMUA Scheme': []
     };
 
     const skipKeys = new Set(['geometry', 'GP_CODE', 'GP_ID', 'GP_NAME', 'VIL_COUNT', 'Dist_Name',
