@@ -72,9 +72,15 @@ function renderDistrictDetail(props, feats) {
         </span>`;
 
     document.getElementById('location-card-title').innerHTML =
-        `<strong>${props.Dist_Name}</strong> / All blocks (${feats.length})` +
-        `<div class="district-summary-line">${props.Dist_Name} — Feasibility ` +
-        `${feas !== null ? feas.toFixed(1) : 'N/A'}% across ${feats.length} blocks</div>`;
+        `<strong>${props.Dist_Name}</strong> / All blocks (${feats.length})`;
+    // #2: district summary as a clean full-width line in the (white) header,
+    // not crammed into the dark map-card header.
+    const ds = document.getElementById('district-summary');
+    if (ds) {
+        ds.innerHTML = `<strong>${props.Dist_Name}</strong> — Feasibility ` +
+            `${feas !== null ? feas.toFixed(1) : 'N/A'}% across ${feats.length} blocks`;
+        ds.style.display = '';
+    }
 
     // No GP dropdown at district level.
     document.getElementById('block-gp-select').style.display = 'none';
