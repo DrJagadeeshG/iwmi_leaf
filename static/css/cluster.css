@@ -391,3 +391,16 @@
     border-radius: 50%;
     animation: cluster-spin 0.7s linear infinite;
 }
+
+/* LEAF-92: toolbar above the in-block cluster cards (Back / Download / Upload CSV). */
+.cluster-toolbar {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+.cluster-upload-status {
+    font-size: 0.85rem;
+    color: #555;
+}

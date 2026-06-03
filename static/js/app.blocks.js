@@ -107,23 +107,143 @@ async function updateBlockClusterDropdown(blockName) {
         sel.appendChild(o);
     });
     sel.style.display = '';
+    // LEAF-92: auto-show all clusters as block-styled cards immediately (rather
+    // than waiting for the user to pick one from the dropdown).
+    renderAllClusters();
 }
 
 function handleBlockClusterSelect() {
     const id = document.getElementById('block-cluster-select').value;
     if (!id) {
-        // Back to the block's category cards + block boundary map.
-        setClusterMode(false);
-        state.currentCluster = null;
-        state.currentViewLevel = 'block';
-        if (state.blockFeature) {
-            renderActiveMetricsByGroup(state.blockFeature.properties);
-            initBlockMiniMap(state.blockFeature);
-        }
+        renderAllClusters();  // LEAF-92: "All clusters" shows them all as cards
         return;
     }
     const c = (state.blockClusters || []).find(x => String(x.cluster_id) === String(id));
     if (c) showClusterDetailView(c);
+}
+
+// LEAF-92: render ALL clusters for the current block+commodity as block-styled
+// cards, with a Download/Upload CSV toolbar (same endpoints as the full planner).
+function renderAllClusters() {
+    const block = state.currentBlock || '';
+    const commodity = state.currentSubcategory || '';
+    const clusters = state.blockClusters || [];
+    if (!clusters.length) { exitBlockClusterMode(); return; }
+    state.currentCluster = null;
+    state.currentViewLevel = 'cluster';
+
+    const cards = clusters.map(c => {
+        const villages = c.villages || [];
+        const label = c.cluster_label != null ? c.cluster_label : (c.cluster_num != null ? c.cluster_num : c.cluster_id);
+        const statusHtml = c.finalized
+            ? '<span style="color:#22AD7A;font-weight:600"><i class="bi bi-check-circle-fill"></i> Finalised</span>'
+            : '<span style="color:#888">Proposed</span>';
+        const memberRows = villages.map(v =>
+            `<div class="metric-row"><span class="metric-label">${escapeText(v.vill_name || 'Village')}</span>` +
+            `<span class="metric-value">${Number(v.members || 0).toLocaleString()}</span></div>`).join('');
+        return `<div class="detail-card">
+            <div class="detail-card-header">
+                <span><i class="bi bi-diagram-3"></i> Cluster ${escapeText(String(label))}</span>
+                <span class="outside-count">${Number(c.total_members || 0).toLocaleString()} members</span>
+            </div>
+            <div class="detail-card-body"><div class="metrics-scroll-wrapper">
+                <div class="metric-row"><span class="metric-label">Villages</span><span class="metric-value">${villages.length}</span></div>
+                <div class="metric-row"><span class="metric-label">Max span</span><span class="metric-value">${c.max_span_km != null ? c.max_span_km + ' km' : '—'}</span></div>
+                <div class="metric-row"><span class="metric-label">Status</span><span class="metric-value">${statusHtml}</span></div>
+                ${memberRows}
+            </div></div>
+        </div>`;
+    }).join('');
+
+    document.getElementById('cluster-cards').innerHTML = clusterToolbarHtml(block, commodity) + cards;
+    document.getElementById('location-card-title').innerHTML =
+        `${escapeText(block)} / <strong>${escapeText(commodity)} clusters (${clusters.length})</strong>`;
+    setClusterMode(true);
+    initAllClustersMiniMap(clusters);
+}
+
+function clusterToolbarHtml(block, commodity) {
+    const q = `block=${encodeURIComponent(block)}&commodity=${encodeURIComponent(commodity)}`;
+    return `<div class="cluster-toolbar">
+        <button class="btn-secondary" onclick="exitBlockClusterMode()"><i class="bi bi-arrow-left"></i> Block view</button>
+        <a class="btn-export" href="/api/clusters/export.csv?${q}"><i class="bi bi-download"></i> Download CSV</a>
+        <button class="btn-export" onclick="document.getElementById('cluster-upload-input').click()"><i class="bi bi-upload"></i> Upload CSV</button>
+        <input type="file" id="cluster-upload-input" accept=".csv,text/csv" style="display:none" onchange="uploadBlockClustersCsv(this)">
+        <span id="cluster-upload-status" class="cluster-upload-status"></span>
+    </div>`;
+}
+
+// Return to the block's category cards from the cluster view.
+function exitBlockClusterMode() {
+    setClusterMode(false);
+    state.currentCluster = null;
+    state.currentViewLevel = 'block';
+    const sel = document.getElementById('block-cluster-select');
+    if (sel) sel.value = '';
+    if (state.blockFeature) {
+        renderActiveMetricsByGroup(state.blockFeature.properties);
+        initBlockMiniMap(state.blockFeature);
+    }
+}
+
+// Upload an edited clusters CSV for the current block+commodity, then refresh.
+async function uploadBlockClustersCsv(input) {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    const block = state.currentBlock || '';
+    const commodity = state.currentSubcategory || '';
+    const status = document.getElementById('cluster-upload-status');
+    if (status) status.textContent = 'Uploading…';
+    try {
+        const text = await file.text();
+        const q = `block=${encodeURIComponent(block)}&commodity=${encodeURIComponent(commodity)}`;
+        const r = await fetch(`/api/clusters/import?${q}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'text/csv' },
+            body: text,
+        });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) throw new Error(j.error || ('HTTP ' + r.status));
+        if (status) status.textContent = `Imported ${j.imported != null ? j.imported : ''} cluster(s).`;
+        await updateBlockClusterDropdown(block);  // re-fetch + re-render
+    } catch (e) {
+        if (status) status.textContent = 'Upload failed: ' + e.message;
+    } finally {
+        input.value = '';
+    }
+}
+
+// Plot every cluster's member villages on the left-hand map, coloured per cluster.
+function initAllClustersMiniMap(clusters) {
+    if (state.blockMiniMap) { state.blockMiniMap.remove(); state.blockMiniMap = null; }
+    state.blockMiniMap = L.map('block-mini-map', { zoomControl: false, attributionControl: false });
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', { maxZoom: 18 })
+        .addTo(state.blockMiniMap);
+    const palette = ['#E86933', '#22AD7A', '#5088C6', '#0297A6', '#DD9103', '#46BBD4', '#a259ff', '#ff5c8a'];
+    const pts = [];
+    (clusters || []).forEach((c, ci) => {
+        const color = palette[ci % palette.length];
+        const label = c.cluster_label != null ? c.cluster_label : (c.cluster_num != null ? c.cluster_num : c.cluster_id);
+        (c.villages || []).forEach(v => {
+            const lat = Number(v.lat), lng = Number(v.long);
+            if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+            pts.push([lat, lng]);
+            L.circleMarker([lat, lng], {
+                radius: Math.max(5, Math.min(14, 4 + Math.sqrt(Number(v.members) || 0) * 1.2)),
+                color: '#243240', weight: 1, fillColor: color, fillOpacity: 0.85,
+            }).addTo(state.blockMiniMap).bindTooltip(
+                `${escapeText(v.vill_name || 'Village')} · ${Number(v.members || 0)} members · Cluster ${escapeText(String(label))}`,
+                { direction: 'top' });
+        });
+    });
+    const fit = () => {
+        try {
+            if (pts.length > 1) state.blockMiniMap.fitBounds(L.latLngBounds(pts), { padding: [30, 30] });
+            else if (pts.length === 1) state.blockMiniMap.setView(pts[0], 13);
+        } catch (e) {}
+    };
+    fit();
+    setTimeout(() => { if (state.blockMiniMap) { state.blockMiniMap.invalidateSize(); fit(); } }, 150);
 }
 
 function showClusterDetailView(c) {
