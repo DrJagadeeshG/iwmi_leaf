@@ -1,0 +1,388 @@
+/* Config Table */
+.config-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.config-table th {
+    background: #0297A6;
+    color: white;
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-transform: uppercase;
+}
+
+.config-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--iwmi-light-grey);
+    vertical-align: middle;
+}
+
+.config-table tbody tr:nth-child(even) {
+    background: rgba(40, 83, 125, 0.03);
+}
+
+.config-table tbody tr:hover {
+    background: rgba(2, 151, 166, 0.08);
+}
+
+.config-sno-cell {
+    width: 50px;
+    text-align: center;
+    font-weight: 600;
+    color: var(--iwmi-dark-blue);
+}
+
+.config-label-cell {
+    min-width: 200px;
+}
+
+.config-label {
+    font-weight: 600;
+    color: var(--iwmi-dark-blue);
+    font-size: 0.9rem;
+}
+
+.config-description {
+    font-size: 0.75rem;
+    color: #666;
+    margin-top: 0.25rem;
+    line-height: 1.3;
+}
+
+.config-pref-cell {
+    width: 150px;
+}
+
+.preference-select {
+    width: 100%;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid var(--iwmi-light-grey);
+    border-radius: 4px;
+    font-size: 0.8rem;
+    background: white;
+    cursor: pointer;
+}
+
+.preference-select:focus {
+    outline: none;
+    border-color: var(--iwmi-teal);
+}
+
+.config-min-cell,
+.config-max-cell {
+    width: 150px;
+}
+
+.config-min-cell span,
+.config-max-cell span {
+    display: block;
+    font-weight: 600;
+    color: var(--iwmi-teal);
+    margin-bottom: 0.3rem;
+    font-size: 0.9rem;
+}
+
+.config-weight-cell {
+    width: 80px;
+}
+
+/* #12: delete-variable cell + button */
+.config-delete-cell {
+    width: 44px;
+    text-align: center;
+}
+
+.config-delete-btn {
+    background: transparent;
+    border: none;
+    color: #c0392b;
+    cursor: pointer;
+    font-size: 1rem;
+    padding: 0.25rem 0.4rem;
+    border-radius: 4px;
+    line-height: 1;
+    transition: background 0.15s, color 0.15s;
+}
+
+.config-delete-btn:hover {
+    background: rgba(192, 57, 43, 0.1);
+    color: #a93226;
+}
+
+.config-table input[type="range"] {
+    width: 100%;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 6px;
+    background: var(--iwmi-light-grey);
+    border-radius: 3px;
+    outline: none;
+}
+
+.config-table input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    background: #0297A6;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.config-table input[type="range"]::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    background: #0297A6;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+
+.config-table input[type="range"]::-webkit-slider-thumb:hover {
+    background: #28537D;
+}
+
+.config-table input[type="range"]::-moz-range-thumb:hover {
+    background: #28537D;
+}
+
+.config-table input[type="range"]:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.config-table input[type="range"]:disabled::-webkit-slider-thumb {
+    background: #999;
+    cursor: not-allowed;
+}
+
+.config-table input[type="range"]:disabled::-moz-range-thumb {
+    background: #999;
+    cursor: not-allowed;
+}
+
+.config-table .weight-input {
+    width: 70px;
+    padding: 0.4rem 0.5rem;
+    border: 1px solid var(--iwmi-light-grey);
+    border-radius: 4px;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.config-table .weight-input:focus {
+    outline: none;
+    border-color: var(--iwmi-teal);
+}
+
+.config-range-values {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #666;
+}
+
+.config-weight input {
+    width: 70px;
+    padding: 0.25rem 0.5rem;
+    border: 1px solid var(--iwmi-light-grey);
+    border-radius: 4px;
+    text-align: center;
+}
+
+/* GP Config Modal Styles */
+.config-table .group-header {
+    background: var(--iwmi-dark-blue) !important;
+    color: white;
+}
+
+.config-table .group-header td {
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+}
+
+.config-check-cell {
+    width: 40px;
+    text-align: center;
+}
+
+.config-check-cell input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    cursor: pointer;
+}
+
+.config-row.active-filter {
+    background: rgba(2, 151, 166, 0.1) !important;
+}
+
+/* #10: grouped + coloured Active Filters rows */
+.filters-table .var-group-header td {
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    padding: 0.4rem 0.6rem;
+}
+
+.filters-table .var-group-row td:first-child {
+    /* compensate for the 3px coloured left border so cells stay aligned */
+    padding-left: 0;
+}
+
+.gp-var-check:checked + .config-label-cell .config-label {
+    color: var(--iwmi-teal);
+}
+
+/* Block Details Panel */
+.block-details {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 3px solid var(--iwmi-teal);
+    box-shadow: 0 -5px 20px rgba(0,0,0,0.1);
+    padding: 1rem 2rem;
+    z-index: 500;
+    transition: transform 0.3s ease;
+}
+
+.block-details.hidden {
+    transform: translateY(100%);
+}
+
+.block-details-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.block-details-header h3 {
+    color: var(--iwmi-dark-blue);
+    border: none;
+    padding: 0;
+    margin: 0;
+}
+
+.block-details-content {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+.detail-item {
+    background: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 6px;
+}
+
+.detail-item .label {
+    font-size: 0.75rem;
+    color: #666;
+    text-transform: uppercase;
+}
+
+.detail-item .value {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--iwmi-dark-blue);
+    margin-top: 0.25rem;
+}
+
+.feasibility-badge {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 600;
+    color: white;
+}
+
+/* Footer */
+.footer {
+    background: var(--iwmi-dark-blue);
+    color: white;
+    text-align: center;
+    padding: 0.75rem;
+    font-size: 0.85rem;
+}
+
+/* Loading State */
+.loading {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: #999;
+}
+
+.loading::after {
+    content: '';
+    width: 30px;
+    height: 30px;
+    border: 3px solid var(--iwmi-light-grey);
+    border-top-color: var(--iwmi-teal);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-left: 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 1200px) {
+    .main-content {
+        grid-template-columns: 1fr 280px 300px;
+    }
+}
+
+@media (max-width: 1024px) {
+    .main-content {
+        grid-template-columns: 1fr 220px 250px;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-content {
+        grid-template-columns: 1fr;
+    }
+
+    #map {
+        height: 350px;
+        min-height: 300px;
+    }
+
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .filter-group select {
+        width: 100%;
+    }
+}
+
+/* ============================================
+   Block Detail View Styles
+   ============================================ */
+
+.block-detail-view {
+    flex: 1;
+    padding: 1.5rem 2rem;
+    max-width: 1800px;
+    margin: 0 auto;
+    width: 100%;
+}
+

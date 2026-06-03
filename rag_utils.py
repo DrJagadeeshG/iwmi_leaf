@@ -266,6 +266,24 @@ Keep the response under 300 words and practical for field implementation."""
         }
 
 
+def reset_vectorstore():
+    """Delete the persisted vector store so the next /api/ai-recommendation
+    call rebuilds it from the current contents of ai-docs/ (LEAF #22).
+
+    Lazy/non-blocking: this only wipes the on-disk Chroma directory and clears
+    the in-process cache. The (expensive) re-embedding happens on the next
+    retrieval call, not here.
+    """
+    import shutil
+
+    # Clear the cached vectorstore handle so a stale one isn't reused.
+    load_vectorstore.cache_clear()
+
+    if VECTORSTORE_DIR.exists():
+        shutil.rmtree(VECTORSTORE_DIR, ignore_errors=True)
+    return True
+
+
 def initialize_vectorstore():
     """Initialize the vector store on startup (can be called manually)."""
     try:
