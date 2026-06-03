@@ -9,7 +9,15 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modals.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/config-table.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/detail-ai.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/metrics-ai.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/detail-grid.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/cluster.css') }}">
 </head>
 <body data-mode="page" data-initial-block="{{ initial_block | default('') }}" data-initial-commodity="{{ initial_commodity | default('') }}">
     {% set mode = 'page' %}
