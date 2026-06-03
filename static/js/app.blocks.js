@@ -11,6 +11,10 @@ function showBlockDetails(props, feature) {
 function renderBlockDetail(feature) {
     const props = feature.properties;
 
+    // The district summary line belongs to the district view only.
+    const _ds = document.getElementById('district-summary');
+    if (_ds) _ds.style.display = 'none';
+
     // Update feasibility badge
     const badgesContainer = document.getElementById('feasibility-badges');
     const feasibility = props.feasibility !== null ? props.feasibility.toFixed(1) : 'N/A';

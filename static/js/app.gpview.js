@@ -5,6 +5,9 @@
 function renderGPDetail(feature) {
     const props = feature.properties;
 
+    const _ds = document.getElementById('district-summary');
+    if (_ds) _ds.style.display = 'none';
+
     // Reuse block detail view elements (same layout as block view)
     const badgesContainer = document.getElementById('feasibility-badges');
     const feasibility = props.feasibility !== null && props.feasibility !== undefined
