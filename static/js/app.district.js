@@ -72,7 +72,9 @@ function renderDistrictDetail(props, feats) {
         </span>`;
 
     document.getElementById('location-card-title').innerHTML =
-        `<strong>${props.Dist_Name}</strong> / All blocks (${feats.length})`;
+        `<strong>${props.Dist_Name}</strong> / All blocks (${feats.length})` +
+        `<div class="district-summary-line">${props.Dist_Name} — Feasibility ` +
+        `${feas !== null ? feas.toFixed(1) : 'N/A'}% across ${feats.length} blocks</div>`;
 
     // No GP dropdown at district level.
     document.getElementById('block-gp-select').style.display = 'none';
