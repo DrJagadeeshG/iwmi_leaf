@@ -86,6 +86,9 @@ async function updateBlockClusterDropdown(blockName) {
     if (!commodity || !blockName) {
         sel.style.display = 'none';
         sel.innerHTML = '<option value="">All clusters</option>';
+        // "All Livestock" (no specific sub-type) -> show no clusters; if a
+        // cluster view was open, drop back to the block's category cards.
+        if (state.currentViewLevel === 'cluster') exitBlockClusterMode();
         return;
     }
     try {
@@ -98,6 +101,7 @@ async function updateBlockClusterDropdown(blockName) {
     if (!state.blockClusters.length) {
         sel.style.display = 'none';
         sel.innerHTML = '<option value="">All clusters</option>';
+        if (state.currentViewLevel === 'cluster') exitBlockClusterMode();
         return;
     }
     sel.innerHTML = '';
