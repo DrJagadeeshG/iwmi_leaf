@@ -140,16 +140,53 @@ def load_metadata():
     """Load the variable metadata from Google Sheets (with fallback to local CSV)."""
     from google_sheets import get_sheet
     df = get_sheet("dss_input")
-    if df is not None:
-        return df
+    if df is None:
+        # Ultimate fallback: read local CSV directly
+        csv_path = DATA_DIR / "DSS_input2.csv"
+        if not csv_path.exists():
+            raise FileNotFoundError(f"Metadata CSV not found at {csv_path}")
+        df = pd.read_csv(csv_path, encoding='utf-8-sig')
+        df.columns = [col.strip() for col in df.columns]
+    return _overlay_livestock_subfilter(df)
 
-    # Ultimate fallback: read local CSV directly
-    csv_path = DATA_DIR / "DSS_input2.csv"
-    if not csv_path.exists():
-        raise FileNotFoundError(f"Metadata CSV not found at {csv_path}")
-    df = pd.read_csv(csv_path, encoding='utf-8-sig')
-    df.columns = [col.strip() for col in df.columns]
-    return df
+
+def _overlay_livestock_subfilter(df):
+    """LEAF-51: add the Livestock sub-types (Dairy/Goatery/Piggery/Backyard_Poultry/
+    Duckery/Fishery_Activity) so the sub-filter dropdown + per-type config work
+    WITHOUT editing the client's dss_input sheet.
+
+    Reads the committed data/livestock_subfilter.csv and APPENDS its rows
+    (parent=Livestock) to the metadata in memory. It NEVER writes the sheet, so
+    nothing the client maintains there is touched.
+
+    Reversible / yields to the sheet: if the source already declares Livestock
+    children (a row with parent == "Livestock"), this is a no-op — so once the
+    rows are added to the sheet itself, the overlay bows out (no duplication)."""
+    LIVESTOCK_SUBTYPES = {"Dairy", "Goatery", "Piggery", "Backyard_Poultry", "Duckery", "Fishery_Activity"}
+    try:
+        if df is None:
+            return df
+        # Defer ONLY if the sheet already defines the real sub-types as Livestock
+        # children (then it owns them and we add nothing).
+        if {'parent', 'Cluster'}.issubset(df.columns):
+            liv = df[df['parent'].astype(str).str.strip().str.lower() == 'livestock']
+            present = set(liv['Cluster'].astype(str).str.strip())
+            if LIVESTOCK_SUBTYPES.issubset(present):
+                return df
+        sub_path = DATA_DIR / "livestock_subfilter.csv"
+        if not sub_path.exists():
+            return df
+        sub = pd.read_csv(sub_path, encoding='utf-8-sig')
+        sub.columns = [c.strip() for c in sub.columns]
+        df = df.copy()
+        # The sub-filter is defined solely by this overlay. Clear any stray
+        # `parent` values in the source so accidental sheet edits can't mis-nest
+        # the top-level interventions (in-memory only — the sheet is untouched).
+        df['parent'] = pd.NA
+        return pd.concat([df, sub], ignore_index=True)
+    except Exception as e:
+        print(f"[data_utils] livestock sub-filter overlay skipped: {e}")
+        return df
 
 
 def get_variable_group(df, var_code):

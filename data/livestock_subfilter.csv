@@ -1,0 +1,58 @@
+Cluster,I_variable,range_min,range_max,Preference,I_weight,I_label,I_description,group,subgroup,variable,Weight,label,Description,parent
+Dairy,BF,0.33,0.987,higher,1,Cattle density (per 100 ha),Existing cattle base,,,,,,,Livestock
+Dairy,BG,0.33,0.969,higher,1,Buffalo density (per 100 ha),Existing buffalo base,,,,,,,Livestock
+Dairy,AP,10,48.48,higher,1,Water Bodies (%),Water bodies for aquaculture/ducks,,,,,,,Livestock
+Dairy,M,33,97.92,higher,1,Livestock extension (%),Vet/extension coverage,,,,,,,Livestock
+Dairy,AE,0.25,1.871,higher,1,Fodder crop area (%),Fodder availability,,,,,,,Livestock
+Dairy,AS,4,13.33,higher,1,Grassland (%),Browse/grazing land,,,,,,,Livestock
+Dairy,Y,1650,4322,higher,1,Number of SHGs,SHG base,,,,,,,Livestock
+Dairy,CW,20,58,higher,1,No. of Pashu Sakhis,Livestock CRP support,,,,,,,Livestock
+Dairy,DB,1,124,higher,1,Custom Hiring Centers,Shared infrastructure,,,,,,,Livestock
+Dairy,V,50,90.59,higher,1,Villages with Banks (<5km) %,Credit access,,,,,,,Livestock
+Dairy,X,80,100,higher,1,Villages with market/mandi %,Market access,,,,,,,Livestock
+Dairy,S,75,100,higher,1,Villages all-weather road %,Connectivity,,,,,,,Livestock
+Goatery,BI,0.33,0.987,higher,1,Goat density (per 100 ha),Existing goat base,,,,,,,Livestock
+Goatery,CBp,10,100,higher,1,Goatery activity (MMUA),MMUA goatery participation,,,,,,,Livestock
+Goatery,AS,4,13.33,higher,1,Grassland (%),Browse/grazing land,,,,,,,Livestock
+Goatery,M,33,97.92,higher,1,Livestock extension (%),Vet/extension coverage,,,,,,,Livestock
+Goatery,AE,0.25,1.871,higher,1,Fodder crop area (%),Fodder availability,,,,,,,Livestock
+Goatery,Y,1650,4322,higher,1,Number of SHGs,SHG base,,,,,,,Livestock
+Goatery,CW,20,58,higher,1,No. of Pashu Sakhis,Livestock CRP support,,,,,,,Livestock
+Goatery,DB,1,124,higher,1,Custom Hiring Centers,Shared infrastructure,,,,,,,Livestock
+Goatery,V,50,90.59,higher,1,Villages with Banks (<5km) %,Credit access,,,,,,,Livestock
+Goatery,X,80,100,higher,1,Villages with market/mandi %,Market access,,,,,,,Livestock
+Goatery,S,75,100,higher,1,Villages all-weather road %,Connectivity,,,,,,,Livestock
+Piggery,BN,0.33,0.965,higher,1,Pig density (per 100 ha),Existing pig base,,,,,,,Livestock
+Piggery,CDp,10,100,higher,1,Piggery activity (MMUA),MMUA piggery participation,,,,,,,Livestock
+Piggery,M,33,97.92,higher,1,Livestock extension (%),Vet/extension coverage,,,,,,,Livestock
+Piggery,AE,0.25,1.871,higher,1,Fodder crop area (%),Fodder availability,,,,,,,Livestock
+Piggery,Y,1650,4322,higher,1,Number of SHGs,SHG base,,,,,,,Livestock
+Piggery,CW,20,58,higher,1,No. of Pashu Sakhis,Livestock CRP support,,,,,,,Livestock
+Piggery,DB,1,124,higher,1,Custom Hiring Centers,Shared infrastructure,,,,,,,Livestock
+Piggery,V,50,90.59,higher,1,Villages with Banks (<5km) %,Credit access,,,,,,,Livestock
+Piggery,X,80,100,higher,1,Villages with market/mandi %,Market access,,,,,,,Livestock
+Piggery,S,75,100,higher,1,Villages all-weather road %,Connectivity,,,,,,,Livestock
+Backyard_Poultry,BO,0.33,0.987,higher,1,Poultry density (per 100 ha),Existing poultry base,,,,,,,Livestock
+Backyard_Poultry,CEp,10,100,higher,1,Poultry activity (MMUA),MMUA poultry participation,,,,,,,Livestock
+Backyard_Poultry,M,33,97.92,higher,1,Livestock extension (%),Vet/extension coverage,,,,,,,Livestock
+Backyard_Poultry,Y,1650,4322,higher,1,Number of SHGs,SHG base,,,,,,,Livestock
+Backyard_Poultry,CW,20,58,higher,1,No. of Pashu Sakhis,Livestock CRP support,,,,,,,Livestock
+Backyard_Poultry,V,50,90.59,higher,1,Villages with Banks (<5km) %,Credit access,,,,,,,Livestock
+Backyard_Poultry,X,80,100,higher,1,Villages with market/mandi %,Market access,,,,,,,Livestock
+Backyard_Poultry,S,75,100,higher,1,Villages all-weather road %,Connectivity,,,,,,,Livestock
+Duckery,BYp,10,100,higher,1,Duckery activity (MMUA),MMUA duckery participation,,,,,,,Livestock
+Duckery,AP,10,48.48,higher,1,Water Bodies (%),Water bodies for aquaculture/ducks,,,,,,,Livestock
+Duckery,M,33,97.92,higher,1,Livestock extension (%),Vet/extension coverage,,,,,,,Livestock
+Duckery,Y,1650,4322,higher,1,Number of SHGs,SHG base,,,,,,,Livestock
+Duckery,CW,20,58,higher,1,No. of Pashu Sakhis,Livestock CRP support,,,,,,,Livestock
+Duckery,V,50,90.59,higher,1,Villages with Banks (<5km) %,Credit access,,,,,,,Livestock
+Duckery,X,80,100,higher,1,Villages with market/mandi %,Market access,,,,,,,Livestock
+Duckery,S,75,100,higher,1,Villages all-weather road %,Connectivity,,,,,,,Livestock
+Fishery_Activity,AP,10,48.48,higher,1,Water Bodies (%),Water bodies for aquaculture/ducks,,,,,,,Livestock
+Fishery_Activity,CAp,10,100,higher,1,Fishery activity (MMUA),MMUA fishery participation,,,,,,,Livestock
+Fishery_Activity,Y,1650,4322,higher,1,Number of SHGs,SHG base,,,,,,,Livestock
+Fishery_Activity,CW,20,58,higher,1,No. of Pashu Sakhis,Livestock CRP support,,,,,,,Livestock
+Fishery_Activity,DB,1,124,higher,1,Custom Hiring Centers,Shared infrastructure,,,,,,,Livestock
+Fishery_Activity,V,50,90.59,higher,1,Villages with Banks (<5km) %,Credit access,,,,,,,Livestock
+Fishery_Activity,X,80,100,higher,1,Villages with market/mandi %,Market access,,,,,,,Livestock
+Fishery_Activity,S,75,100,higher,1,Villages all-weather road %,Connectivity,,,,,,,Livestock
