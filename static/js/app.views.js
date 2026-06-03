@@ -87,7 +87,11 @@ function updateExportButtonVisibility() {
     const btn = document.getElementById('export-btn');
     if (!btn) return;
     const group = btn.closest('.filter-group') || btn;
-    group.style.display = state.currentDistrict ? '' : 'none';
+    // Show CSV only in a detail view; hide on the state overview. Keyed off the
+    // view level rather than state.currentDistrict, which can persist after
+    // returning to the overview (so the button used to linger there).
+    const inDetail = state.currentViewLevel && state.currentViewLevel !== 'state';
+    group.style.display = inDetail ? '' : 'none';
 }
 
 // #2: Populate the district summary line in the overview. Aggregates the
