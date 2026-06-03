@@ -125,6 +125,14 @@ def load_shapefile():
     if district_mapping and 'DISTRICT_I' in gdf.columns:
         gdf['Dist_Name'] = gdf['DISTRICT_I'].map(district_mapping)
 
+    # LEAF #24: normalize block-name capitalization to Title Case so dropdowns,
+    # tooltips, and headers are consistent everywhere (the source sheet mixes
+    # UPPER, lower, and Title case).
+    if 'Block_name' in gdf.columns:
+        gdf['Block_name'] = gdf['Block_name'].apply(
+            lambda x: str(x).strip().title() if pd.notna(x) else x
+        )
+
     return gdf
 
 

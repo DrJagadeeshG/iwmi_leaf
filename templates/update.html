@@ -690,6 +690,31 @@
                 </table>
             </div>
 
+            <!-- AI Knowledge Base Upload (admin only) -->
+            <div class="card" id="ai-upload-card" style="display:none; border-left: 4px solid var(--iwmi-teal);">
+                <div class="card-title" style="margin-bottom: 0.75rem;">
+                    <i class="bi bi-robot"></i> AI Knowledge Base
+                </div>
+                <p style="color:#666; font-size:0.85rem; margin-bottom:1rem;">
+                    Upload a policy or guideline <strong>PDF</strong> to the AI knowledge base. The document
+                    joins the retrieval pool and the knowledge base rebuilds automatically on the next
+                    AI Insights request.
+                </p>
+                <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                    <input type="file" id="ai-doc-file" accept="application/pdf,.pdf"
+                           style="font-size:0.85rem;">
+                    <div class="btn-group">
+                        <button id="ai-upload-btn" class="btn btn-primary" onclick="uploadAiDoc()">
+                            <i class="bi bi-cloud-arrow-up"></i> Upload PDF
+                        </button>
+                    </div>
+                </div>
+                <div class="tip" style="margin-top:1rem;">
+                    <strong>Lazy rebuild:</strong> embedding the new document is deferred to the next
+                    AI recommendation, so the first AI request after an upload may take a little longer.
+                </div>
+            </div>
+
         </div><!-- /right col-stack -->
 
         </div><!-- /two-col -->
@@ -737,8 +762,57 @@
     <div id="toast" class="toast"></div>
 
     <script>
+        // Admin gate mirrors clusters.js: ?admin=1 in the URL reveals admin-only
+        // controls. The matching API guard lives in shared._is_admin_request.
+        const IS_ADMIN = new URLSearchParams(window.location.search).get('admin') === '1';
+
         // Load status on page load
-        document.addEventListener('DOMContentLoaded', () => { loadStatus(); loadValidation(); });
+        document.addEventListener('DOMContentLoaded', () => {
+            loadStatus();
+            loadValidation();
+            if (IS_ADMIN) {
+                const card = document.getElementById('ai-upload-card');
+                if (card) card.style.display = '';
+            }
+        });
+
+        async function uploadAiDoc() {
+            const input = document.getElementById('ai-doc-file');
+            const btn = document.getElementById('ai-upload-btn');
+            const file = input.files && input.files[0];
+
+            if (!file) { showToast('Choose a PDF file first.', 'error'); return; }
+            if (!file.name.toLowerCase().endsWith('.pdf')) {
+                showToast('Only PDF documents are accepted.', 'error');
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append('file', file);
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Uploading...';
+
+            try {
+                const resp = await fetch('/api/config/upload-ai-doc?admin=1', {
+                    method: 'POST',
+                    headers: { 'X-Admin': '1' },
+                    body: fd,
+                });
+                const data = await resp.json();
+                if (resp.ok && data.ok) {
+                    showToast(data.message || 'Document uploaded.', 'success');
+                    input.value = '';
+                } else {
+                    showToast(data.error || 'Upload failed.', 'error');
+                }
+            } catch (e) {
+                showToast('Network error - could not reach the server.', 'error');
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-cloud-arrow-up"></i> Upload PDF';
+        }
 
         async function loadValidation() {
             try {

@@ -1,0 +1,375 @@
+/* Main Content - 3 Column Layout */
+.main-content {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 250px 450px;
+    align-items: start;
+    gap: 1.5rem;
+    padding: 1.5rem 2rem;
+    max-width: 1800px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.main-content section {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.filters-section {
+    padding: 0 !important;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: #28537D !important;
+}
+
+.main-content h3 {
+    font-size: 0.9rem;
+    color: var(--iwmi-dark-blue);
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--iwmi-light-grey);
+}
+
+/* Distribution Section */
+.distribution-section {
+    display: flex;
+    flex-direction: column;
+}
+
+
+
+/* #2: District-level summary line above the overview */
+.district-summary-line {
+    margin: 0.75rem 2rem 0;
+    padding: 0.6rem 1rem;
+    background: rgba(2, 151, 166, 0.08);
+    border-left: 4px solid var(--iwmi-teal);
+    border-radius: 4px;
+    font-size: 0.95rem;
+    color: var(--iwmi-dark-blue);
+}
+
+/* Map Section */
+.map-section {
+    min-height: 500px;
+}
+
+.map-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid var(--iwmi-light-grey);
+}
+
+.map-header h3 {
+    margin: 0;
+    padding: 0;
+    border: none;
+}
+
+.map-header .legend-items {
+    display: flex;
+    flex-direction: row;
+    gap: 0.4rem;
+}
+
+.map-header .legend-item {
+    font-size: 0.75rem;
+    gap: 0.2rem;
+}
+
+.map-header .legend-color {
+    width: 12px;
+    height: 12px;
+}
+
+.overlay-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8rem;
+    color: var(--iwmi-dark-grey);
+    cursor: pointer;
+    user-select: none;
+    white-space: nowrap;
+}
+
+.overlay-toggle input[type="checkbox"] {
+    accent-color: #2e7d32;
+    cursor: pointer;
+}
+
+.overlay-swatch {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    opacity: 0.7;
+}
+
+#map {
+    height: calc(100vh - 280px);
+    min-height: 400px;
+    border-radius: 8px;
+    border: 1px solid var(--iwmi-light-grey);
+}
+
+/* #6: map loader overlay - small centered spinner over the map container */
+.map-container {
+    position: relative;
+}
+
+.map-loader {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.35);
+    border-radius: 8px;
+    z-index: 600;
+    pointer-events: none;
+}
+
+.map-loader-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--iwmi-light-grey);
+    border-top-color: var(--iwmi-teal);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+/* Custom map tooltip */
+.custom-tooltip {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.95rem;
+    padding: 10px 14px;
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    max-width: 320px;
+}
+
+.custom-tooltip strong {
+    color: var(--iwmi-dark-blue);
+}
+
+/* #7: the feature tooltip (app.events.js bindTooltip) lists the active
+ * variable values and is tall; near the map edges it was being clipped by
+ * the surrounding panel's stacking/overflow. Let it float above and stop
+ * the map-section from clipping it. */
+.map-section,
+.map-container {
+    overflow: visible;
+}
+#map .leaflet-tooltip-pane {
+    z-index: 1000;
+}
+#map .leaflet-tooltip.custom-tooltip {
+    z-index: 1000;
+    overflow: visible;
+}
+
+/* District boundary labels */
+.district-label {
+    background: none !important;
+    border: none !important;
+    box-shadow: none !important;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #333;
+    text-shadow: 1px 1px 2px white, -1px -1px 2px white, 1px -1px 2px white, -1px 1px 2px white;
+    pointer-events: none;
+}
+
+/* Distribution Chart */
+.chart-container {
+    height: 150px;
+}
+
+.chart-legend {
+    margin-top: 0.5rem;
+}
+
+.legend-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.7rem;
+}
+
+.legend-table th {
+    text-align: left;
+    padding: 0.25rem 0.25rem;
+    border-bottom: 1px solid var(--iwmi-light-grey);
+    font-weight: 600;
+    color: var(--iwmi-dark-blue);
+    font-size: 0.65rem;
+    text-transform: uppercase;
+}
+
+.legend-table td {
+    padding: 0.2rem 0.25rem;
+    border-bottom: 1px solid #eee;
+}
+
+.legend-table .legend-color {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+}
+
+.legend-table .text-right {
+    text-align: right;
+}
+
+.stats-cards {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+}
+
+.stat-card {
+    background: white;
+    padding: 0.6rem;
+    border-radius: 6px;
+    text-align: center;
+    border: 1px solid var(--iwmi-light-grey);
+}
+
+.stat-card .value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--iwmi-dark-blue);
+}
+
+.stat-card .label {
+    font-size: 0.7rem;
+    color: #666;
+    margin-top: 0.2rem;
+}
+
+/* Legend Section */
+.legend-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+}
+
+.legend-color {
+    width: 16px;
+    height: 16px;
+    border-radius: 3px;
+    border: 1px solid rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+
+#active-filters {
+    font-size: 0.8rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    color: white;
+}
+
+.no-filters {
+    color: white;
+    font-style: italic;
+    font-size: 0.9rem;
+    text-align: center;
+    padding: 2rem;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.filters-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+    border-radius: 0;
+    overflow: hidden;
+    box-shadow: none;
+}
+
+.filters-table th {
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    background: #0297A6;
+    color: white;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+}
+
+.filters-title-row th {
+    background: #28537D;
+    text-align: center;
+    font-size: 0.85rem;
+    padding: 0.75rem;
+    color: white;
+}
+
+.filters-table td {
+    padding: 0.5rem 0.8rem;
+    background: #28537D;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    color: white;
+}
+
+.filters-table tbody tr:nth-child(even) td {
+    background: #1e4263;
+}
+
+.filters-table tbody tr:hover td {
+    background: #0297A6;
+}
+
+.filters-table .text-right {
+    text-align: right;
+}
+
+.filter-chip {
+    display: inline-block;
+    background: white;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    margin: 0.2rem;
+    font-size: 0.75rem;
+    border: 1px solid var(--iwmi-light-grey);
+}
+
+.btn-export {
+    width: auto;
+    padding: 0.5rem 1.5rem;
+    background: var(--iwmi-green);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    justify-self: start;
+}
+
+.btn-export:hover {
+    background: #1a8a5f;
+}
+

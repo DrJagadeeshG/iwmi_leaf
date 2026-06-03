@@ -12,6 +12,9 @@
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
+    <!-- html2canvas (summary report map capture, LEAF-19) -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
@@ -19,7 +22,15 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
 
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/layout.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/modals.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/config-table.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/detail-ai.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/metrics-ai.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/detail-grid.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/responsive.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/cluster.css') }}">
 </head>
 <body>
     <!-- Header -->
@@ -170,6 +181,10 @@
         </div>
     </div>
 
+    <!-- #2: District-level summary line, shown above the overview when a
+         specific district is selected; hidden for "All Districts". -->
+    <div id="district-summary-line" class="district-summary-line" style="display: none;"></div>
+
     <!-- Overview View (Default) -->
     <main id="overviewView" class="main-content">
         <!-- Map Section (Left) -->
@@ -180,7 +195,13 @@
                     <!-- Dynamic legend loaded by JS -->
                 </div>
             </div>
-            <div id="map"></div>
+            <!-- #6: small centered spinner overlay shown during async map loads -->
+            <div class="map-container">
+                <div id="map"></div>
+                <div id="map-loader" class="map-loader" style="display: none;">
+                    <div class="map-loader-spinner"></div>
+                </div>
+            </div>
         </section>
 
         <!-- Distribution Section (Middle) -->
@@ -450,7 +471,26 @@
          clusters.js so that link's href is wired to the right block. The
          planner UI itself is NOT embedded here (LEAF-48). -->
 
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.core.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.map.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.events.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.gp.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.locations.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.interventions.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.feasibility.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.configure.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.aimodal.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.reports.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.charts.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.choropleth.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.views.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.district.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.blocks.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.metrics.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.airec.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.blockdetail.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.gpview.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.export.js') }}"></script>
     <script src="{{ url_for('static', filename='js/clusters.js') }}"></script>
 </body>
 </html>

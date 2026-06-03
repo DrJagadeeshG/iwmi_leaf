@@ -1,0 +1,219 @@
+/* LEAF DSS - Stylesheet */
+/* IWMI Brand Colors */
+
+:root {
+    /* Primary Colors */
+    --iwmi-dark-blue: #28537D;
+    --iwmi-light-blue: #5088C6;
+    --iwmi-sky-blue: #46BBD4;
+
+    /* Secondary Colors */
+    --iwmi-teal: #0297A6;
+    --iwmi-green: #22AD7A;
+    --iwmi-orange: #E86933;
+    --iwmi-yellow: #DD9103;
+    --iwmi-light-grey: #E8E7E7;
+
+    /* Feasibility Colors */
+    --feas-very-high: #1b5e20;
+    --feas-high: #81c784;
+    --feas-moderate-high: #c5e1a5;
+    --feas-moderate: #ffd700;
+    --feas-low: #ff8c00;
+    --feas-very-low: #ff0000;
+    --feas-no-data: #E0E0E0;
+
+    /* Layout */
+    --header-height: 90px;
+    --filter-bar-height: 60px;
+    --footer-height: 40px;
+}
+
+/* Reset & Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: linear-gradient(135deg, #28537D 0%, #0297A6 35%, #22AD7A 70%, #46BBD4 100%);
+    color: #333;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header */
+.header {
+    background: white;
+    height: var(--header-height);
+    padding: 0 2rem;
+    display: flex;
+    align-items: center;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    border-bottom: 3px solid var(--iwmi-teal);
+}
+
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 1800px;
+    margin: 0 auto;
+}
+
+.logo-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.header-nav-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: var(--iwmi-dark-blue);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    padding: 0.45rem 0.9rem;
+    border: 1px solid var(--iwmi-light-grey);
+    border-radius: 6px;
+    transition: background 0.2s, color 0.2s;
+}
+
+.header-nav-link:hover {
+    background: var(--iwmi-teal);
+    color: white;
+    border-color: var(--iwmi-teal);
+}
+
+.logo {
+    height: 45px;
+    width: auto;
+}
+
+.giz-logo {
+    height: 70px;
+}
+
+.title-section h1 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: var(--iwmi-dark-blue);
+}
+
+.title-section p {
+    font-size: 0.85rem;
+    margin: 0;
+    color: var(--iwmi-teal);
+}
+
+/* Filter Bar */
+.filter-bar {
+    background: white;
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: flex-end;
+    gap: 2rem;
+    border-bottom: 1px solid var(--iwmi-light-grey);
+    flex-wrap: wrap;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.filter-group label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--iwmi-dark-blue);
+    text-transform: uppercase;
+}
+
+.filter-group select {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--iwmi-light-grey);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    min-width: 200px;
+    cursor: pointer;
+}
+
+.filter-group select:focus {
+    outline: none;
+    border-color: var(--iwmi-teal);
+}
+
+/* Level Toggle (Block/GP) */
+.level-toggle {
+    display: flex;
+    border: 2px solid var(--iwmi-dark-blue);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.level-btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    background: white;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+    color: var(--iwmi-dark-blue);
+}
+
+.level-btn.active {
+    background: var(--iwmi-dark-blue);
+    color: white;
+}
+
+.level-btn:hover:not(.active) {
+    background: var(--iwmi-light-grey);
+}
+
+.level-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-primary {
+    padding: 0.5rem 1.5rem;
+    background: #0297A6 !important;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-primary:hover {
+    background: #28537D !important;
+}
+
+.btn-secondary {
+    padding: 0.5rem 1.5rem;
+    background: white;
+    color: var(--iwmi-dark-blue);
+    border: 1px solid var(--iwmi-light-grey);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btn-secondary:hover {
+    background: var(--iwmi-light-grey);
+}
+

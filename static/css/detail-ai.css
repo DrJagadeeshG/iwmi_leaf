@@ -1,0 +1,439 @@
+/* Block Detail Header */
+.block-detail-header {
+    display: flex;
+    flex-direction: column;
+    background: white;
+    padding: 1rem 1.5rem;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    margin-bottom: 1.5rem;
+}
+
+.header-top-row {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    width: 100%;
+}
+
+.recommendation-line {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: linear-gradient(135deg, #f0f9f4, #e8f4fc);
+    border-radius: 8px;
+    border-left: 4px solid var(--iwmi-teal);
+    font-size: 0.9rem;
+    color: #333;
+}
+
+.recommendation-line i {
+    color: var(--iwmi-teal);
+    font-size: 1.1rem;
+}
+
+.recommendation-line strong {
+    color: var(--iwmi-dark-blue);
+}
+
+/* AI Recommendation Styles */
+.ai-loading {
+    color: var(--iwmi-teal);
+    font-style: italic;
+    font-size: 0.85rem;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+.ai-recommendation {
+    width: 100%;
+}
+
+.ai-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.25rem 0;
+}
+
+.ai-header:hover {
+    opacity: 0.9;
+}
+
+.ai-summary {
+    flex: 1;
+    color: #666;
+}
+
+.ai-toggle-icon {
+    color: var(--iwmi-teal);
+    transition: transform 0.2s;
+}
+
+.ai-body {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: white;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.ai-content {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: #333;
+}
+
+.ai-content p {
+    margin-bottom: 0.75rem;
+}
+
+.ai-content strong {
+    color: var(--iwmi-dark-blue);
+}
+
+.ai-content ul, .ai-content ol {
+    margin: 0.5rem 0 0.75rem 1.5rem;
+    padding: 0;
+}
+
+.ai-content li {
+    margin-bottom: 0.5rem;
+}
+
+.ai-sources {
+    margin-top: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e0e0e0;
+    font-size: 0.8rem;
+    color: #666;
+}
+
+.ai-sources strong {
+    color: var(--iwmi-dark-blue);
+}
+
+/* AI Recommendation Button */
+.recommendation-line {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+/* Feasibility summary sentence (LEAF #21) - sits on its own line above the
+   AI Insights button. */
+.feasibility-summary-sentence {
+    flex-basis: 100%;
+    width: 100%;
+    margin: 0.4rem 0;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    color: var(--iwmi-dark-blue);
+}
+
+.recommendation-line-content {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.btn-ai-recommend {
+    background: linear-gradient(135deg, var(--iwmi-teal), var(--iwmi-dark-blue));
+    color: white;
+    border: none;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    margin-left: auto;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    flex-shrink: 0;
+}
+
+.btn-ai-recommend:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(2, 151, 166, 0.3);
+}
+
+.btn-ai-recommend i {
+    font-size: 0.9rem;
+    color: white;
+}
+
+.feasibility-value {
+    color: var(--iwmi-teal);
+    font-weight: 600;
+    margin-left: 0.25rem;
+}
+
+/* AI Modal Specific Styles */
+.modal-lg {
+    max-width: 1100px;
+    width: 95%;
+    max-height: 92vh;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 25px 80px rgba(0,0,0,0.25);
+}
+
+.modal-lg .modal-header {
+    background: linear-gradient(135deg, var(--iwmi-dark-blue) 0%, var(--iwmi-teal) 100%);
+    color: white;
+    padding: 0.85rem 1.25rem;
+    border: none;
+}
+
+.modal-lg .modal-header h2 {
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+}
+
+.modal-lg .modal-header h2 i {
+    font-size: 1.1rem;
+}
+
+.modal-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.modal-action-btn {
+    background: rgba(255,255,255,0.15);
+    border: none;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.modal-action-btn:hover {
+    background: rgba(255,255,255,0.25);
+}
+
+.modal-action-btn i {
+    font-size: 0.9rem;
+}
+
+.modal-action-btn.copied {
+    background: #10b981;
+}
+
+.modal-action-btn.copied i::before {
+    content: "\f26b";
+}
+
+/* Retrieved Context Section */
+.ai-context-section {
+    margin-top: 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.ai-context-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1rem;
+    background: #f1f5f9;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.ai-context-header:hover {
+    background: #e2e8f0;
+}
+
+.ai-context-header h4 {
+    margin: 0;
+    font-size: 0.8rem;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.ai-context-header h4 i {
+    color: var(--iwmi-teal);
+}
+
+.context-toggle {
+    color: #64748b;
+}
+
+.ai-context-body {
+    padding: 0.75rem;
+    background: #f8fafc;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.context-chunk {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 0.6rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.75rem;
+}
+
+.context-chunk:last-child {
+    margin-bottom: 0;
+}
+
+.context-source {
+    font-weight: 600;
+    color: var(--iwmi-teal);
+    margin-bottom: 0.4rem;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.context-text {
+    color: #475569;
+    line-height: 1.5;
+    white-space: pre-wrap;
+}
+
+.modal-lg .modal-close {
+    color: white;
+    opacity: 0.8;
+    font-size: 1.75rem;
+}
+
+.modal-lg .modal-close:hover {
+    opacity: 1;
+    color: white;
+}
+
+.modal-lg .modal-body {
+    padding: 1rem;
+    max-height: 60vh;
+    overflow-y: auto;
+    font-size: 0.85rem;
+}
+
+.modal-lg .modal-footer {
+    background: #f8fafc;
+    border-top: 1px solid #e2e8f0;
+    padding: 0.75rem 1.5rem;
+}
+
+.ai-loading-state {
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+    background: linear-gradient(180deg, #f8fafc 0%, white 100%);
+}
+
+.ai-spin {
+    font-size: 2.5rem;
+    color: var(--iwmi-teal);
+    display: inline-block;
+    animation: robotShake 0.4s ease-in-out infinite;
+}
+
+@keyframes robotShake {
+    0%, 100% { transform: translateX(0) rotate(0deg); }
+    20% { transform: translateX(-4px) rotate(-8deg); }
+    40% { transform: translateX(4px) rotate(8deg); }
+    60% { transform: translateX(-4px) rotate(-8deg); }
+    80% { transform: translateX(4px) rotate(8deg); }
+}
+
+.ai-loading-state p {
+    margin-top: 1rem;
+    color: #475569;
+    font-size: 0.85rem;
+}
+
+.ai-loading-detail {
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-top: 0.35rem;
+}
+
+/* AI Recommendation Header */
+.ai-recommendation-header {
+    background: linear-gradient(135deg, #f0fdfa 0%, #f0f9ff 100%);
+    padding: 1rem 1.25rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: stretch;
+    gap: 1rem;
+}
+
+.ai-header-left {
+    flex: 1;
+}
+
+.ai-recommendation-header h3 {
+    margin: 0 0 0.5rem 0;
+    color: var(--iwmi-dark-blue);
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+.ai-meta {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.ai-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    color: #475569;
+    font-size: 0.8rem;
+    background: white;
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+.ai-meta i {
+    color: var(--iwmi-teal);
+    font-size: 0.9rem;
+}
+
+.ai-feasibility {
+    font-weight: 600;
+}
+
+.ai-header-map {
+    width: 150px;
+    height: 100px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 2px solid white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    flex-shrink: 0;
+}
+
