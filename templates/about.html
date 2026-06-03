@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LEAF DSS - About</title>
-    <link rel="icon" href="https://www.iwmi.org/wp-content/uploads/2025/06/iwmi-favicon-512x512-1.png">
+    <link rel="icon" href="data:,">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <style>
@@ -184,7 +184,6 @@
     <header class="header">
         <div class="header-content">
             <a href="/" class="logo-section">
-                <img src="{{ url_for('static', filename='images/iwmi_logo.png') }}" alt="IWMI Logo" class="logo" onerror="this.style.display='none'">
                 <div class="title-section">
                     <h1>LEAF DSS</h1>
                     <p>Landscape Evaluation & Assessment Framework</p>
@@ -267,14 +266,6 @@
             </dl>
         </div>
 
-        <!-- Partners -->
-        <div class="card">
-            <div class="card-title"><i class="bi bi-people"></i> Partners</div>
-            <div class="partners">
-                <img src="{{ url_for('static', filename='images/iwmi_logo.png') }}" alt="IWMI" onerror="this.style.display='none'">
-                <img src="{{ url_for('static', filename='images/cgiar_logo.png') }}" alt="CGIAR" onerror="this.style.display='none'">
-            </div>
-        </div>
     </div>
 </body>
 </html>
