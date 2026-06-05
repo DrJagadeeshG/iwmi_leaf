@@ -90,8 +90,18 @@
             </select>
         </div>
 
+        <!-- Cluster filter (block→cluster drill-down). Hidden until a specific
+             livestock activity is selected on a block detail view. Inserted
+             between Sub-category and Configure per the block-cluster spec. -->
+        <div class="filter-group" id="cluster-filter-group" style="display: none;">
+            <label for="filterbar-cluster-select">Cluster</label>
+            <select id="filterbar-cluster-select" disabled>
+                <option value="">All clusters</option>
+            </select>
+        </div>
+
         <div class="filter-group">
-            <button id="configure-btn" class="btn-primary"><i class="bi bi-sliders"></i> Configure</button>
+            <button id="configure-btn" class="btn-primary" title="Configure" aria-label="Configure"><i class="bi bi-sliders"></i></button>
         </div>
 
         <div class="filter-group">
@@ -167,10 +177,6 @@
         </div>
     </div>
 
-    <!-- #2: District-level summary line, shown above the overview when a
-         specific district is selected; hidden for "All Districts". -->
-    <div id="district-summary-line" class="district-summary-line" style="display: none;"></div>
-
     <!-- Overview View (Default) -->
     <main id="overviewView" class="main-content">
         <!-- Map Section (Left) -->
@@ -225,7 +231,7 @@
     <main id="blockDetailView" class="block-detail-view" style="display: none;">
         <!-- Header with Back Button -->
         <div class="block-detail-header">
-            <div class="header-top-row">
+            <div class="header-top-row" id="block-ribbon-row">
                 <a href="#" id="back-to-overview" class="back-link">
                     <i class="bi bi-arrow-left"></i> Overview
                 </a>
@@ -239,6 +245,10 @@
                     <i class="bi bi-diagram-3"></i> Cluster Planning
                 </a>
             </div>
+            <!-- Cluster stat tiles (block→cluster spec, state 3). Replaces the
+                 ribbon row above when a specific cluster is selected. Populated
+                 by app.clusterview.js. -->
+            <div class="cluster-stat-tiles" id="cluster-stat-tiles" style="display: none;"></div>
         </div>
 
         <!-- Block Detail Grid: 50/50 split - map (left) + info cards (right) -->
@@ -340,6 +350,11 @@
 
             <!-- Cluster detail cards (LEAF-53): shown when a cluster is picked -->
             <div id="cluster-cards" class="cluster-cards" style="display: none;"></div>
+
+            <!-- Block→cluster drill-down cards (spec state 3): the 6 new cards
+                 that replace the variable category cards when a specific cluster
+                 is selected. Populated by app.clusterview.js. -->
+            <div id="clusterview-cards" class="cluster-cards" style="display: none;"></div>
             </div><!-- /.detail-right -->
         </div>
     </main>
@@ -492,6 +507,7 @@
     <script src="{{ url_for('static', filename='js/app.airec.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app.blockdetail.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app.gpview.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/app.clusterview.js') }}"></script>
     <script src="{{ url_for('static', filename='js/clusters.js') }}"></script>
 </body>
 </html>

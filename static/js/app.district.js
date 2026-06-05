@@ -46,6 +46,14 @@ function showDistrictDetailView(districtName) {
     }
     if (!feats.length) { showOverviewView(); return; }
 
+    // Switching to the district view reuses #blockDetailView. Tear down any
+    // cluster overlay / stat tiles / cluster cards / cluster dropdown left over
+    // from a block's cluster state (state 3) before rebuilding the district
+    // mini-map, otherwise they stay stranded over the district header
+    // (cluster_view_spec reset rule; clusterViewReset also clears the cluster
+    // globals so Download Summary doesn't emit a stale cluster report).
+    if (typeof clusterViewReset === 'function') clusterViewReset();
+
     document.getElementById('overviewView').style.display = 'none';
     document.getElementById('blockDetailView').style.display = 'block';
     document.getElementById('gpDetailView').style.display = 'none';

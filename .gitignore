@@ -27,3 +27,12 @@ Thumbs.db
 # Runtime data artifacts (regenerated/uploaded at runtime, not source-of-truth)
 data/clusters.json
 data/infrastructure.csv
+
+# Prod ops / scratch scripts and ad-hoc data drops (not part of the app source;
+# keep them out of feature commits)
+prod_inspect.py
+prod_cleanup.py
+run_migration.py
+changes.txt
+data/DSS_input2 2.csv
+data/Tansukia_GP_data_2 1.xlsx
