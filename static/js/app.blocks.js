@@ -11,10 +11,6 @@ function showBlockDetails(props, feature) {
 function renderBlockDetail(feature) {
     const props = feature.properties;
 
-    // The district summary line belongs to the district view only.
-    const _ds = document.getElementById('district-summary');
-    if (_ds) _ds.style.display = 'none';
-
     // Update feasibility badge
     const badgesContainer = document.getElementById('feasibility-badges');
     const feasibility = props.feasibility !== null ? props.feasibility.toFixed(1) : 'N/A';
@@ -45,14 +41,6 @@ function renderBlockDetail(feature) {
 
     // Render metrics by category (dynamic based on active filters)
     const totalOutside = renderActiveMetricsByGroup(props);
-
-    // Update total outside count
-    const totalCountEl = document.getElementById('total-outside-count');
-    if (totalOutside > 0) {
-        totalCountEl.innerHTML = `${totalOutside} outside range`;
-    } else {
-        totalCountEl.innerHTML = '';
-    }
 
     // Reset to block view (hide any cluster cards) and refresh the cluster
     // dropdown for this block + active commodity (LEAF-53).
@@ -91,12 +79,15 @@ async function updateBlockClusterDropdown(blockName) {
         if (state.currentViewLevel === 'cluster') exitBlockClusterMode();
         return;
     }
+    setDetailLoader(true);  // cluster fetch can take a moment - show progress
     try {
         const r = await fetch(`/api/clusters?block=${encodeURIComponent(blockName)}&commodity=${encodeURIComponent(commodity)}`);
         const clusters = await r.json();
         state.blockClusters = Array.isArray(clusters) ? clusters : [];
     } catch (e) {
         state.blockClusters = [];
+    } finally {
+        setDetailLoader(false);
     }
     if (!state.blockClusters.length) {
         sel.style.display = 'none';

@@ -106,6 +106,9 @@ function updateChoroplethLegend(label, min, max) {
 
     if (mapTitle) {
         mapTitle.innerHTML = `<i class="bi bi-map"></i> ${label}`;
+        // Variable choropleth is active - swap the title tooltip to match.
+        mapTitle.dataset.infotip = `Blocks coloured by their "${label}" values (darker green = higher). ` +
+            `Toggle the map icon in Active Filters to return to the feasibility view.`;
     }
 
     const binSize = (max - min) / CHOROPLETH_COLORS.length;
@@ -137,6 +140,7 @@ function restoreDefaultLegend() {
     const mapTitle = document.querySelector('.map-header h3');
     if (mapTitle) {
         mapTitle.innerHTML = '<i class="bi bi-map"></i> Feasibility Map';
+        mapTitle.dataset.infotip = FEASIBILITY_MAP_TIP;
     }
 
     if (state.currentFilters && state.currentFilters.length > 0) {

@@ -94,10 +94,6 @@
             <button id="configure-btn" class="btn-primary"><i class="bi bi-sliders"></i> Configure</button>
         </div>
 
-        <div class="filter-group" id="export-filter-group" style="display: none;">
-            <button id="export-btn" class="btn-export"><i class="bi bi-download"></i> CSV</button>
-        </div>
-
         <div class="filter-group">
             <button id="summary-btn" class="btn-export" title="Download a summary report for the current view"><i class="bi bi-file-earmark-text"></i> Summary</button>
         </div>
@@ -198,6 +194,9 @@
                 <div id="map-loader" class="map-loader" style="display: none;">
                     <div class="map-loader-spinner"></div>
                 </div>
+                <!-- Docked hover-info panel: updates as blocks are hovered;
+                     fixed position so long variable lists can be scrolled. -->
+                <div id="map-hover-panel" class="map-hover-panel" style="display: none;"></div>
             </div>
         </section>
 
@@ -238,11 +237,15 @@
                     <i class="bi bi-diagram-3"></i> Cluster Planning
                 </a>
             </div>
-            <div id="district-summary" class="district-summary-line" style="display: none;"></div>
         </div>
 
         <!-- Block Detail Grid: 50/50 split - map (left) + info cards (right) -->
         <div class="block-detail-grid detail-5050">
+            <!-- Loader overlay shown while feasibility/cluster data reloads
+                 for this view (configure apply, intervention change, etc.) -->
+            <div id="detail-loader" class="detail-loader" style="display: none;">
+                <div class="map-loader-spinner"></div>
+            </div>
             <!-- Left half: Location Card with Mini Map (spatial UI) -->
             <div class="detail-left">
             <div class="detail-card detail-card-map">
@@ -255,7 +258,6 @@
                         <select id="block-gp-select" class="block-gp-dropdown" style="display: none;">
                             <option value="">All GPs</option>
                         </select>
-                        <span class="outside-count" id="total-outside-count"></span>
                     </div>
                 </div>
                 <div class="detail-card-body">
@@ -488,7 +490,6 @@
     <script src="{{ url_for('static', filename='js/app.airec.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app.blockdetail.js') }}"></script>
     <script src="{{ url_for('static', filename='js/app.gpview.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/app.export.js') }}"></script>
     <script src="{{ url_for('static', filename='js/clusters.js') }}"></script>
 </body>
 </html>

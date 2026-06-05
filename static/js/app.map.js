@@ -6,6 +6,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     initInfotip();
     initMap();
     initEventListeners();
+    // Show the map spinner from the very start - the dropdown/hierarchy loads
+    // below run before the first map data request, and the map looked dead
+    // until then. loadInitialMapData() takes the loader over from here.
+    setMapLoader(true);
     await loadInterventionsHierarchy();
     await loadLocationDropdowns();
 
@@ -28,6 +32,14 @@ document.addEventListener('DOMContentLoaded', async () => {
 // #6: toggle the small centered spinner overlay on the map container.
 function setMapLoader(show) {
     const loader = document.getElementById('map-loader');
+    if (loader) loader.style.display = show ? 'flex' : 'none';
+}
+
+// Loader overlay for the district/block detail grid. Shown alongside the map
+// loader so recalculations are visible whichever view is open - without it,
+// the detail cards just froze and looked broken while data reloaded.
+function setDetailLoader(show) {
+    const loader = document.getElementById('detail-loader');
     if (loader) loader.style.display = show ? 'flex' : 'none';
 }
 
@@ -188,6 +200,22 @@ window.addEventListener('popstate', () => {
 // =============================================================================
 
 function initMap() {
+    // General tooltip on the map title word ("Feasibility Map") explaining
+    // what the map shows. Attributes survive the innerHTML rewrites done by
+    // updateChoroplethLegend/restoreDefaultLegend.
+    const mapTitle = document.querySelector('.map-header h3');
+    if (mapTitle) {
+        mapTitle.dataset.infotip = FEASIBILITY_MAP_TIP;
+        mapTitle.dataset.infotipPos = 'below';
+    }
+
+    // While the cursor is on the hover panel, never swap its content - the
+    // user is reading/scrolling it (see hover-intent above).
+    const hoverPanel = document.getElementById('map-hover-panel');
+    if (hoverPanel) {
+        hoverPanel.addEventListener('mouseenter', cancelPendingMapHoverTip);
+    }
+
     // Initialize Leaflet map
     state.map = L.map('map').setView([22.5, 82.5], 7);
 
@@ -273,7 +301,71 @@ function toggleProtectedAreas(show) {
     }
 }
 
+// =============================================================================
+// Map hover panel: docked info box in the map's top-right corner (the classic
+// Leaflet "info control" pattern). Hovering a block updates the content in
+// place - the panel never moves, so a long variable list can be scrolled
+// naturally. A cursor-following tooltip can't do that: it moves away as you
+// chase it, and Leaflet-bound tooltips get clipped by the map container.
+// The panel is sticky: it keeps showing the last hovered block until the map
+// data refreshes or the user clicks through to a detail view.
+// =============================================================================
+
+// Hover-intent: the panel swaps content only after the cursor DWELLS on a
+// block for a moment. Blocks merely crossed on the way to the panel (to
+// scroll it) don't steal the content; entering the panel itself cancels any
+// pending swap, so what you're reading is guaranteed to hold.
+const MAP_PANEL_DWELL_MS = 300;
+let mapPanelTimer = null;
+let mapPanelCurrentHtml = '';
+
+function cancelPendingMapHoverTip() {
+    if (mapPanelTimer) { clearTimeout(mapPanelTimer); mapPanelTimer = null; }
+}
+
+function showMapHoverTip(html) {
+    const panel = document.getElementById('map-hover-panel');
+    if (!panel) return;
+
+    // Re-entering the block already shown: keep it, drop any pending swap.
+    if (html === mapPanelCurrentHtml && panel.style.display !== 'none') {
+        cancelPendingMapHoverTip();
+        return;
+    }
+
+    const render = () => {
+        mapPanelCurrentHtml = html;
+        // Close button: the panel is sticky (so it can be scrolled), which
+        // means it needs an explicit dismiss too.
+        panel.innerHTML =
+            '<button class="map-hover-panel-close" title="Close" ' +
+            'onclick="hideMapHoverTip()">&times;</button>' + html;
+        panel.style.display = 'block';
+        panel.scrollTop = 0;
+    };
+
+    // First show is instant; afterwards wait out the dwell delay.
+    if (panel.style.display === 'none' || !panel.innerHTML) {
+        cancelPendingMapHoverTip();
+        render();
+    } else {
+        cancelPendingMapHoverTip();
+        mapPanelTimer = setTimeout(render, MAP_PANEL_DWELL_MS);
+    }
+}
+
+function hideMapHoverTip() {
+    cancelPendingMapHoverTip();
+    mapPanelCurrentHtml = '';
+    const panel = document.getElementById('map-hover-panel');
+    if (panel) panel.style.display = 'none';
+}
+
 function updateMap(geojsonData) {
+    // The hover panel belongs to the old layer's features - never leave it
+    // stuck on screen across a data refresh.
+    hideMapHoverTip();
+
     // Remove existing layer
     if (state.geojsonLayer) {
         state.map.removeLayer(state.geojsonLayer);

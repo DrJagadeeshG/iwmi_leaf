@@ -3,13 +3,19 @@
 // the current view (state / district / block / cluster), consistent format.
 // =============================================================================
 
-// Capture the overall map (#map) to a PNG dataURL via html2canvas (LEAF-19).
+// Capture the current view's map to a PNG dataURL via html2canvas (LEAF-19).
+// In detail views the overview #map is display:none (html2canvas renders it
+// blank), so capture the visible mini-map instead. allowTaint must stay off:
+// a tainted canvas makes toDataURL throw and the report loses its map.
 // Returns '' on any failure so the report still renders without the map.
 async function captureMapImage() {
     try {
-        const mapEl = document.getElementById('map');
-        if (!mapEl || typeof html2canvas === 'undefined') return '';
-        const canvas = await html2canvas(mapEl, { useCORS: true, allowTaint: true, logging: false });
+        if (typeof html2canvas === 'undefined') return '';
+        const inDetail = state.currentViewLevel && state.currentViewLevel !== 'state';
+        const miniEl = document.getElementById('block-mini-map');
+        const mapEl = (inDetail && miniEl && miniEl.offsetParent !== null) ? miniEl : document.getElementById('map');
+        if (!mapEl || mapEl.offsetParent === null) return '';
+        const canvas = await html2canvas(mapEl, { useCORS: true, logging: false });
         return canvas.toDataURL('image/png');
     } catch (e) {
         console.warn('Map capture failed:', e);
@@ -18,6 +24,15 @@ async function captureMapImage() {
 }
 
 async function downloadSummaryReport() {
+    // Busy state on the Summary button - the map capture below takes a second
+    // or two and the button looked unresponsive.
+    const summaryBtn = document.getElementById('summary-btn');
+    const summaryBtnHtml = summaryBtn ? summaryBtn.innerHTML : '';
+    if (summaryBtn) {
+        summaryBtn.disabled = true;
+        summaryBtn.innerHTML = '<span class="btn-spinner"></span> Preparing…';
+    }
+    try {
     const level = state.currentViewLevel || 'state';
     const intervention = state.currentIntervention || '—';
     const sub = state.currentSubcategory ? ` › ${state.currentSubcategory}` : '';
@@ -56,21 +71,50 @@ async function downloadSummaryReport() {
             if (!groupMap[g]) { groupMap[g] = []; groups.push(g); }
             groupMap[g].push(f);
         });
+        // Target ranges shown to 1 decimal.
+        const fmt1 = v => Number.isFinite(Number(v)) ? Number(v).toFixed(1) : '—';
+        // Per-category tallies, reused for the category-wise summary table.
+        const catSummary = [];
         const rows = groups.map(g => {
             let inCount = 0, total = 0;
+            const outLabels = [];
             const groupRows = groupMap[g].map(f => {
                 const v = props ? Number(props[f.column]) : NaN;
                 const val = Number.isFinite(v) ? v.toFixed(1) : '—';
                 const inRange = Number.isFinite(v) && v >= f.min_val && v <= f.max_val;
-                if (Number.isFinite(v)) { total++; if (inRange) inCount++; }
+                if (Number.isFinite(v)) {
+                    total++;
+                    if (inRange) inCount++; else outLabels.push(f.label || f.column);
+                }
                 const status = !Number.isFinite(v) ? '—' : (inRange ? 'In range' : 'Out of range');
                 const cls = !Number.isFinite(v) ? '' : (inRange ? 'in-range' : 'out-range');
-                return `<tr class="${cls}"><td>${escapeText(f.label || f.column)}</td><td>${val}</td><td>${f.min_val}–${f.max_val}</td><td>${status}</td></tr>`;
+                return `<tr class="${cls}"><td>${escapeText(f.label || f.column)}</td><td>${val}</td><td>${fmt1(f.min_val)}–${fmt1(f.max_val)}</td><td>${status}</td></tr>`;
             }).join('');
+            catSummary.push({ group: g, inCount, total, outLabels });
             const groupHeader = `<tr class="group-header"><td colspan="4">${escapeText(g)}</td></tr>`;
             const groupSummary = `<tr class="group-summary"><td colspan="4">${inCount} of ${total} in range</td></tr>`;
             return groupHeader + groupRows + groupSummary;
         }).join('');
+        // Category-wise summary: counts plus a plain-language statement per
+        // category, naming the indicators that need attention.
+        const catStatement = (c) => {
+            if (c.total === 0) return 'No data available for this category.';
+            if (c.inCount === c.total) return 'All indicators are within the target range — conditions are favourable.';
+            const listed = c.outLabels.slice(0, 4).join(', ');
+            const more = c.outLabels.length > 4 ? ` and ${c.outLabels.length - 4} more` : '';
+            if (c.inCount === 0) return `None of the indicators meet the target range. Key gaps: ${listed}${more}.`;
+            return `${c.inCount} of ${c.total} indicators are within range. Needs attention: ${listed}${more}.`;
+        };
+        const catRows = catSummary.map(c => {
+            const pct = c.total > 0 ? Math.round((c.inCount / c.total) * 100) + '%' : '—';
+            return `<tr><td>${escapeText(c.group)}</td><td>${c.inCount}/${c.total} (${pct})</td><td>${escapeText(catStatement(c))}</td></tr>`;
+        }).join('');
+        const catSection = catRows ? `
+            <h2>Category-wise summary</h2>
+            <table>
+                <thead><tr><th>Category</th><th>In range</th><th>Remarks</th></tr></thead>
+                <tbody>${catRows}</tbody>
+            </table>` : '';
         const feas = props && Number.isFinite(Number(props.feasibility)) ? Number(props.feasibility).toFixed(1) + '%' : 'N/A';
         const aggNote = level === 'district' ? ' Values are averaged across all blocks in the district.'
             : level === 'state' ? ' Values are averaged across all blocks in the state.' : '';
@@ -79,13 +123,14 @@ async function downloadSummaryReport() {
             <strong>${escapeText(intervention)}${escapeText(sub)}</strong> criteria. Overall feasibility is
             <strong>${feas}</strong>.${aggNote} Indicators marked <em>Out of range</em> fall outside the target band and
             point to where conditions are less suitable and may need targeted support.</p>
+            ${catSection}
             <table>
                 <thead><tr><th>Indicator</th><th>Value</th><th>Target range</th><th>Status</th></tr></thead>
                 <tbody>${rows || '<tr><td colspan="4">No indicators selected — pick an intervention to populate this table.</td></tr>'}</tbody>
             </table>`;
     }
 
-    // Capture the overall map and embed it before printing (LEAF-19).
+    // Capture the overall map and embed it at the top of the report (LEAF-19).
     const mapImg = await captureMapImage();
     const mapSection = mapImg
         ? `<h2>Overall map</h2><img class="map-img" src="${mapImg}" alt="Overall map" />`
@@ -105,7 +150,7 @@ async function downloadSummaryReport() {
             tr.in-range { border-left: 3px solid #10b981; } tr.out-range { border-left: 3px solid #ef4444; }
             tr.group-header td { background: #e6f6f5; color: #28537D; font-weight: 700; font-size: 11px; border-bottom: 1px solid #0297A6; }
             tr.group-summary td { background: #fafafa; color: #555; font-style: italic; font-size: 9px; border-bottom: 2px solid #ddd; }
-            .map-img { width: 100%; max-width: 100%; border: 1px solid #ddd; border-radius: 6px; margin: 12px 0; }
+            .map-img { display: block; margin: 10px auto; width: auto; height: auto; max-width: 460px; max-height: 300px; border: 1px solid #ddd; border-radius: 6px; }
             .footer { margin-top: 30px; padding-top: 15px; border-top: 1px solid #ddd; font-size: 9px; color: #666; }
             @media print { body { padding: 20px; } }
         </style></head><body>
@@ -115,12 +160,11 @@ async function downloadSummaryReport() {
                 <p><strong>Intervention:</strong> ${escapeText(intervention)}${escapeText(sub)}</p>
                 <p><strong>Generated:</strong> ${now}</p>
             </div>
+            ${mapSection}
             <h2>Summary</h2>
             ${bodyHtml}
-            ${mapSection}
             <div class="footer">
                 <p><strong>LEAF DSS</strong> — Landscape Evaluation &amp; Assessment Framework</p>
-                <p>IWMI — International Water Management Institute</p>
             </div>
         </body></html>`;
 
@@ -128,6 +172,12 @@ async function downloadSummaryReport() {
     w.document.write(printContent);
     w.document.close();
     setTimeout(() => w.print(), 300);
+    } finally {
+        if (summaryBtn) {
+            summaryBtn.disabled = false;
+            summaryBtn.innerHTML = summaryBtnHtml;
+        }
+    }
 }
 
 // Cluster summary body: facts + member-village table (LEAF-58).
@@ -155,7 +205,7 @@ function buildClusterReportBody(c) {
         </div>` : ''}`;
 }
 
-function applyConfig() {
+async function applyConfig() {
     const form = document.getElementById('config-form');
     const rows = form.querySelectorAll('.config-row');
 
@@ -191,6 +241,9 @@ function applyConfig() {
     });
 
     closeConfigModal();
-    calculateFeasibility();
+    await calculateFeasibility();
+    // Configure changes must reach the open district/block/GP view too — the
+    // recalculation above only refreshes the (hidden) state-level map.
+    rerenderActiveDetailView();
 }
 

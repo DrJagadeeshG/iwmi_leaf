@@ -3,7 +3,8 @@
 // =============================================================================
 
 async function calculateFeasibility() {
-    setMapLoader(true);  // #6: show map spinner while recalculating
+    setMapLoader(true);     // #6: show map spinner while recalculating
+    setDetailLoader(true);  // also cover the detail view if one is open
     try {
         // Use different API endpoint based on current level
         const apiUrl = state.currentLevel === 'gp'
@@ -48,6 +49,7 @@ async function calculateFeasibility() {
         console.error('Error calculating feasibility:', error);
     } finally {
         setMapLoader(false);  // #6
+        setDetailLoader(false);
     }
 }
 

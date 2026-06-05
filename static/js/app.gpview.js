@@ -5,9 +5,6 @@
 function renderGPDetail(feature) {
     const props = feature.properties;
 
-    const _ds = document.getElementById('district-summary');
-    if (_ds) _ds.style.display = 'none';
-
     // Reuse block detail view elements (same layout as block view)
     const badgesContainer = document.getElementById('feasibility-badges');
     const feasibility = props.feasibility !== null && props.feasibility !== undefined
@@ -32,9 +29,6 @@ function renderGPDetail(feature) {
         ? `${districtName} / ${blockName} / <strong>${gpName}</strong>`
         : `${districtName} / <strong>${gpName}</strong>`;
     document.getElementById('location-card-title').innerHTML = locationPath;
-
-    // Clear outside count
-    document.getElementById('total-outside-count').innerHTML = '';
 
     // Update recommendations
     const vilCount = props.VIL_COUNT || props['NUMBER OF VILLAGE'] || '';

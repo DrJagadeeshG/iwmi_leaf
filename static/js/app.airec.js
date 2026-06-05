@@ -3,14 +3,28 @@
 let currentBlockProps = null;
 let currentBlockFeature = null;
 
+// The livestock sub-filter must flow into AI insights: requests send the
+// effective intervention (the sub-category when one is picked, e.g. Goatery
+// instead of just Livestock) and the modal shows "Livestock › Goatery".
+function effectiveIntervention() {
+    return state.currentSubcategory || state.currentIntervention;
+}
+
+function interventionDisplayLabel() {
+    return state.currentSubcategory
+        ? `${state.currentIntervention} › ${state.currentSubcategory}`
+        : state.currentIntervention;
+}
+
 // Build the plain-language feasibility summary sentence (LEAF #21).
 // Y = number of variables selected; X = Y - variables outside range.
 function buildFeasibilitySummary(outsideCount, scope) {
     const y = state.currentFilters ? state.currentFilters.length : 0;
     if (!y) return '';
     const x = Math.max(0, y - (outsideCount || 0));
+    const pct = Math.round((x / y) * 100);
     return `<div class="feasibility-summary-sentence">` +
-        `For ${scope}, of the ${y} variables selected for assessing feasibility, ${x} are within the recommended range. ` +
+        `For ${scope}, of the ${y} variables selected for assessing feasibility, ${x} (${pct}%) are within the recommended range. ` +
         `For the rest, work needs to be done. Click on AI Insights to check recommendations.` +
         `</div>`;
 }
@@ -36,16 +50,16 @@ function renderRecommendations(props, feature = null, summaryOpts = null) {
     if (state.currentIntervention && feasibility !== null) {
         if (feasibility >= 75) {
             icon = 'bi-check-circle-fill';
-            recommendation = `High potential for ${state.currentIntervention}`;
+            recommendation = `High potential for ${effectiveIntervention()}`;
         } else if (feasibility >= 50) {
             icon = 'bi-arrow-up-circle-fill';
-            recommendation = `Moderate potential for ${state.currentIntervention}`;
+            recommendation = `Moderate potential for ${effectiveIntervention()}`;
         } else if (feasibility >= 25) {
             icon = 'bi-exclamation-triangle-fill';
-            recommendation = `Limited potential for ${state.currentIntervention}`;
+            recommendation = `Limited potential for ${effectiveIntervention()}`;
         } else {
             icon = 'bi-x-circle-fill';
-            recommendation = `Low potential for ${state.currentIntervention}`;
+            recommendation = `Low potential for ${effectiveIntervention()}`;
         }
 
         container.innerHTML = `
@@ -78,7 +92,7 @@ function openAIRecommendation() {
         <div class="ai-loading-state">
             <i class="bi bi-robot ai-spin"></i>
             <p>Analyzing policy documents for <strong>${currentBlockProps.Block_name}</strong>...</p>
-            <p class="ai-loading-detail">Intervention: ${state.currentIntervention}</p>
+            <p class="ai-loading-detail">Intervention: ${interventionDisplayLabel()}</p>
         </div>
     `;
     modalFooter.style.display = 'none';
@@ -112,7 +126,10 @@ async function fetchAIRecommendation(props) {
             body: JSON.stringify({
                 block_name: blockName,
                 district_name: districtName,
-                intervention: state.currentIntervention,
+                // Effective intervention: the livestock sub-category when one
+                // is active (e.g. Goatery), so RAG retrieval + the prompt are
+                // commodity-specific rather than generic "Livestock".
+                intervention: effectiveIntervention(),
                 feasibility_score: feasibility,
                 metrics: metrics,
                 filters: state.currentFilters
@@ -148,7 +165,7 @@ async function fetchAIRecommendation(props) {
                     <div class="ai-header-left">
                         <h3>${blockName}, ${districtName}</h3>
                         <div class="ai-meta">
-                            <span class="ai-intervention"><i class="bi bi-flower2"></i> ${state.currentIntervention}</span>
+                            <span class="ai-intervention"><i class="bi bi-flower2"></i> ${interventionDisplayLabel()}</span>
                             <span class="ai-feasibility"><i class="bi bi-speedometer2"></i> Feasibility: ${feasibility.toFixed(1)}%</span>
                         </div>
                     </div>
@@ -173,7 +190,7 @@ async function fetchAIRecommendation(props) {
                                 <tr class="${m.in_range ? 'in-range' : 'out-range'}">
                                     <td class="metric-label">${m.label}</td>
                                     <td class="metric-value">${m.value !== null && m.value !== undefined ? parseFloat(m.value).toFixed(2) : 'N/A'}</td>
-                                    <td class="metric-range">${m.min} - ${m.max}</td>
+                                    <td class="metric-range">${Number(m.min).toFixed(1)} - ${Number(m.max).toFixed(1)}</td>
                                     <td class="metric-status">
                                         <span class="status-badge ${m.in_range ? 'pass' : 'fail'}">
                                             ${m.in_range ? '<i class="bi bi-check-circle-fill"></i> Pass' : '<i class="bi bi-x-circle-fill"></i> Fail'}

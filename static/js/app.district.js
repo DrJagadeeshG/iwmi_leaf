@@ -73,21 +73,11 @@ function renderDistrictDetail(props, feats) {
 
     document.getElementById('location-card-title').innerHTML =
         `<strong>${props.Dist_Name}</strong> / All blocks (${feats.length})`;
-    // #2: district summary as a clean full-width line in the (white) header,
-    // not crammed into the dark map-card header.
-    const ds = document.getElementById('district-summary');
-    if (ds) {
-        ds.innerHTML = `<strong>${props.Dist_Name}</strong> — Feasibility ` +
-            `${feas !== null ? feas.toFixed(1) : 'N/A'}% across ${feats.length} blocks`;
-        ds.style.display = '';
-    }
 
     // No GP dropdown at district level.
     document.getElementById('block-gp-select').style.display = 'none';
 
     const totalOutside = renderActiveMetricsByGroup(props);
-    const totalCountEl = document.getElementById('total-outside-count');
-    totalCountEl.innerHTML = totalOutside > 0 ? `${totalOutside} outside range (avg)` : '';
 
     // District-level AI Insights (LEAF #1) + feasibility summary sentence (#21).
     // Reuse /api/ai-recommendation with aggregated district props: present the

@@ -80,10 +80,21 @@ async function handleInterventionChange() {
 }
 
 // Re-render whichever detail view is currently open so it picks up freshly
-// recalculated feasibility after applyIntervention() (LEAF #18).
+// recalculated feasibility after applyIntervention() or applyConfig().
 function rerenderActiveDetailView() {
+    // calculateFeasibility() rebuilds the geojson layer, so state.blockFeature
+    // still points at the OLD feature with stale props. Re-resolve the block's
+    // feature from the fresh layer before re-rendering (configure changes were
+    // not showing up in the district/block views because of this).
+    if (state.currentBlock && state.currentLevel !== 'gp' && state.geojsonLayer) {
+        state.geojsonLayer.eachLayer(l => {
+            const p = (l.feature && l.feature.properties) || {};
+            if ((p.Block_name || '') === state.currentBlock) state.blockFeature = l.feature;
+        });
+    }
     if (state.currentBlock && state.blockFeature) {
         renderBlockDetail(state.blockFeature);
+        initBlockMiniMap(state.blockFeature);
     } else if (state.currentViewLevel === 'district' && state.currentDistrict) {
         showDistrictDetailView(state.currentDistrict);
     } else if (state.currentViewLevel === 'gp' && state.currentGP) {

@@ -76,6 +76,14 @@ const CHOROPLETH_COLORS = [
 ];
 const CHOROPLETH_NO_DATA = '#E0E0E0';
 
+// Explanatory tooltip for the "Feasibility Map" title (shown on hover via the
+// infotip; swapped for a variable-specific text when a choropleth is active).
+const FEASIBILITY_MAP_TIP =
+    'Each block is coloured by its feasibility score - the share of selected ' +
+    'indicators that fall within their target range.\n' +
+    'Green = high, yellow/orange = moderate, red = low, grey = no data.\n' +
+    'Hover a block to see its values; click it to open the detail view.';
+
 // =============================================================================
 // Infotip Helper - builds tooltip text for variable labels
 // =============================================================================

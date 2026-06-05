@@ -83,7 +83,9 @@ function gpFillColor(feature) {
 }
 
 async function loadGPPolygonsInMiniMap(blockName) {
-    setMapLoader(true);  // #6: show spinner during async GP polygon load
+    // Spinner over the detail view (the overview map - and its loader - is
+    // hidden while the block view is open, so setMapLoader was invisible here).
+    setDetailLoader(true);
     try {
         // If feasibility filters are active, fetch scored GP data; otherwise plain geojson
         let geojson;
@@ -152,7 +154,7 @@ async function loadGPPolygonsInMiniMap(blockName) {
     } catch (error) {
         console.error('Error loading GP polygons in mini map:', error);
     } finally {
-        setMapLoader(false);  // #6
+        setDetailLoader(false);
     }
 }
 
@@ -246,9 +248,6 @@ function handleBlockGPSelect() {
         document.getElementById('location-card-title').innerHTML = blockName
             ? `${districtName} / ${blockName} / <strong>${props.GP_NAME}</strong>`
             : `${districtName} / <strong>${props.GP_NAME}</strong>`;
-
-        // Clear outside count (GP data has no block-level filter ranges)
-        document.getElementById('total-outside-count').innerHTML = '';
 
         // Swap metric cards to GP data
         renderGPMetricsInBlockView(props);

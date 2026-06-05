@@ -92,12 +92,12 @@ function renderActiveMetricsByGroup(props) {
             max: f.max_val
         }));
 
-        const outsideCount = renderMetricItemsWithStatus(container, props, metrics);
-        totalOutsideCount += outsideCount;
+        const { outside } = renderMetricItemsWithStatus(container, props, metrics);
+        totalOutsideCount += outside;
 
         // Update count in header
-        if (countEl && outsideCount > 0) {
-            countEl.innerHTML = `${outsideCount} outside range`;
+        if (countEl && outside > 0) {
+            countEl.innerHTML = `${outside} outside range`;
         }
     });
 
@@ -151,8 +151,9 @@ function renderAllBlockMetrics(props, groupContainers) {
             container.closest('.detail-card').style.display = 'block';
             setTimeout(() => initScrollSync(container), 0);
         } else {
-            container.innerHTML = '<p class="no-data">No data available</p>';
-            container.closest('.detail-card').style.display = 'block';
+            // No data for this group: leave the card hidden instead of
+            // rendering an empty "No data available" box.
+            container.innerHTML = '';
         }
     });
 }
@@ -214,30 +215,38 @@ function initScrollSync(container) {
     }
 }
 
+// Returns { outside, total }: out-of-range count and the number of rendered
+// (non-empty) metrics, so callers can show "3 (38%) outside range".
 function renderMetricItemsWithStatus(container, props, metrics) {
     let rowsHtml = '';
     let outsideCount = 0;
+    let renderedCount = 0;
 
     metrics.forEach(m => {
         const value = props[m.key];
-        let displayValue = 'N/A';
+
+        // Empty variables are not rendered at all - no "N/A" rows. (At block
+        // level these were showing as empty boxes; district scale already
+        // drops them because aggregation omits valueless fields.)
+        if (value === null || value === undefined || value === '') return;
+
+        const numVal = typeof value === 'number' ? value : parseFloat(value);
+        if (!Number.isFinite(numVal)) return;
+
+        renderedCount++;
+        const displayValue = numVal.toFixed(2);
         let statusClass = '';
         let statusIcon = '';
 
-        if (value !== null && value !== undefined && value !== '') {
-            const numVal = typeof value === 'number' ? value : parseFloat(value);
-            displayValue = numVal.toFixed(2);
-
-            // Check if value is within range
-            if (m.min !== undefined && m.max !== undefined) {
-                if (numVal >= m.min && numVal <= m.max) {
-                    statusClass = 'metric-pass';
-                    statusIcon = '<i class="bi bi-check-circle-fill status-icon pass"></i>';
-                } else {
-                    statusClass = 'metric-fail';
-                    statusIcon = '<i class="bi bi-x-circle-fill status-icon fail"></i>';
-                    outsideCount++;
-                }
+        // Check if value is within range
+        if (m.min !== undefined && m.max !== undefined) {
+            if (numVal >= m.min && numVal <= m.max) {
+                statusClass = 'metric-pass';
+                statusIcon = '<i class="bi bi-check-circle-fill status-icon pass"></i>';
+            } else {
+                statusClass = 'metric-fail';
+                statusIcon = '<i class="bi bi-x-circle-fill status-icon fail"></i>';
+                outsideCount++;
             }
         }
 
@@ -260,9 +269,13 @@ function renderMetricItemsWithStatus(container, props, metrics) {
         container.innerHTML = wrapInScrollStructure(rowsHtml);
         setTimeout(() => initScrollSync(container), 0);
     } else {
-        container.innerHTML = '<p class="no-data">No data available</p>';
+        // No renderable metrics in this group: hide the whole card rather
+        // than showing an empty box.
+        container.innerHTML = '';
+        const card = container.closest('.detail-card');
+        if (card) card.style.display = 'none';
     }
-    return outsideCount;
+    return { outside: outsideCount, total: renderedCount };
 }
 
 function renderMetricItems(container, props, metrics) {

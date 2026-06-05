@@ -73,18 +73,24 @@ function onEachFeature(feature, layer) {
         tooltipContent += `<br><br><em>Click Configure to set filters</em>`;
     }
 
-    // Tooltip
-    layer.bindTooltip(tooltipContent, { className: 'custom-tooltip' });
+    // Hover info: shown in the docked panel at the map's top-right (see
+    // app.map.js) — a cursor tooltip couldn't hold a scrollable variable
+    // list, and Leaflet tooltips get clipped by the map container.
 
     // Click handler - pass the full feature for detail view
-    layer.on('click', () => showBlockDetails(props, feature));
+    layer.on('click', () => {
+        hideMapHoverTip();
+        showBlockDetails(props, feature);
+    });
 
     // Hover effects
     layer.on('mouseover', () => {
         layer.setStyle({ weight: 3, color: '#000' });
+        showMapHoverTip(tooltipContent);
     });
     layer.on('mouseout', () => {
         layer.setStyle({ weight: 1, color: '#333' });
+        // Panel stays (sticky) so the user can move over and scroll it.
     });
 }
 
@@ -139,9 +145,6 @@ function initEventListeners() {
     document.getElementById('config-modal').addEventListener('click', (e) => {
         if (e.target.id === 'config-modal') closeConfigModal();
     });
-
-    // Export button
-    document.getElementById('export-btn').addEventListener('click', exportCSV);
 
     // Back to overview link (Block view)
     document.getElementById('back-to-overview').addEventListener('click', (e) => {

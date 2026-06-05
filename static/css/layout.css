@@ -146,6 +146,37 @@
     animation: spin 1s linear infinite;
 }
 
+/* Loader overlay for the district/block detail grid - shown while the view's
+ * data recalculates (configure apply, intervention change, cluster loads). */
+.block-detail-grid {
+    position: relative;
+}
+
+.detail-loader {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.45);
+    border-radius: 8px;
+    z-index: 1500;
+    pointer-events: none;
+}
+
+/* Inline spinner for buttons that kick off async work (Summary, CSV). */
+.btn-spinner {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    vertical-align: -2px;
+    margin-right: 4px;
+}
+
 /* Custom map tooltip */
 .custom-tooltip {
     font-family: 'Inter', sans-serif;
@@ -160,20 +191,51 @@
     color: var(--iwmi-dark-blue);
 }
 
-/* #7: the feature tooltip (app.events.js bindTooltip) lists the active
- * variable values and is tall; near the map edges it was being clipped by
- * the surrounding panel's stacking/overflow. Let it float above and stop
- * the map-section from clipping it. */
-.map-section,
-.map-container {
-    overflow: visible;
-}
-#map .leaflet-tooltip-pane {
+/* Main-map hover popup (app.map.js): the feature popup lists the active
+ * variable values and is tall, so a Leaflet tooltip got clipped by the
+ * map container (.leaflet-container is overflow:hidden). It is rendered as
+ * a body-level fixed element instead, floating above all panels. */
+/* Docked hover-info panel: top-right corner of the map. It never moves, so
+ * the cursor can simply travel over it and scroll long variable lists.
+ * z-index 1000 floats it above Leaflet's panes (~200-700) and controls. */
+.map-hover-panel {
+    position: absolute;
+    top: 10px;
+    right: 10px;
     z-index: 1000;
+    width: 300px;
+    max-height: calc(100% - 20px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    background: rgba(255, 255, 255, 0.96);
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    line-height: 1.5;
 }
-#map .leaflet-tooltip.custom-tooltip {
-    z-index: 1000;
-    overflow: visible;
+
+.map-hover-panel strong {
+    color: var(--iwmi-dark-blue);
+}
+
+.map-hover-panel-close {
+    position: sticky;          /* stays visible while the list scrolls */
+    top: 0;
+    float: right;
+    margin: -4px -8px 0 8px;
+    border: none;
+    background: transparent;
+    font-size: 1.1rem;
+    line-height: 1;
+    color: #888;
+    cursor: pointer;
+    padding: 2px 4px;
+}
+
+.map-hover-panel-close:hover {
+    color: var(--iwmi-dark-blue);
 }
 
 /* District boundary labels */
