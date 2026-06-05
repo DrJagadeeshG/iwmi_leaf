@@ -220,6 +220,20 @@
     color: var(--iwmi-dark-blue);
 }
 
+/* Protected Areas toggle docked on the map (below the Leaflet zoom control,
+ * which sits top-left with ~10px margins and is ~65px tall). */
+.map-overlay-control {
+    position: absolute;
+    top: 85px;
+    left: 10px;
+    z-index: 1000;
+    background: rgba(255, 255, 255, 0.95);
+    border: 1px solid rgba(0,0,0,0.15);
+    border-radius: 6px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+    padding: 6px 10px;
+}
+
 .map-hover-panel-close {
     position: sticky;          /* stays visible while the list scrolls */
     top: 0;

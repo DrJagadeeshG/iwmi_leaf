@@ -98,13 +98,6 @@
             <button id="summary-btn" class="btn-export" title="Download a summary report for the current view"><i class="bi bi-file-earmark-text"></i> Summary</button>
         </div>
 
-        <div class="filter-group">
-            <label class="overlay-toggle" title="Show/hide Protected Areas of India">
-                <input type="checkbox" id="protected-areas-toggle" onchange="toggleProtectedAreas(this.checked)">
-                <span class="overlay-swatch" style="background:#2e7d32;"></span>
-                Protected Areas
-            </label>
-        </div>
     </div>
 
     <!-- Add Variable Modal -->
@@ -197,6 +190,15 @@
                 <!-- Docked hover-info panel: updates as blocks are hovered;
                      fixed position so long variable lists can be scrolled. -->
                 <div id="map-hover-panel" class="map-hover-panel" style="display: none;"></div>
+                <!-- Protected Areas overlay toggle, docked on the map under
+                     the zoom controls -->
+                <div class="map-overlay-control">
+                    <label class="overlay-toggle" title="Show/hide Protected Areas of India">
+                        <input type="checkbox" id="protected-areas-toggle" onchange="toggleProtectedAreas(this.checked)">
+                        <span class="overlay-swatch" style="background:#2e7d32;"></span>
+                        Protected Areas
+                    </label>
+                </div>
             </div>
         </section>
 
