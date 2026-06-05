@@ -67,11 +67,11 @@ function renderRecommendations(props, feature = null, summaryOpts = null) {
                 <i class="bi ${icon}"></i>
                 <strong>${blockName}, ${districtName}:</strong> ${recommendation}
                 <span class="feasibility-value">(${feasibility.toFixed(1)}%)</span>
+                <button class="btn-ai-recommend" onclick="openAIRecommendation()">
+                    <i class="bi bi-robot"></i> AI Insights
+                </button>
             </div>
             ${summaryHtml}
-            <button class="btn-ai-recommend" onclick="openAIRecommendation()">
-                <i class="bi bi-robot"></i> AI Insights
-            </button>
         `;
     } else {
         recommendation = 'Select an intervention to see recommendations.';
