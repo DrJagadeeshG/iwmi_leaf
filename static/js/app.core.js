@@ -11,6 +11,16 @@
 // routes and views are kept intact - flip this to true to re-enable the feature.
 const GP_FEATURE_ENABLED = false;
 
+// Block→cluster drill-down (cluster_view_spec). When true, the new filter-bar
+// Cluster dropdown + app.clusterview.js own the block cluster experience: the
+// map switches to the clusters overlay on activity selection (state 2) and the
+// ribbon/cards swap to cluster tiles+cards on cluster selection (state 3). This
+// SUPERSEDES the older LEAF-92 in-header cluster dropdown (block-cluster-select)
+// which auto-rendered every cluster as cards the moment a commodity was picked
+// — that conflicted with the spec's "info same as before" for All-clusters.
+// Flip to false to restore the LEAF-92 behaviour.
+const CLUSTERVIEW_ENABLED = true;
+
 // =============================================================================
 // Global State
 // =============================================================================

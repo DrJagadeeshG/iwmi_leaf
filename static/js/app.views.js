@@ -10,12 +10,13 @@ function showOverviewView() {
     state.currentGP = null;
     state.currentViewLevel = 'state';
 
+    // Block→cluster drill-down: leaving the block view tears down the cluster
+    // overlay and hides the filter-bar Cluster dropdown (cluster_view_spec).
+    if (typeof clusterViewReset === 'function') clusterViewReset();
+
     // #9: CSV export is a detail-view action; hide it in the state overview
     // (no district selected). It is re-shown in detail views.
     updateExportButtonVisibility();
-
-    // #2: District-level summary line above the all-blocks overview.
-    updateDistrictSummaryLine();
 
     // Destroy block mini map if exists
     if (state.blockMiniMap) {
@@ -85,40 +86,4 @@ function showGPDetailView(feature) {
 // Summary report is the user-facing export now. Kept as a no-op so the
 // detail-view render paths that call it stay unchanged.
 function updateExportButtonVisibility() {}
-
-// #2: Populate the district summary line in the overview. Aggregates the
-// selected district's block feasibility (reuses aggregateBlockProps logic) and
-// renders "‹District› — Feasibility ‹avg%› (‹N› blocks)". Hidden for "All Districts".
-function updateDistrictSummaryLine() {
-    const el = document.getElementById('district-summary-line');
-    if (!el) return;
-
-    if (!state.currentDistrict) {
-        el.style.display = 'none';
-        el.innerHTML = '';
-        return;
-    }
-
-    // Gather this district's block features from the current map layer.
-    const feats = [];
-    if (state.geojsonLayer) {
-        state.geojsonLayer.eachLayer(l => {
-            const p = (l.feature && l.feature.properties) || {};
-            if ((p.Dist_Name || '') === state.currentDistrict) feats.push(l.feature);
-        });
-    }
-
-    if (!feats.length) {
-        el.style.display = 'none';
-        el.innerHTML = '';
-        return;
-    }
-
-    const aggProps = aggregateBlockProps(feats, state.currentDistrict);
-    const feas = Number.isFinite(aggProps.feasibility) ? aggProps.feasibility : null;
-    const feasText = feas !== null ? `${feas.toFixed(1)}%` : 'N/A';
-    el.innerHTML =
-        `<strong>${state.currentDistrict}</strong> — Feasibility ${feasText} (${feats.length} blocks)`;
-    el.style.display = '';
-}
 

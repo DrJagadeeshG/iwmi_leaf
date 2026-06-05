@@ -114,11 +114,18 @@ async function handleSubcategoryChange() {
     const effective = state.currentSubcategory || state.currentIntervention;
     if (effective) await applyIntervention(effective);
     // Re-render the open detail view so its badges + metric cards reflect the
-    // sub-category's recalculated feasibility (LEAF #18).
+    // sub-category's recalculated feasibility (LEAF #18). For an open block view
+    // this runs renderBlockDetail() -> updateBlockClusterDropdown() ->
+    // clusterViewSync(), which (under CLUSTERVIEW_ENABLED) already re-fetches the
+    // clusters, repopulates the dropdown and rebuilds the overlay for the new
+    // commodity — and clusterViewSync clears the stale cluster selection.
     rerenderActiveDetailView();
-    if (state.currentBlock) {
-        // If a cluster was being viewed, drop back to block view first so the
-        // user isn't stuck on a stale cluster detail from the old commodity.
+    if (state.currentBlock && !(typeof CLUSTERVIEW_ENABLED !== 'undefined' && CLUSTERVIEW_ENABLED)) {
+        // Legacy (LEAF-92) path only: the rerender above does NOT drive the
+        // in-header cluster dropdown, so reset any open cluster view and refresh
+        // the dropdown explicitly. Under CLUSTERVIEW_ENABLED this is redundant
+        // with the line-above rerender and would fire a second concurrent
+        // clusterViewSync fetch that races the first.
         if (state.currentCluster) {
             setClusterMode(false);
             state.currentCluster = null;

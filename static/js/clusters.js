@@ -357,6 +357,12 @@
     async function refreshOpenButton() {
         const btn = $('open-cluster-planner');
         if (!btn) return;
+        // TEMP (2026-06-05): Cluster Planning button hidden while the in-page
+        // block→cluster drill-down view is rolled out. Remove this early
+        // return to restore the button (the /clustering page itself stays
+        // reachable by URL).
+        btn.style.display = 'none';
+        if (true) return;
         const raw = activeBlockName();
         const canonical = await blockHasVillages(raw);
         if (!canonical) {

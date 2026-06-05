@@ -68,6 +68,15 @@ function setClusterMode(on) {
 // sub-category (the clustering commodity). Hidden when no commodity is active
 // or the block+commodity has no clusters.
 async function updateBlockClusterDropdown(blockName) {
+    // Block→cluster drill-down (cluster_view_spec): the new filter-bar Cluster
+    // dropdown + app.clusterview.js own this experience now. Keep the legacy
+    // in-header dropdown hidden and hand off to the new module.
+    if (typeof CLUSTERVIEW_ENABLED !== 'undefined' && CLUSTERVIEW_ENABLED) {
+        const legacy = document.getElementById('block-cluster-select');
+        if (legacy) { legacy.style.display = 'none'; legacy.value = ''; }
+        if (typeof clusterViewSync === 'function') await clusterViewSync(blockName);
+        return;
+    }
     const sel = document.getElementById('block-cluster-select');
     const commodity = state.currentSubcategory;  // e.g. Goatery / Piggery / Dairy
     state.blockClusters = [];
