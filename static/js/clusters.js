@@ -636,6 +636,9 @@
     // Provisional badge still rides alongside. Falls back to cluster_num, then
     // cluster_id, for older payloads.
     function clusterLabel(c) {
+        // cluster_code is the human-readable unique ID (e.g. MOBHGO01,
+        // Faiz 2026-06-06); legacy payloads fall back to "Cluster <label>".
+        if (c.cluster_code != null) return String(c.cluster_code);
         const lbl = c.cluster_label != null ? c.cluster_label
                   : (c.cluster_num != null ? String(c.cluster_num) : null);
         return lbl == null ? c.cluster_id : `Cluster ${lbl}`;

@@ -75,9 +75,18 @@
     }
 
     function clusterLabel(c) {
+        // cluster_code is the human-readable unique ID (e.g. MOBHGO01,
+        // Faiz 2026-06-06); older payloads fall back to the tier label.
+        if (c.cluster_code != null) return c.cluster_code;
         if (c.cluster_label != null) return c.cluster_label;
         if (c.cluster_num != null) return String(c.cluster_num);
         return c.cluster_id;
+    }
+
+    // Display name: the code is self-descriptive, the legacy "1"/"P1" labels
+    // still need the "Cluster " prefix to read as a name.
+    function clusterDisplay(c) {
+        return c.cluster_code != null ? c.cluster_code : ('Cluster ' + clusterLabel(c));
     }
 
     function activeCommodity() {
@@ -191,7 +200,7 @@
         clusters.forEach(function (c) {
             var o = document.createElement('option');
             o.value = c.cluster_id;
-            o.textContent = 'Cluster ' + clusterLabel(c) + ' · ' +
+            o.textContent = clusterDisplay(c) + ' · ' +
                 (c.total_members || 0) + ' members';
             sel.appendChild(o);
         });
@@ -446,7 +455,7 @@
                 dot.on('click', function () { selectCluster(c); });
                 dot.bindTooltip(
                     esc(v.vill_name || 'Village') + ' · ' + Number(v.members || 0) +
-                    ' members · Cluster ' + esc(String(clusterLabel(c))),
+                    ' members · ' + esc(String(clusterDisplay(c))),
                     { direction: 'top' });
                 layers.push(dot);
             });
@@ -514,7 +523,7 @@
     }
 
     function ringTooltip(c) {
-        return '<b>Cluster ' + esc(String(clusterLabel(c))) + '</b><br>' +
+        return '<b>' + esc(String(clusterDisplay(c))) + '</b><br>' +
             (c.total_members || 0) + ' members · ' + (c.villages || []).length +
             ' villages · ' + (c.max_span_km != null ? c.max_span_km + ' km' : '—');
     }

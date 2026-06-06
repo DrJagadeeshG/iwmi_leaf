@@ -2,6 +2,17 @@
 // Block Details
 // =============================================================================
 
+// Display name for a cluster anywhere in the block-detail UI: prefer the
+// human-readable unique code (cluster_code, e.g. MOBHGO01 - first two letters
+// of district + block + commodity + sequence, Faiz 2026-06-06); legacy
+// payloads without it fall back to "Cluster <label>".
+function clusterDisplayName(c) {
+    if (c.cluster_code != null) return String(c.cluster_code);
+    const lbl = c.cluster_label != null ? c.cluster_label
+        : (c.cluster_num != null ? c.cluster_num : c.cluster_id);
+    return `Cluster ${lbl}`;
+}
+
 function showBlockDetails(props, feature) {
     if (feature) {
         showBlockDetailView(feature);
@@ -111,7 +122,7 @@ async function updateBlockClusterDropdown(blockName) {
     state.blockClusters.forEach(c => {
         const o = document.createElement('option');
         o.value = c.cluster_id;
-        o.textContent = `Cluster ${c.cluster_label != null ? c.cluster_label : (c.cluster_num != null ? c.cluster_num : c.cluster_id)} · ${c.total_members} members`;
+        o.textContent = `${clusterDisplayName(c)} · ${c.total_members} members`;
         sel.appendChild(o);
     });
     sel.style.display = '';
@@ -142,7 +153,6 @@ function renderAllClusters() {
 
     const cards = clusters.map(c => {
         const villages = c.villages || [];
-        const label = c.cluster_label != null ? c.cluster_label : (c.cluster_num != null ? c.cluster_num : c.cluster_id);
         const statusHtml = c.finalized
             ? '<span style="color:#22AD7A;font-weight:600"><i class="bi bi-check-circle-fill"></i> Finalised</span>'
             : '<span style="color:#888">Proposed</span>';
@@ -151,7 +161,7 @@ function renderAllClusters() {
             `<span class="metric-value">${Number(v.members || 0).toLocaleString()}</span></div>`).join('');
         return `<div class="detail-card">
             <div class="detail-card-header">
-                <span><i class="bi bi-diagram-3"></i> Cluster ${escapeText(String(label))}</span>
+                <span><i class="bi bi-diagram-3"></i> ${escapeText(clusterDisplayName(c))}</span>
                 <span class="outside-count">${Number(c.total_members || 0).toLocaleString()} members</span>
             </div>
             <div class="detail-card-body"><div class="metrics-scroll-wrapper">
@@ -231,16 +241,17 @@ function initAllClustersMiniMap(clusters) {
     const pts = [];
     (clusters || []).forEach((c, ci) => {
         const color = palette[ci % palette.length];
-        const label = c.cluster_label != null ? c.cluster_label : (c.cluster_num != null ? c.cluster_num : c.cluster_id);
         (c.villages || []).forEach(v => {
             const lat = Number(v.lat), lng = Number(v.long);
             if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
             pts.push([lat, lng]);
             L.circleMarker([lat, lng], {
-                radius: Math.max(5, Math.min(14, 4 + Math.sqrt(Number(v.members) || 0) * 1.2)),
+                // 06-Jun feedback: small dots (3-8px, mirrors clusters.js) so
+                // the cluster grouping reads clearly.
+                radius: Math.max(3, Math.min(8, 3 + Math.sqrt(Number(v.members) || 0) * 0.7)),
                 color: '#243240', weight: 1, fillColor: color, fillOpacity: 0.85,
             }).addTo(state.blockMiniMap).bindTooltip(
-                `${escapeText(v.vill_name || 'Village')} · ${Number(v.members || 0)} members · Cluster ${escapeText(String(label))}`,
+                `${escapeText(v.vill_name || 'Village')} · ${Number(v.members || 0)} members · ${escapeText(clusterDisplayName(c))}`,
                 { direction: 'top' });
         });
     });
@@ -276,7 +287,7 @@ function showClusterDetailView(c) {
 
     document.getElementById('cluster-cards').innerHTML = `
         <div class="detail-card">
-            <div class="detail-card-header"><span><i class="bi bi-diagram-3"></i> Cluster ${c.cluster_label != null ? c.cluster_label : (c.cluster_num != null ? c.cluster_num : c.cluster_id)}</span></div>
+            <div class="detail-card-header"><span><i class="bi bi-diagram-3"></i> ${escapeText(clusterDisplayName(c))}</span></div>
             <div class="detail-card-body"><div class="metrics-scroll-wrapper">
                 <div class="metric-row"><span class="metric-label">Commodity</span><span class="metric-value">${escapeText(c.commodity || '')}</span></div>
                 <div class="metric-row"><span class="metric-label">Total members</span><span class="metric-value">${Number(c.total_members || 0).toLocaleString()}</span></div>
@@ -292,7 +303,7 @@ function showClusterDetailView(c) {
         ${coord}`;
 
     document.getElementById('location-card-title').innerHTML =
-        `${escapeText(c.block_name || state.currentBlock || '')} / <strong>Cluster ${c.cluster_label != null ? c.cluster_label : (c.cluster_num != null ? c.cluster_num : c.cluster_id)}</strong>`;
+        `${escapeText(c.block_name || state.currentBlock || '')} / <strong>${escapeText(clusterDisplayName(c))}</strong>`;
 
     setClusterMode(true);
     initClusterMiniMap(c);

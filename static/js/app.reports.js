@@ -52,7 +52,7 @@ async function downloadSummaryReport() {
         props = state.districtAggProps;
     } else if (level === 'cluster' && state.currentCluster) {
         const c = state.currentCluster;
-        scopeLabel = `${c.block_name || state.currentBlock || ''} / Cluster ${c.cluster_label != null ? c.cluster_label : (c.cluster_num != null ? c.cluster_num : c.cluster_id)}`;
+        scopeLabel = `${c.block_name || state.currentBlock || ''} / ${clusterDisplayName(c)}`;
         bodyHtml = buildClusterReportBody(c);
     } else {
         const feats = [];

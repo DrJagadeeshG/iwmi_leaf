@@ -234,6 +234,24 @@ def _fetch_villages(cluster_ids: List[str]) -> Dict[str, List[Dict]]:
         return out
 
 
+def _cluster_code(c: Dict) -> str:
+    """Human-readable unique cluster code (Faiz 2026-06-06): first two letters
+    of district + block + commodity, then the within-tier sequence number -
+    e.g. MOBHGO01 (MOrigaon / BHurbandha / GOatery / fundable #1) and
+    MOBHGOP01 for the provisional tier. Derived at read time from cluster_num,
+    so CSV splits/merges renumber cleanly on the next read; cluster_id stays
+    the stable internal key."""
+    def two(s: Optional[str]) -> str:
+        letters = "".join(ch for ch in str(s or "") if ch.isalpha())
+        return (letters[:2] or "XX").upper()
+    tier = "P" if c.get("provisional") else ""
+    num = int(c.get("cluster_num") or 0)
+    return (
+        f"{two(c.get('district_name'))}{two(c.get('block_name'))}"
+        f"{two(c.get('commodity'))}{tier}{num:02d}"
+    )
+
+
 def get_clusters(
     block_name: Optional[str] = None,
     commodity: Optional[str] = None,
@@ -279,6 +297,7 @@ def get_clusters(
         else:
             n_fund += 1
             c["cluster_num"], c["cluster_label"] = n_fund, str(n_fund)
+        c["cluster_code"] = _cluster_code(c)
     return clusters
 
 
@@ -303,6 +322,7 @@ def get_cluster(cluster_id: str) -> Optional[Dict]:
         )
         n = int(cur.fetchone()["n"]) + 1
     c["cluster_num"], c["cluster_label"] = n, (f"P{n}" if prov else str(n))
+    c["cluster_code"] = _cluster_code(c)
     return c
 
 
@@ -553,7 +573,7 @@ def set_cluster_dashboard(cluster_id: str, payload: Dict) -> Optional[Dict]:
 
 
 _CSV_COLUMNS = [
-    "cluster_num", "cluster_id", "commodity", "district_name", "block_name",
+    "cluster_code", "cluster_num", "cluster_id", "commodity", "district_name", "block_name",
     "gp_name", "vill_name", "lat", "long", "members", "pashu_sakhi", "block_coordinator",
 ]
 
@@ -570,6 +590,9 @@ def clusters_to_csv(clusters: List[Dict]) -> str:
     for c in clusters:
         for v in c.get("villages", []):
             rows.append({
+                # Human-readable unique code (e.g. MOBHGO01); ignored on import
+                # (cluster_id is the join key) so field edits can't corrupt it.
+                "cluster_code": c.get("cluster_code"),
                 # Prefer the separate-tier display label ("1" / "P1") so
                 # provisional rows are unambiguous; fall back to the raw number
                 # for callers that haven't been through get_clusters numbering.
