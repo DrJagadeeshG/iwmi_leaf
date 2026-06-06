@@ -120,6 +120,54 @@ def api_interventions():
 
 
 
+@interventions_bp.route('/api/livestock-subfilter.csv')
+def api_livestock_subfilter_csv():
+    """Download the effective Livestock sub-filter configuration as CSV.
+    ---
+    tags:
+      - Interventions
+    summary: Export livestock sub-filter CSV
+    description: |
+      Returns the Livestock sub-category configuration rows (Dairy, Goatery,
+      Piggery, Backyard_Poultry, Duckery, Fishery_Activity) currently in
+      effect - one row per (sub-type, variable) with the same columns as the
+      Intervention & Variable Config sheet plus the `parent` column
+      (always `Livestock`).
+
+      Source resolution mirrors the runtime overlay (LEAF-51): when the
+      dss_input Google Sheet itself declares all six sub-types as Livestock
+      children, the sheet's rows are returned; otherwise the app's built-in
+      defaults are returned. To edit the sub-filter, download this CSV, adjust
+      the ranges/weights/labels, paste the rows into the Intervention &
+      Variable Config Google Sheet, and hit Refresh on the /update page -
+      once the sheet declares all six sub-types it owns the configuration and
+      the built-in defaults are ignored.
+    responses:
+      200:
+        description: CSV file (columns of the dss_input sheet + parent)
+        schema: {type: string}
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
+    try:
+        df = load_metadata()
+        if 'parent' in df.columns:
+            rows = df[df['parent'].astype(str).str.strip().str.lower() == 'livestock']
+        else:
+            rows = df.iloc[0:0]
+        return Response(
+            rows.to_csv(index=False),
+            mimetype='text/csv',
+            headers={'Content-Disposition': 'attachment; filename=livestock_subfilter.csv'},
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+
 @interventions_bp.route('/api/variables')
 def api_variables():
     """Get all available variables from the shapefile.

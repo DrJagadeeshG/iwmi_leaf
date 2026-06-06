@@ -180,35 +180,6 @@
     color: var(--iwmi-dark-blue);
 }
 
-/* Main-map hover popup (app.map.js): the feature popup lists the active
- * variable values and is tall, so a Leaflet tooltip got clipped by the
- * map container (.leaflet-container is overflow:hidden). It is rendered as
- * a body-level fixed element instead, floating above all panels. */
-/* Docked hover-info panel: top-right corner of the map. It never moves, so
- * the cursor can simply travel over it and scroll long variable lists.
- * z-index 1000 floats it above Leaflet's panes (~200-700) and controls. */
-.map-hover-panel {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
-    width: 300px;
-    max-height: calc(100% - 20px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    background: rgba(255, 255, 255, 0.96);
-    border: 1px solid rgba(0,0,0,0.12);
-    border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-    padding: 10px 14px;
-    font-size: 0.85rem;
-    line-height: 1.5;
-}
-
-.map-hover-panel strong {
-    color: var(--iwmi-dark-blue);
-}
-
 /* Protected Areas toggle docked on the map (below the Leaflet zoom control,
  * which sits top-left with ~10px margins and is ~65px tall). */
 .map-overlay-control {
@@ -221,24 +192,6 @@
     border-radius: 6px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.15);
     padding: 6px 10px;
-}
-
-.map-hover-panel-close {
-    position: sticky;          /* stays visible while the list scrolls */
-    top: 0;
-    float: right;
-    margin: -4px -8px 0 8px;
-    border: none;
-    background: transparent;
-    font-size: 1.1rem;
-    line-height: 1;
-    color: #888;
-    cursor: pointer;
-    padding: 2px 4px;
-}
-
-.map-hover-panel-close:hover {
-    color: var(--iwmi-dark-blue);
 }
 
 /* District boundary labels */

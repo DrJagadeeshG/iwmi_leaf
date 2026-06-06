@@ -126,6 +126,13 @@ def api_clusters_list():
       are served as-is, so reloads never wipe edits and unchanged scopes aren't
       needlessly rebuilt. No explicit `POST /api/clusters/regenerate` is needed
       for routine viewing.
+
+      Each record carries three identifiers: `cluster_id` (stable internal
+      UUID key), `cluster_num`/`cluster_label` (within-tier sequence, `1`/`P1`)
+      and `cluster_code` - the human-readable unique code shown in the UI:
+      first two letters of district + block + commodity followed by the
+      sequence number (e.g. `MOBHGO01`; provisional `MOBHGOP01`). The code is
+      derived at read time, so CSV splits/merges renumber on the next read.
     parameters:
       - name: block
         in: query
@@ -181,6 +188,10 @@ def api_cluster_detail(cluster_id):
     tags:
       - Clusters
     summary: Get cluster by ID
+    description: |
+      Returns one cluster record by its internal `cluster_id`. The record also
+      carries the derived `cluster_num`/`cluster_label` (within-tier sequence)
+      and `cluster_code` (human-readable unique code, e.g. `MOBHGO01`).
     parameters:
       - name: cluster_id
         in: path
@@ -319,9 +330,13 @@ def api_clusters_export_csv():
       - Clusters
     summary: Export clusters CSV
     description: |
-      Produces a CSV with one row per (cluster, village). Columns: cluster_num,
-      cluster_id, commodity, district_name, block_name, gp_name, vill_name,
-      lat, long, members, pashu_sakhi, block_coordinator. Editors can change
+      Produces a CSV with one row per (cluster, village). Columns: cluster_code,
+      cluster_num, cluster_id, commodity, district_name, block_name, gp_name,
+      vill_name, lat, long, members, pashu_sakhi, block_coordinator.
+      `cluster_code` is the human-readable unique code (first two letters of
+      district + block + commodity, then the sequence number, e.g. `MOBHGO01`;
+      provisional tier carries a `P`, e.g. `MOBHGOP01`). It is display-only and
+      ignored on import - `cluster_id` remains the join key. Editors can change
       villages, member counts, fill in `pashu_sakhi` / `block_coordinator`, or
       append a row for a brand-new village discovered in the field by supplying
       its lat/long inline. Re-upload via `POST /api/clusters/import` to update
@@ -356,11 +371,17 @@ def api_clusters_export_csv():
             district_name=district,
         )
         # Mirror the lazy materialise in /api/clusters so the download CSV is
-        # never empty on first request for a freshly ingested block.
+        # never empty on first request for a freshly ingested block. Re-read
+        # through get_clusters afterwards so the rows carry the derived
+        # cluster_num/cluster_label/cluster_code fields (the raw regenerate
+        # payload has none of them).
         if not clusters and block:
-            clusters = regenerate_clusters(block_name=block, commodity=commodity)
-            if district:
-                clusters = [c for c in clusters if c.get('district_name') == district]
+            regenerate_clusters(block_name=block, commodity=commodity)
+            clusters = get_clusters(
+                block_name=block,
+                commodity=commodity,
+                district_name=district,
+            )
         csv_text = clusters_to_csv(clusters)
         scope = block or district or 'all'
         return Response(

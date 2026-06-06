@@ -574,6 +574,61 @@
                 </div>
             </div>
 
+            <!-- Livestock sub-filter config (06-Jun: editable via the sheet) -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="bi bi-piggy-bank"></i> Livestock Sub-filter
+                    </div>
+                </div>
+                <p style="color:#666; font-size:0.85rem; margin-bottom:1rem;">
+                    The Livestock dropdown's sub-categories (<strong>Dairy, Goatery, Piggery,
+                    Backyard_Poultry, Duckery, Fishery_Activity</strong>) have their own variable
+                    ranges and weights. They live in the <strong>Intervention &amp; Variable
+                    Config</strong> sheet as extra rows whose <code>parent</code> column is
+                    <code>Livestock</code> - same columns as the intervention rows above, one row
+                    per (sub-type, variable). While the sheet has no such rows, the app falls back
+                    to built-in defaults.
+                </p>
+
+                <table class="col-table">
+                    <thead><tr><th>Step</th><th>What to do</th></tr></thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td>Download the currently effective sub-filter rows with the button below.</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td>Edit ranges / weights / labels in Excel. Keep <code>Cluster</code> = sub-type name and <code>parent</code> = <code>Livestock</code>.</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td>Paste the rows at the bottom of the Intervention &amp; Variable Config sheet (add a <code>parent</code> column if missing).</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td>Click <strong>Refresh</strong>. Once all six sub-types exist in the sheet, the sheet owns the config and the built-in defaults are ignored.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="btn-group" style="margin-top: 1.25rem;">
+                    <a href="/api/livestock-subfilter.csv" class="btn btn-primary">
+                        <i class="bi bi-download"></i> Download Sub-filter CSV
+                    </a>
+                    <button class="btn btn-outline" onclick="refreshData()">
+                        <i class="bi bi-arrow-clockwise"></i> Refresh
+                    </button>
+                </div>
+
+                <div class="tip" style="margin-top: 1rem;">
+                    <strong>Tip:</strong> the downloaded file always reflects what the app is using
+                    right now - sheet rows when present, built-in defaults otherwise - so it is the
+                    safe starting point for edits.
+                </div>
+            </div>
+
         </div><!-- /left col-stack -->
 
         <!-- ==================== RIGHT COLUMN ==================== -->

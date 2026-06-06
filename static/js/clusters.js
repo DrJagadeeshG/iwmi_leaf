@@ -357,12 +357,6 @@
     async function refreshOpenButton() {
         const btn = $('open-cluster-planner');
         if (!btn) return;
-        // TEMP (2026-06-05): Cluster Planning button hidden while the in-page
-        // block→cluster drill-down view is rolled out. Remove this early
-        // return to restore the button (the /clustering page itself stays
-        // reachable by URL).
-        btn.style.display = 'none';
-        if (true) return;
         const raw = activeBlockName();
         const canonical = await blockHasVillages(raw);
         if (!canonical) {
@@ -525,9 +519,11 @@
             pointToLayer: (feat, latlng) => {
                 const p = feat.properties || {};
                 const members = memberKeyForCurrent(p);
+                // 06-Jun feedback: keep dots small (3-8px, was 4-14px) so the
+                // cluster rings stay readable - big member-bubbles swamped them.
                 const radius = local.currentCommodity
-                    ? Math.max(4, Math.min(14, 4 + Math.sqrt(members) * 1.2))
-                    : 5;
+                    ? Math.max(3, Math.min(8, 3 + Math.sqrt(members) * 0.7))
+                    : 4;
                 // Grey by default; in commodity-mode interested villages take
                 // the commodity colour and no-interest villages are dimmed grey
                 // so the active commodity stands out (LEAF-46).
@@ -640,6 +636,9 @@
     // Provisional badge still rides alongside. Falls back to cluster_num, then
     // cluster_id, for older payloads.
     function clusterLabel(c) {
+        // cluster_code is the human-readable unique ID (e.g. MOBHGO01,
+        // Faiz 2026-06-06); legacy payloads fall back to "Cluster <label>".
+        if (c.cluster_code != null) return String(c.cluster_code);
         const lbl = c.cluster_label != null ? c.cluster_label
                   : (c.cluster_num != null ? String(c.cluster_num) : null);
         return lbl == null ? c.cluster_id : `Cluster ${lbl}`;
@@ -905,7 +904,7 @@
                     weight: 3.5,
                     fillOpacity: 0.95,
                 });
-                l.setRadius(Math.max(l.__origStyle.radius + 3, 8));
+                l.setRadius(Math.max(l.__origStyle.radius + 2, 6));
                 if (l.bringToFront) l.bringToFront();
             } else {
                 l.setStyle({
