@@ -436,7 +436,9 @@
                 if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
                 pts.push([lat, lng]);
                 var dot = L.circleMarker([lat, lng], {
-                    radius: Math.max(5, Math.min(14, 4 + Math.sqrt(Number(v.members) || 0) * 1.2)),
+                    // 06-Jun feedback: small dots (3-8px, mirrors clusters.js)
+                    // so the cluster rings read clearly.
+                    radius: Math.max(3, Math.min(8, 3 + Math.sqrt(Number(v.members) || 0) * 0.7)),
                     color: '#243240', weight: 1,
                     fillColor: COMMODITY_COLOR[c.commodity] || '#0297A6',
                     fillOpacity: 0.85,
