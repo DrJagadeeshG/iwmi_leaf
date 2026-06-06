@@ -35,6 +35,26 @@ function aggregateBlockProps(feats, districtName) {
     return props;
 }
 
+// District feasibility mirrors the backend block formula (feasibility.py
+// calculate_feasibility): the weighted share of active filters whose
+// district-level value (the per-variable average across blocks shown on the
+// cards) falls inside its range. It was previously the plain mean of the
+// block feasibility scores, which never reconciled with the ✓/✗ marks the
+// district cards display right next to the badge (06-Jun feedback: "numbers
+// are not matching for district/block view").
+function districtFeasibilityFromProps(props) {
+    const filters = state.currentFilters || [];
+    let matched = 0, applicable = 0;
+    filters.forEach(f => {
+        const v = Number(props[f.column]);
+        if (!Number.isFinite(v)) return;   // no data for this variable: skip, like the backend
+        const w = Number(f.weight) || 1;
+        applicable += w;
+        if (v >= f.min_val && v <= f.max_val) matched += w;
+    });
+    return applicable > 0 ? (matched / applicable) * 100 : null;
+}
+
 function showDistrictDetailView(districtName) {
     // Gather this district's block features from the current map layer.
     const feats = [];
@@ -69,7 +89,13 @@ function showDistrictDetailView(districtName) {
 }
 
 function renderDistrictDetail(props, feats) {
-    const feas = Number.isFinite(props.feasibility) ? props.feasibility : null;
+    // Derive the badge from the same averaged values the cards show (see
+    // districtFeasibilityFromProps) so badge, ✓/✗ marks and outside-range
+    // counters all tell one story. props.feasibility (the mean of block
+    // scores from aggregation) is overwritten so AI insights and the summary
+    // report quote the same number as the badge.
+    const feas = districtFeasibilityFromProps(props);
+    props.feasibility = feas;
     const { label, color } = classifyFeasibilityFE(feas);
     props.feasibility_label = label;
     props.feasibility_color = color;
