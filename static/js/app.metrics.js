@@ -18,14 +18,19 @@ function renderActiveMetricsByGroup(props) {
         'Other': 'bi-grid'
     };
 
-    // Container IDs mapping
+    // Container IDs mapping. Soil/Climate/Other have their own cards so
+    // Configure-added variables in those groups actually show up (they were
+    // silently skipped before — groups without a card never rendered).
     const groupContainers = {
         'Land & Agri': 'land-agri-metrics',
         'Water': 'water-metrics',
         'Infrastructure': 'infrastructure-metrics',
         'Livestock': 'livestock-metrics',
         'People': 'people-metrics',
-        'MMUA Scheme': 'mmua-metrics'
+        'MMUA Scheme': 'mmua-metrics',
+        'Soil': 'soil-metrics',
+        'Climate': 'climate-metrics',
+        'Other': 'other-metrics'
     };
 
     // Count IDs mapping
@@ -35,7 +40,10 @@ function renderActiveMetricsByGroup(props) {
         'Infrastructure': 'count-infrastructure',
         'Livestock': 'count-livestock',
         'People': 'count-people',
-        'MMUA Scheme': 'count-mmua'
+        'MMUA Scheme': 'count-mmua',
+        'Soil': 'count-soil',
+        'Climate': 'count-climate',
+        'Other': 'count-other'
     };
 
     // Clear all containers and counts first
