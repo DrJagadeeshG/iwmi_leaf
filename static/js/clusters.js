@@ -156,7 +156,9 @@
         currentDistrict: null,
         currentCommodity: '',
         modalMap: null,
-        boundaryLayer: null,
+        // boundaryLayer removed 07-Jun: boundary/GP polygons are no longer drawn
+        // on the planner map (inaccurate shapefiles). boundaryBounds is still
+        // used to fit the map to the block extent.
         boundaryBounds: null,
         villageLayer: null,
         clusterLayer: null,
@@ -385,7 +387,6 @@
             local.modalMap.remove();
             local.modalMap = null;
         }
-        local.boundaryLayer = null;
         local.villageLayer = null;
         local.clusterLayer = null;
     }
@@ -438,72 +439,22 @@
     }
 
     /**
-     * Add the block boundary polygon and (when available) the GP polygons inside.
+     * Fit the map to the block extent WITHOUT drawing any boundary polygons.
+     *
+     * Client 07-Jun: the block/GP shapefile boundaries are inaccurate — villages
+     * plot outside them, which makes the map look broken. So we no longer add the
+     * block outline, the GP polygons, or the permanent GP-name labels (those were
+     * bound to the GP polygons and go away with them). We still use the block
+     * geometry purely to compute bounds so the map centres on the block extent;
+     * we do not fetch /api/gp/geojson anymore since nothing draws it.
      */
     async function renderBoundaries() {
         if (!local.modalMap) return;
         const blockFeature = await blockFeatureFor(local.currentBlock);
         if (!blockFeature) return;
-        const s = appState();
 
-        const layers = [];
-
-        const blockLayer = L.geoJSON(blockFeature, {
-            style: {
-                color: '#28537D',
-                weight: 2.5,
-                fillColor: '#0297A6',
-                fillOpacity: 0.08,
-                interactive: false,
-            },
-        });
-        layers.push(blockLayer);
-
-        // GP polygons inside the block (Tinsukia today; safe no-op elsewhere).
-        const districtName = (blockFeature.properties && blockFeature.properties.Dist_Name) || '';
-        const gpDistricts = (s && s.gpDistricts) || [];
-        if (s && s.gpAvailable && gpDistricts.includes(districtName)) {
-            try {
-                const r = await fetch('/api/gp/geojson');
-                const gp = await r.json();
-                if (gp && Array.isArray(gp.features)) {
-                    const blockGPs = {
-                        type: 'FeatureCollection',
-                        features: gp.features.filter(f =>
-                            (f.properties && f.properties.Block_Name) === blockFeature.properties.Block_name),
-                    };
-                    if (blockGPs.features.length) {
-                        const gpLayer = L.geoJSON(blockGPs, {
-                            style: {
-                                color: '#1b5e20',
-                                weight: 1.2,
-                                fillColor: '#a5d6a7',
-                                fillOpacity: 0.15,
-                                interactive: false,
-                            },
-                            // 07-Jun feedback: show the GP name as a small,
-                            // permanent map label (class cluster-gp-label keeps the
-                            // font tiny) so it doesn't compete with the cluster rings.
-                            onEachFeature: (feat, layer) => {
-                                const gpName = (feat.properties && (feat.properties.GP_NAME || feat.properties.GP_Name)) || '';
-                                if (gpName) {
-                                    layer.bindTooltip(String(gpName), {
-                                        permanent: true,
-                                        direction: 'center',
-                                        className: 'cluster-gp-label',
-                                    });
-                                }
-                            },
-                        });
-                        layers.push(gpLayer);
-                    }
-                }
-            } catch (e) {
-                console.warn('GP polygon fetch failed in cluster modal:', e);
-            }
-        }
-
-        local.boundaryLayer = L.layerGroup(layers).addTo(local.modalMap);
+        // Build the block geometry off-map only to read its bounds, then fit.
+        const blockLayer = L.geoJSON(blockFeature);
         try {
             local.boundaryBounds = blockLayer.getBounds();
             local.modalMap.fitBounds(local.boundaryBounds, { padding: [40, 40] });
