@@ -284,7 +284,6 @@
             var g = (v.gp_name || '').trim();
             if (g && gpNames.indexOf(g) === -1) gpNames.push(g);
         });
-        var gpText = gpNames.length ? gpNames.join(', ') : '—';
         // Match the mock's 1-decimal "8.2 km" (stored value carries up to 3dp).
         var span = (c.max_span_km != null)
             ? (Number(c.max_span_km).toFixed(1) + ' km') : '—';
@@ -297,7 +296,7 @@
             '<span class="cluster-id-ribbon" data-tooltip="Cluster ID">' +
                 '<i class="bi bi-diagram-3"></i> ' + esc(String(clusterDisplay(c))) + '</span>' +
             tile(villages.length, 'Villages') +
-            tile(esc(gpText), 'Gram Panchayat') +
+            gpTile(gpNames) +
             tile(Number(c.total_members || 0).toLocaleString(), 'Members') +
             tile(esc(span), 'Max span');
 
@@ -315,6 +314,21 @@
         return '<div class="cluster-stat-tile">' +
             '<div class="cluster-stat-value">' + value + '</div>' +
             '<div class="cluster-stat-label">' + label + '</div>' +
+            '</div>';
+    }
+
+    // 07-Jun feedback: long multi-GP names as the tile's big value blew the
+    // ribbon apart. The GP tile is now numeric like its siblings, with the
+    // names on one ellipsized sub-line and the full list in a hover tooltip.
+    function gpTile(gpNames) {
+        var count = gpNames.length;
+        var namesText = count ? gpNames.join(', ') : '—';
+        return '<div class="cluster-stat-tile" data-tooltip="' + esc(namesText) + '"' +
+            ' data-tooltip-wrap data-tooltip-below>' +
+            '<div class="cluster-stat-value">' + (count || '—') + '</div>' +
+            '<div class="cluster-stat-label">' +
+                (count === 1 ? 'Gram Panchayat' : 'Gram Panchayats') + '</div>' +
+            '<div class="cluster-stat-sub">' + esc(namesText) + '</div>' +
             '</div>';
     }
 
