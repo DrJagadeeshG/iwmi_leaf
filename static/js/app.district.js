@@ -111,13 +111,13 @@ function renderDistrictDetail(props, feats) {
     // No GP dropdown at district level.
     document.getElementById('block-gp-select').style.display = 'none';
 
-    const totalOutside = renderActiveMetricsByGroup(props);
+    const { outside: totalOutside, rendered: totalRendered } = renderActiveMetricsByGroup(props);
 
     // District-level AI Insights (LEAF #1) + feasibility summary sentence (#21).
     // Reuse /api/ai-recommendation with aggregated district props: present the
     // district name as the "block" so the request + modal header are district-level.
     const aiProps = Object.assign({}, props, { Block_name: props.Dist_Name });
-    renderRecommendations(aiProps, null, { outsideCount: totalOutside, scope: 'this district' });
+    renderRecommendations(aiProps, null, { outsideCount: totalOutside, renderedCount: totalRendered, scope: 'this district' });
 
     initDistrictMiniMap(feats);
 }

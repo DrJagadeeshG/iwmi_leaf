@@ -52,11 +52,12 @@ function renderActiveMetricsByGroup(props) {
     });
 
     let totalOutsideCount = 0;
+    let totalRenderedCount = 0;
 
     // If no filters, show all available data from the block
     if (!state.currentFilters || state.currentFilters.length === 0) {
         renderAllBlockMetrics(props, groupContainers);
-        return totalOutsideCount;
+        return { outside: totalOutsideCount, rendered: totalRenderedCount };
     }
 
     // Group active filters by their group
@@ -92,8 +93,9 @@ function renderActiveMetricsByGroup(props) {
             max: f.max_val
         }));
 
-        const { outside } = renderMetricItemsWithStatus(container, props, metrics);
+        const { outside, total } = renderMetricItemsWithStatus(container, props, metrics);
         totalOutsideCount += outside;
+        totalRenderedCount += total;
 
         // Update count in header
         if (countEl && outside > 0) {
@@ -101,7 +103,10 @@ function renderActiveMetricsByGroup(props) {
         }
     });
 
-    return totalOutsideCount;
+    // rendered = variables that actually have data for this scope. The
+    // feasibility summary uses it as denominator so its % matches the
+    // backend feasibility score (which excludes no-data variables).
+    return { outside: totalOutsideCount, rendered: totalRenderedCount };
 }
 
 // Render all available block metrics when no filters applied

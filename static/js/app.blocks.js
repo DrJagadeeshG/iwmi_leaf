@@ -51,7 +51,7 @@ function renderBlockDetail(feature) {
     }
 
     // Render metrics by category (dynamic based on active filters)
-    const totalOutside = renderActiveMetricsByGroup(props);
+    const { outside: totalOutside, rendered: totalRendered } = renderActiveMetricsByGroup(props);
 
     // Reset to block view (hide any cluster cards) and refresh the cluster
     // dropdown for this block + active commodity (LEAF-53).
@@ -59,7 +59,7 @@ function renderBlockDetail(feature) {
     updateBlockClusterDropdown(blockName);
 
     // Render recommendations (pass feature for map + feasibility summary sentence #21)
-    renderRecommendations(props, feature, { outsideCount: totalOutside, scope: 'this block' });
+    renderRecommendations(props, feature, { outsideCount: totalOutside, renderedCount: totalRendered, scope: 'this block' });
 }
 
 // =============================================================================
