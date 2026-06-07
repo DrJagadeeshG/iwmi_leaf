@@ -50,10 +50,14 @@
     // record may carry its own `links.{mmua,infrastructure,members}` (populated
     // by ASRLM later); when neither is present the link renders disabled with
     // "Link pending (ASRLM)". Build the plumbing, not the data.
+    //
+    // INTERIM LINKS (per client request, Jun 2026): until ASRLM supplies
+    // per-cluster data, each linked card points to a shared Google Sheet.
+    // These are temporary placeholders — swap/clear them when real data lands.
     var DEFAULT_CARD_LINKS = {
-        mmua: '',
-        infrastructure: '',
-        members: '',
+        mmua: 'https://docs.google.com/spreadsheets/d/1SzF1Sy0k31_RccOVp9jtPbQTouw0iX_T/edit?usp=drive_link&ouid=115622155937193541879&rtpof=true&sd=true',
+        infrastructure: 'https://docs.google.com/spreadsheets/d/1U-7lD9gLSrMW55gG4j17MBsJjNMc9bX5/edit?usp=drive_link&ouid=115622155937193541879&rtpof=true&sd=true',
+        members: 'https://docs.google.com/spreadsheets/d/1vHbbzT_CapzZDUKBDmusgLnfEwlgS-_H/edit?usp=drive_link&ouid=115622155937193541879&rtpof=true&sd=true',
     };
 
     // Module-local state. `state` (global) holds the cross-cutting app state;
