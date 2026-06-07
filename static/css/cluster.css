@@ -486,21 +486,8 @@
     flex-wrap: wrap;
     margin-bottom: 10px;
 }
-/* 07-Jun feedback: GP name labels on the clustering maps are small and
-   unobtrusive (tiny font, no box) so the cluster rings dominate visually. */
-.cluster-gp-label {
-    font-size: 9px;
-    font-weight: 500;
-    color: #1b5e20;
-    background: transparent;
-    border: none;
-    box-shadow: none;
-    padding: 0;
-    white-space: nowrap;
-    pointer-events: none;
-    text-shadow: 0 0 2px #fff, 0 0 2px #fff, 0 0 3px #fff;
-}
-.cluster-gp-label::before { display: none; }
+/* GP name labels removed 07-Jun: the GP polygons they were bound to are no
+   longer drawn on the planner map (inaccurate shapefile boundaries). */
 
 .cluster-upload-status {
     font-size: 0.85rem;

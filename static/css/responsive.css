@@ -152,7 +152,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 14px 22px;
+    /* 07-Jun feedback: taller ribbon so the header/filter bar breathes. */
+    padding: 22px 22px;
     background: linear-gradient(90deg, #28537D, #5088C6);
     color: #fff;
 }
@@ -197,12 +198,16 @@
 }
 
 .cluster-modal-controls select {
-    padding: 7px 12px;
+    /* 07-Jun feedback: wider, larger-font dropdowns so they read comfortably.
+       The controls row already wraps (flex-wrap above), so on a 1366px laptop
+       these wrap to a second line rather than overflowing the ribbon. */
+    padding: 9px 14px;
+    min-width: 160px;
     border-radius: 4px;
     border: 1px solid rgba(255, 255, 255, 0.4);
     background: #fff;
     color: #28537D;
-    font-size: clamp(13px, 0.95vw, 15px);
+    font-size: clamp(15px, 1vw, 16px);
     cursor: pointer;
 }
 
