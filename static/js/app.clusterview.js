@@ -288,9 +288,9 @@
         var span = (c.max_span_km != null)
             ? (Number(c.max_span_km).toFixed(1) + ' km') : '—';
 
+        // 07-Jun: no "← All clusters" back link - the Cluster dropdown in the
+        // filter bar is the way back (pick "All clusters" there).
         tiles.innerHTML =
-            '<a href="#" class="cluster-tiles-back" id="cluster-tiles-back">' +
-                '<i class="bi bi-arrow-left"></i> All clusters</a>' +
             // 07-Jun feedback: surface the cluster's ID (cluster_code) in the
             // ribbon when a cluster is selected.
             '<span class="cluster-id-ribbon" data-tooltip="Cluster ID">' +
@@ -302,12 +302,6 @@
 
         if (ribbon) ribbon.style.display = 'none';
         tiles.style.display = '';
-
-        var back = document.getElementById('cluster-tiles-back');
-        if (back) back.addEventListener('click', function (e) {
-            e.preventDefault();
-            selectCluster(null);
-        });
     }
 
     function tile(value, label) {

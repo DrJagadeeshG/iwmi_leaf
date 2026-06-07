@@ -404,18 +404,6 @@
     width: 100%;
     flex-wrap: wrap;
 }
-.cluster-stat-tiles .cluster-tiles-back {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    align-self: center;
-    color: var(--iwmi-dark-blue, #28537D);
-    font-size: 0.85rem;
-    font-weight: 600;
-    text-decoration: none;
-    white-space: nowrap;
-}
-.cluster-stat-tiles .cluster-tiles-back:hover { text-decoration: underline; }
 /* 07-Jun feedback: the selected cluster's ID, shown in the ribbon. */
 .cluster-id-ribbon {
     display: inline-flex;
