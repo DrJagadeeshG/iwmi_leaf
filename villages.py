@@ -79,13 +79,18 @@ def load_shg_kobo() -> pd.DataFrame:
 
 
 def block_shg_summary(block_name: str) -> Dict:
-    """Aggregate SHG counts for one block, shaped for the right-side panel."""
+    """Aggregate SHG counts for one block, shaped for the right-side panel.
+
+    Prefers the raw Kobo sidecar dump (richer: per-activity breakdown); blocks
+    only present in the June-2 village master (most of the 173) fall back to
+    aggregating villages.csv so the panel shows real numbers instead of
+    "No SHG form data" (Faiz, Boginodi report 07-Jun)."""
     df = load_shg_kobo()
     if df.empty:
-        return {"block_name": block_name, "available": False}
+        return _village_master_summary(block_name)
     sub = df[df["block_name"].str.upper() == block_name.upper()]
     if sub.empty:
-        return {"block_name": block_name, "available": False}
+        return _village_master_summary(block_name)
 
     has_gps = sub["lat"].notna() & sub["long"].notna()
     activities_raw = {
@@ -113,6 +118,38 @@ def block_shg_summary(block_name: str) -> Dict:
         "commodities": commodities,
         "other": other,
         "activities_raw": activities_raw,
+    }
+
+
+def _village_master_summary(block_name: str) -> Dict:
+    """SHG summary built from villages.csv for blocks absent from the Kobo
+    sidecar. Same shape as the Kobo path; commodity totals are the master's
+    aggregated counts, so there is no per-activity "other" breakdown."""
+    df = load_villages()
+    sub = df[df["block_name"].astype(str).str.upper() == str(block_name).upper()]
+    if sub.empty:
+        return {"block_name": block_name, "available": False}
+
+    has_gps = sub["lat"].notna() & sub["long"].notna()
+    commodities = {
+        c: int(pd.to_numeric(sub[c], errors="coerce").fillna(0).sum())
+        for c in _COMMODITY_MAP if c in sub.columns
+    }
+
+    return {
+        "district_name": str(sub["district_name"].iloc[0]),
+        "block_name": str(sub["block_name"].iloc[0]),
+        "available": True,
+        "source": "village_master",
+        "villages_total": int(len(sub)),
+        "villages_with_gps": int(has_gps.sum()),
+        "villages_without_gps": int((~has_gps).sum()),
+        "gp_count": int(sub["gp_name"].nunique()),
+        "gps": sorted(sub["gp_name"].dropna().unique().tolist()),
+        "members_total": int(sum(commodities.values())),
+        "commodities": commodities,
+        "other": {},
+        "activities_raw": {},
     }
 
 
