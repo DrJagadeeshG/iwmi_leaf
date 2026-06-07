@@ -448,6 +448,17 @@
     line-height: 1.1;
     word-break: break-word;
 }
+/* GP names under the count: one ellipsized line so long names can't blow
+   up the ribbon (the full list shows in the tile's hover tooltip). */
+.cluster-stat-sub {
+    margin-top: 0.2rem;
+    font-size: 0.72rem;
+    color: #6b7785;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
 .cluster-stat-label {
     margin-top: 0.25rem;
     font-size: 0.75rem;
