@@ -130,9 +130,10 @@ def api_clusters_list():
       Each record carries three identifiers: `cluster_id` (stable internal
       UUID key), `cluster_num`/`cluster_label` (within-tier sequence, `1`/`P1`)
       and `cluster_code` - the human-readable unique code shown in the UI:
-      first two letters of district + block + commodity followed by the
-      sequence number (e.g. `MOBHGO01`; provisional `MOBHGOP01`). The code is
-      derived at read time, so CSV splits/merges renumber on the next read.
+      hyphen-separated first two letters of district + block + commodity
+      (intervention type) followed by the sequence number (e.g. `MO-BH-GO-01`;
+      provisional `MO-BH-GO-P01`). The code is derived at read time, so CSV
+      splits/merges renumber on the next read.
     parameters:
       - name: block
         in: query
@@ -191,7 +192,7 @@ def api_cluster_detail(cluster_id):
     description: |
       Returns one cluster record by its internal `cluster_id`. The record also
       carries the derived `cluster_num`/`cluster_label` (within-tier sequence)
-      and `cluster_code` (human-readable unique code, e.g. `MOBHGO01`).
+      and `cluster_code` (human-readable unique code, e.g. `MO-BH-GO-01`).
     parameters:
       - name: cluster_id
         in: path
@@ -333,9 +334,10 @@ def api_clusters_export_csv():
       Produces a CSV with one row per (cluster, village). Columns: cluster_code,
       cluster_num, cluster_id, commodity, district_name, block_name, gp_name,
       vill_name, lat, long, members, pashu_sakhi, block_coordinator.
-      `cluster_code` is the human-readable unique code (first two letters of
-      district + block + commodity, then the sequence number, e.g. `MOBHGO01`;
-      provisional tier carries a `P`, e.g. `MOBHGOP01`). It is display-only and
+      `cluster_code` is the human-readable unique code (hyphen-separated first
+      two letters of district + block + commodity, then the sequence number,
+      e.g. `MO-BH-GO-01`; provisional tier carries a `P`, e.g. `MO-BH-GO-P01`).
+      It is display-only and
       ignored on import - `cluster_id` remains the join key. Editors can change
       villages, member counts, fill in `pashu_sakhi` / `block_coordinator`, or
       append a row for a brand-new village discovered in the field by supplying

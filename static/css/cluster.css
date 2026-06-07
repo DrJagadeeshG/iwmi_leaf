@@ -416,6 +416,21 @@
     white-space: nowrap;
 }
 .cluster-stat-tiles .cluster-tiles-back:hover { text-decoration: underline; }
+/* 07-Jun feedback: the selected cluster's ID, shown in the ribbon. */
+.cluster-id-ribbon {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    align-self: center;
+    padding: 0.3rem 0.7rem;
+    border-radius: 6px;
+    background: var(--iwmi-dark-blue, #28537D);
+    color: #fff;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
 .cluster-stat-tile {
     flex: 1 1 0;
     min-width: 130px;
@@ -472,6 +487,22 @@
     flex-wrap: wrap;
     margin-bottom: 10px;
 }
+/* 07-Jun feedback: GP name labels on the clustering maps are small and
+   unobtrusive (tiny font, no box) so the cluster rings dominate visually. */
+.cluster-gp-label {
+    font-size: 9px;
+    font-weight: 500;
+    color: #1b5e20;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    padding: 0;
+    white-space: nowrap;
+    pointer-events: none;
+    text-shadow: 0 0 2px #fff, 0 0 2px #fff, 0 0 3px #fff;
+}
+.cluster-gp-label::before { display: none; }
+
 .cluster-upload-status {
     font-size: 0.85rem;
     color: #555;

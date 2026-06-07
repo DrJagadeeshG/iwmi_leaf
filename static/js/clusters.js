@@ -481,6 +481,19 @@
                                 fillOpacity: 0.15,
                                 interactive: false,
                             },
+                            // 07-Jun feedback: show the GP name as a small,
+                            // permanent map label (class cluster-gp-label keeps the
+                            // font tiny) so it doesn't compete with the cluster rings.
+                            onEachFeature: (feat, layer) => {
+                                const gpName = (feat.properties && (feat.properties.GP_NAME || feat.properties.GP_Name)) || '';
+                                if (gpName) {
+                                    layer.bindTooltip(String(gpName), {
+                                        permanent: true,
+                                        direction: 'center',
+                                        className: 'cluster-gp-label',
+                                    });
+                                }
+                            },
                         });
                         layers.push(gpLayer);
                     }
@@ -519,11 +532,12 @@
             pointToLayer: (feat, latlng) => {
                 const p = feat.properties || {};
                 const members = memberKeyForCurrent(p);
-                // 06-Jun feedback: keep dots small (3-8px, was 4-14px) so the
-                // cluster rings stay readable - big member-bubbles swamped them.
+                // 07-Jun feedback: shrink dots further (2-5px, was 3-8px) so the
+                // cluster rings clearly dominate the map - member-bubbles were
+                // still crowding the rings.
                 const radius = local.currentCommodity
-                    ? Math.max(3, Math.min(8, 3 + Math.sqrt(members) * 0.7))
-                    : 4;
+                    ? Math.max(2, Math.min(5, 2 + Math.sqrt(members) * 0.5))
+                    : 3;
                 // Grey by default; in commodity-mode interested villages take
                 // the commodity colour and no-interest villages are dimmed grey
                 // so the active commodity stands out (LEAF-46).
@@ -636,8 +650,8 @@
     // Provisional badge still rides alongside. Falls back to cluster_num, then
     // cluster_id, for older payloads.
     function clusterLabel(c) {
-        // cluster_code is the human-readable unique ID (e.g. MOBHGO01,
-        // Faiz 2026-06-06); legacy payloads fall back to "Cluster <label>".
+        // cluster_code is the human-readable unique ID (e.g. MO-BH-GO-01,
+        // Faiz 2026-06-07); legacy payloads fall back to "Cluster <label>".
         if (c.cluster_code != null) return String(c.cluster_code);
         const lbl = c.cluster_label != null ? c.cluster_label
                   : (c.cluster_num != null ? String(c.cluster_num) : null);
@@ -761,6 +775,7 @@
         // Any prior village highlight belongs to the previous commodity's
         // active cluster - reset before we re-render.
         clearVillageHighlight();
+        setHeaderClusterId(null);
         local.activeClusterId = null;
         if (!local.currentBlock || !local.currentCommodity) {
             updateSummary(0);
@@ -835,6 +850,7 @@
         renderClusterSummaryPanel(c);
         highlightClusterVillages(c);
         highlightClusterRing(c);
+        setHeaderClusterId(c);
         // Keep the jump dropdown in sync if the click came from elsewhere.
         const sel = $('cluster-jump-select');
         if (sel && c.cluster_id) sel.value = c.cluster_id;
@@ -843,6 +859,21 @@
                 && local.clusterRegistry[String(c.cluster_id).toLowerCase()];
             if (hit) panToCluster(hit);
         }
+    }
+
+    // 07-Jun feedback: show the selected cluster's ID (cluster_code) in the
+    // top header ribbon. Pass null to clear it (e.g. when the commodity or
+    // block changes and no cluster is selected).
+    function setHeaderClusterId(c) {
+        const el = $('cluster-modal-id');
+        if (!el) return;
+        if (!c) {
+            el.style.display = 'none';
+            el.textContent = '';
+            return;
+        }
+        el.innerHTML = '<i class="bi bi-diagram-3"></i> ' + escapeHtml(String(clusterLabel(c)));
+        el.style.display = '';
     }
 
     // LEAF-45: darken the selected cluster's ring (and reset all the others)

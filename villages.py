@@ -235,20 +235,20 @@ def _fetch_villages(cluster_ids: List[str]) -> Dict[str, List[Dict]]:
 
 
 def _cluster_code(c: Dict) -> str:
-    """Human-readable unique cluster code (Faiz 2026-06-06): first two letters
-    of district + block + commodity, then the within-tier sequence number -
-    e.g. MOBHGO01 (MOrigaon / BHurbandha / GOatery / fundable #1) and
-    MOBHGOP01 for the provisional tier. Derived at read time from cluster_num,
-    so CSV splits/merges renumber cleanly on the next read; cluster_id stays
-    the stable internal key."""
+    """Human-readable unique cluster code (Faiz 2026-06-07): hyphen-separated -
+    first two letters of district + block + commodity (intervention type), then
+    the within-tier sequence number - e.g. MO-BH-GO-01 (MOrigaon / BHurbandha /
+    GOatery / fundable #1) and MO-BH-GO-P01 for the provisional tier. Derived at
+    read time from cluster_num, so CSV splits/merges renumber cleanly on the next
+    read; cluster_id stays the stable internal key."""
     def two(s: Optional[str]) -> str:
         letters = "".join(ch for ch in str(s or "") if ch.isalpha())
         return (letters[:2] or "XX").upper()
     tier = "P" if c.get("provisional") else ""
     num = int(c.get("cluster_num") or 0)
     return (
-        f"{two(c.get('district_name'))}{two(c.get('block_name'))}"
-        f"{two(c.get('commodity'))}{tier}{num:02d}"
+        f"{two(c.get('district_name'))}-{two(c.get('block_name'))}-"
+        f"{two(c.get('commodity'))}-{tier}{num:02d}"
     )
 
 
