@@ -168,6 +168,104 @@ def api_livestock_subfilter_csv():
 
 
 
+@interventions_bp.route('/api/livestock-subfilter', methods=['POST'])
+def api_upload_livestock_subfilter():
+    """Upload a new Livestock sub-filter configuration CSV (admin only).
+    ---
+    tags:
+      - Interventions
+    summary: Upload livestock sub-filter CSV
+    description: >
+      Admin-only. Accepts an edited Livestock sub-filter CSV (the file produced
+      by `GET /api/livestock-subfilter.csv`) as multipart/form-data field
+      `file`, validates it, and persists it to the app's sub-filter store
+      (`data/livestock_subfilter.csv`). The dss_input cache is then refreshed so
+      the new ranges/weights/labels take effect immediately, with no redeploy.
+
+      This makes the six Livestock commodities (Dairy, Goatery, Piggery,
+      Backyard_Poultry, Duckery, Fishery_Activity) fully data-driven from the
+      /update page: download, edit, upload. The stored CSV is the overlay source
+      used whenever the dss_input Google Sheet does not itself declare all six
+      sub-types as Livestock children. Requires the admin guard (`?admin=1`
+      query param or `X-Admin: 1` header).
+
+      Validation rejects the upload (400) unless: the required columns
+      (Cluster, I_variable, range_min, range_max, parent) are present; every
+      row has parent=Livestock; all six commodities are present with at least
+      one variable row each; and range_min/range_max are numeric with
+      range_min <= range_max.
+    consumes:
+      - multipart/form-data
+    parameters:
+      - in: formData
+        name: file
+        type: file
+        required: true
+        description: The edited Livestock sub-filter CSV.
+    responses:
+      200:
+        description: Upload accepted and persisted; config now in effect.
+        schema:
+          type: object
+          properties:
+            ok:
+              type: boolean
+            rows:
+              type: integer
+              description: Number of data rows persisted.
+            message:
+              type: string
+      400:
+        description: No file provided, or the CSV failed validation.
+        schema:
+          $ref: '#/definitions/Error'
+      403:
+        description: Caller is not an admin.
+        schema:
+          $ref: '#/definitions/Error'
+      500:
+        description: Server error while saving the configuration.
+        schema:
+          $ref: '#/definitions/Error'
+    """
+    from data_utils import validate_livestock_subfilter_csv, save_livestock_subfilter_csv
+
+    if not _is_admin_request():
+        return jsonify({'error': 'Admin access required.'}), 403
+
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file provided. Use multipart/form-data field "file".'}), 400
+
+    upload = request.files['file']
+    if not upload or not upload.filename:
+        return jsonify({'error': 'No file selected.'}), 400
+
+    try:
+        text = upload.read().decode('utf-8-sig')
+    except Exception:
+        return jsonify({'error': 'Could not read the file as UTF-8 text.'}), 400
+
+    df, error = validate_livestock_subfilter_csv(text)
+    if error:
+        return jsonify({'error': error}), 400
+
+    try:
+        save_livestock_subfilter_csv(df)
+        # Drop the dss_input cache so the overlay re-reads the new file at once.
+        from google_sheets import refresh
+        refresh('dss_input')
+    except Exception as e:
+        return jsonify({'error': f'Failed to save the configuration: {e}'}), 500
+
+    return jsonify({
+        'ok': True,
+        'rows': int(len(df)),
+        'message': 'Livestock sub-filter updated. The new configuration is now in effect.',
+    })
+
+
+
+
 @interventions_bp.route('/api/variables')
 def api_variables():
     """Get all available variables from the shapefile.

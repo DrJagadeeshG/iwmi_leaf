@@ -584,11 +584,9 @@
                 <p style="color:#666; font-size:0.85rem; margin-bottom:1rem;">
                     The Livestock dropdown's sub-categories (<strong>Dairy, Goatery, Piggery,
                     Backyard_Poultry, Duckery, Fishery_Activity</strong>) have their own variable
-                    ranges and weights. They live in the <strong>Intervention &amp; Variable
-                    Config</strong> sheet as extra rows whose <code>parent</code> column is
-                    <code>Livestock</code> - same columns as the intervention rows above, one row
-                    per (sub-type, variable). While the sheet has no such rows, the app falls back
-                    to built-in defaults.
+                    ranges and weights. Edit them right here: download the current configuration,
+                    adjust the ranges / weights / labels in Excel, and upload the file back. The new
+                    settings take effect immediately - no redeploy needed.
                 </p>
 
                 <table class="col-table">
@@ -600,15 +598,11 @@
                         </tr>
                         <tr>
                             <td>2</td>
-                            <td>Edit ranges / weights / labels in Excel. Keep <code>Cluster</code> = sub-type name and <code>parent</code> = <code>Livestock</code>.</td>
+                            <td>Edit ranges / weights / labels in Excel. Keep <code>Cluster</code> = sub-type name and <code>parent</code> = <code>Livestock</code>, and keep all six commodities.</td>
                         </tr>
                         <tr>
                             <td>3</td>
-                            <td>Paste the rows at the bottom of the Intervention &amp; Variable Config sheet (add a <code>parent</code> column if missing).</td>
-                        </tr>
-                        <tr>
-                            <td>4</td>
-                            <td>Click <strong>Refresh</strong>. Once all six sub-types exist in the sheet, the sheet owns the config and the built-in defaults are ignored.</td>
+                            <td>Choose the edited file and click <strong>Upload Sub-filter CSV</strong>. It is validated and applied right away.</td>
                         </tr>
                     </tbody>
                 </table>
@@ -622,10 +616,24 @@
                     </button>
                 </div>
 
+                <!-- Upload (admin only): persists data/livestock_subfilter.csv -->
+                <div id="subfilter-upload-row" style="display:none; margin-top: 1.25rem;">
+                    <label style="display:block; font-size:0.85rem; color:#444; margin-bottom:0.4rem;">
+                        Upload an edited sub-filter CSV
+                    </label>
+                    <div class="btn-group">
+                        <input type="file" id="subfilter-file" accept=".csv,text/csv">
+                        <button id="subfilter-upload-btn" class="btn btn-primary" onclick="uploadSubfilter()">
+                            <i class="bi bi-cloud-arrow-up"></i> Upload Sub-filter CSV
+                        </button>
+                    </div>
+                </div>
+
                 <div class="tip" style="margin-top: 1rem;">
                     <strong>Tip:</strong> the downloaded file always reflects what the app is using
-                    right now - sheet rows when present, built-in defaults otherwise - so it is the
-                    safe starting point for edits.
+                    right now, so it is the safe starting point for edits. If the Intervention &amp;
+                    Variable Config sheet itself declares all six sub-types (<code>parent</code> =
+                    <code>Livestock</code>), the sheet wins and the uploaded file is ignored.
                 </div>
             </div>
 
@@ -827,8 +835,48 @@
             if (IS_ADMIN) {
                 const card = document.getElementById('ai-upload-card');
                 if (card) card.style.display = '';
+                const subRow = document.getElementById('subfilter-upload-row');
+                if (subRow) subRow.style.display = '';
             }
         });
+
+        async function uploadSubfilter() {
+            const input = document.getElementById('subfilter-file');
+            const btn = document.getElementById('subfilter-upload-btn');
+            const file = input.files && input.files[0];
+
+            if (!file) { showToast('Choose a CSV file first.', 'error'); return; }
+            if (!file.name.toLowerCase().endsWith('.csv')) {
+                showToast('Only CSV files are accepted.', 'error');
+                return;
+            }
+
+            const fd = new FormData();
+            fd.append('file', file);
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Uploading...';
+
+            try {
+                const resp = await fetch('/api/livestock-subfilter?admin=1', {
+                    method: 'POST',
+                    headers: { 'X-Admin': '1' },
+                    body: fd,
+                });
+                const data = await resp.json();
+                if (resp.ok && data.ok) {
+                    showToast(data.message || 'Sub-filter updated.', 'success');
+                    input.value = '';
+                } else {
+                    showToast(data.error || 'Upload failed.', 'error');
+                }
+            } catch (e) {
+                showToast('Network error - could not reach the server.', 'error');
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="bi bi-cloud-arrow-up"></i> Upload Sub-filter CSV';
+        }
 
         async function uploadAiDoc() {
             const input = document.getElementById('ai-doc-file');
