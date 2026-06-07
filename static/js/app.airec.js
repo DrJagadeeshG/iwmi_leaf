@@ -17,14 +17,21 @@ function interventionDisplayLabel() {
 }
 
 // Build the plain-language feasibility summary sentence (LEAF #21).
-// Y = number of variables selected; X = Y - variables outside range.
-function buildFeasibilitySummary(outsideCount, scope) {
-    const y = state.currentFilters ? state.currentFilters.length : 0;
-    if (!y) return '';
-    const x = Math.max(0, y - (outsideCount || 0));
-    const pct = Math.round((x / y) * 100);
+// The % must match the feasibility badge: both use variables WITH DATA as
+// the denominator (the backend score excludes no-data variables too).
+// rendered = variables with data; x = rendered - variables outside range.
+function buildFeasibilitySummary(outsideCount, renderedCount, scope) {
+    const selected = state.currentFilters ? state.currentFilters.length : 0;
+    const rendered = renderedCount || 0;
+    if (!selected || !rendered) return '';
+    const x = Math.max(0, rendered - (outsideCount || 0));
+    const pct = +((x / rendered) * 100).toFixed(1);
+    // Mention missing data only when some selected variables have none here.
+    const dataNote = rendered < selected
+        ? `of the ${selected} variables selected for assessing feasibility, ${rendered} have data and `
+        : `of the ${rendered} variables selected for assessing feasibility, `;
     return `<div class="feasibility-summary-sentence">` +
-        `For ${scope}, of the ${y} variables selected for assessing feasibility, ${x} (${pct}%) are within the recommended range. ` +
+        `For ${scope}, ${dataNote}${x} (${pct}%) are within the recommended range. ` +
         `For the rest, work needs to be done. Click on AI Insights to check recommendations.` +
         `</div>`;
 }
@@ -41,32 +48,18 @@ function renderRecommendations(props, feature = null, summaryOpts = null) {
 
     // Feasibility summary sentence (LEAF #21) - shown before the AI Insights button.
     const summaryHtml = (summaryOpts && summaryOpts.scope)
-        ? buildFeasibilitySummary(summaryOpts.outsideCount, summaryOpts.scope)
+        ? buildFeasibilitySummary(summaryOpts.outsideCount, summaryOpts.renderedCount, summaryOpts.scope)
         : '';
 
-    let icon = 'bi-lightbulb-fill';
-    let recommendation = '';
+    const icon = 'bi-lightbulb-fill';
 
     if (state.currentIntervention && feasibility !== null) {
-        if (feasibility >= 75) {
-            icon = 'bi-check-circle-fill';
-            recommendation = `High potential for ${effectiveIntervention()}`;
-        } else if (feasibility >= 50) {
-            icon = 'bi-arrow-up-circle-fill';
-            recommendation = `Moderate potential for ${effectiveIntervention()}`;
-        } else if (feasibility >= 25) {
-            icon = 'bi-exclamation-triangle-fill';
-            recommendation = `Limited potential for ${effectiveIntervention()}`;
-        } else {
-            icon = 'bi-x-circle-fill';
-            recommendation = `Low potential for ${effectiveIntervention()}`;
-        }
-
+        // Per Faiz (Jun 2026): no "High/Limited potential for X (NN.N%)" verdict
+        // line - the summary sentence below carries the feasibility message.
         container.innerHTML = `
             <div class="recommendation-line-content">
                 <i class="bi ${icon}"></i>
-                <strong>${blockName}, ${districtName}:</strong> ${recommendation}
-                <span class="feasibility-value">(${feasibility.toFixed(1)}%)</span>
+                <strong>${blockName}, ${districtName}</strong>
                 <button class="btn-ai-recommend" onclick="openAIRecommendation()">
                     <i class="bi bi-robot"></i> AI Insights
                 </button>
@@ -74,7 +67,7 @@ function renderRecommendations(props, feature = null, summaryOpts = null) {
             ${summaryHtml}
         `;
     } else {
-        recommendation = 'Select an intervention to see recommendations.';
+        const recommendation = 'Select an intervention to see recommendations.';
         container.innerHTML = `<i class="bi ${icon}"></i> <strong>Recommendation for ${blockName}, Assam:</strong> ${recommendation}${summaryHtml}`;
     }
 }
