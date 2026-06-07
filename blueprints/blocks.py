@@ -187,7 +187,10 @@ def api_block_shg_summary(block_name):
       into the 6 clustering commodities (Dairy/Goatery/Piggery/Backyard
       Poultry/Duckery/Fishery), plus an "other" group for fodder, feed,
       transport, meat shop, and a raw per-activity breakdown of all 25 form
-      questions. Returns `available: false` when the block has no Kobo rows.
+      questions. Blocks absent from the Kobo export fall back to the village
+      master (villages.csv) aggregates — same shape, `source: village_master`,
+      with empty `other`/`activities_raw` (no per-activity breakdown there).
+      Returns `available: false` only when the block is in neither source.
     parameters:
       - name: block_name
         in: path
@@ -203,6 +206,9 @@ def api_block_shg_summary(block_name):
             district_name: {type: string}
             block_name: {type: string}
             available: {type: boolean}
+            source:
+              type: string
+              description: Present (village_master) when built from the village master fallback.
             villages_total: {type: integer}
             villages_with_gps: {type: integer}
             villages_without_gps: {type: integer}

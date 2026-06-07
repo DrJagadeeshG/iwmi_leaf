@@ -1664,6 +1664,7 @@
 <hr />
 <h2 id="get-shg-summary-for-a-block">Get SHG Summary for a Block<a class="headerlink" href="#get-shg-summary-for-a-block" title="Permanent link">&para;</a></h2>
 <p>Aggregates the village-level SHG form data (Kobo export) for one block. Returned shape drives the right-side summary panel in the Cluster Planner.</p>
+<p>Blocks absent from the Kobo export fall back to the village master (<code>villages.csv</code>) aggregates: same shape with <code>"source": "village_master"</code>, and empty <code>other</code> / <code>activities_raw</code> (the master has no per-activity breakdown).</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a>GET /api/blocks/{block_name}/shg-summary
 </code></pre></div>
 <h3 id="parameters_2">Parameters<a class="headerlink" href="#parameters_2" title="Permanent link">&para;</a></h3>
@@ -1719,7 +1720,7 @@
 <a id="__codelineno-13-29" name="__codelineno-13-29" href="#__codelineno-13-29"></a><span class="w">  </span><span class="p">}</span>
 <a id="__codelineno-13-30" name="__codelineno-13-30" href="#__codelineno-13-30"></a><span class="p">}</span>
 </code></pre></div>
-<p>When the block has no Kobo rows yet, the response is <code>{"block_name": "...", "available": false}</code>.</p>
+<p>When the block is in neither the Kobo export nor the village master, the response is <code>{"block_name": "...", "available": false}</code>.</p>
 <h3 id="field-notes">Field Notes<a class="headerlink" href="#field-notes" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
