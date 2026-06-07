@@ -162,7 +162,7 @@ def _overlay_livestock_subfilter(df):
     Reversible / yields to the sheet: if the source already declares Livestock
     children (a row with parent == "Livestock"), this is a no-op — so once the
     rows are added to the sheet itself, the overlay bows out (no duplication)."""
-    LIVESTOCK_SUBTYPES = {"Dairy", "Goatery", "Piggery", "Backyard_Poultry", "Duckery", "Fishery_Activity"}
+    subtypes = set(LIVESTOCK_SUBTYPES)
     try:
         if df is None:
             return df
@@ -171,9 +171,9 @@ def _overlay_livestock_subfilter(df):
         if {'parent', 'Cluster'}.issubset(df.columns):
             liv = df[df['parent'].astype(str).str.strip().str.lower() == 'livestock']
             present = set(liv['Cluster'].astype(str).str.strip())
-            if LIVESTOCK_SUBTYPES.issubset(present):
+            if subtypes.issubset(present):
                 return df
-        sub_path = DATA_DIR / "livestock_subfilter.csv"
+        sub_path = SUBFILTER_PATH
         if not sub_path.exists():
             return df
         sub = pd.read_csv(sub_path, encoding='utf-8-sig')
@@ -187,6 +187,76 @@ def _overlay_livestock_subfilter(df):
     except Exception as e:
         print(f"[data_utils] livestock sub-filter overlay skipped: {e}")
         return df
+
+
+# The six Livestock commodities the sub-filter is built from. The overlay only
+# defers to the Google Sheet once it declares ALL of these as Livestock
+# children (see _overlay_livestock_subfilter); an uploaded CSV must therefore
+# define all six so the dropdown is complete in every code path.
+LIVESTOCK_SUBTYPES = ["Dairy", "Goatery", "Piggery", "Backyard_Poultry",
+                      "Duckery", "Fishery_Activity"]
+# Columns the upload must carry. Mirrors DSS_input2 + the `parent` link column.
+SUBFILTER_REQUIRED_COLS = ["Cluster", "I_variable", "range_min", "range_max", "parent"]
+SUBFILTER_PATH = DATA_DIR / "livestock_subfilter.csv"
+
+
+def validate_livestock_subfilter_csv(text):
+    """Validate uploaded Livestock sub-filter CSV text (LEAF-51 follow-up).
+
+    Returns (df, None) when valid, else (None, error_message). Checks:
+      - parses as CSV with the required columns,
+      - every parent value is "Livestock" (case-insensitive),
+      - all six commodities present (so the overlay never half-fills the
+        dropdown), and each has at least one variable row,
+      - range_min / range_max are numeric and range_min <= range_max.
+    """
+    import io
+    try:
+        df = pd.read_csv(io.StringIO(text), encoding='utf-8-sig')
+    except Exception as e:
+        return None, f"Could not parse the file as CSV: {e}"
+    df.columns = [str(c).strip() for c in df.columns]
+
+    missing = [c for c in SUBFILTER_REQUIRED_COLS if c not in df.columns]
+    if missing:
+        return None, f"Missing required column(s): {', '.join(missing)}."
+
+    df = df[df['Cluster'].notna() & (df['Cluster'].astype(str).str.strip() != "")].copy()
+    if df.empty:
+        return None, "The file has no data rows."
+
+    bad_parent = df[df['parent'].astype(str).str.strip().str.lower() != 'livestock']
+    if len(bad_parent):
+        return None, (f"{len(bad_parent)} row(s) have a parent other than 'Livestock'. "
+                      "Every sub-filter row must have parent=Livestock.")
+
+    present = {str(c).strip() for c in df['Cluster']}
+    absent = [s for s in LIVESTOCK_SUBTYPES if s not in present]
+    if absent:
+        return None, ("Missing rows for commodit(y/ies): " + ", ".join(absent)
+                      + ". All six (" + ", ".join(LIVESTOCK_SUBTYPES)
+                      + ") must be present.")
+
+    lo = pd.to_numeric(df['range_min'], errors='coerce')
+    hi = pd.to_numeric(df['range_max'], errors='coerce')
+    n_bad_num = int(lo.isna().sum() + hi.isna().sum())
+    if n_bad_num:
+        return None, f"{n_bad_num} cell(s) in range_min/range_max are not numeric."
+    n_inverted = int((lo > hi).sum())
+    if n_inverted:
+        return None, f"{n_inverted} row(s) have range_min greater than range_max."
+
+    return df, None
+
+
+def save_livestock_subfilter_csv(df):
+    """Persist a validated sub-filter DataFrame to data/livestock_subfilter.csv.
+
+    This is the same file the runtime overlay reads, so the new values take
+    effect on the next load_metadata() call (after the dss_input cache is
+    refreshed) with no redeploy. Caller must refresh the dss_input cache."""
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    df.to_csv(SUBFILTER_PATH, index=False, encoding='utf-8')
 
 
 def get_variable_group(df, var_code):
