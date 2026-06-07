@@ -345,6 +345,40 @@
                 </div>
             </div>
 
+            <!-- Soil / Climate / Other cards: metadata groups beyond the six
+                 originals. Without these, variables added via Configure in
+                 these groups never appeared in district/block views (the
+                 renderer skips groups with no card). Auto-hide when empty. -->
+            <div class="detail-card" id="card-soil">
+                <div class="detail-card-header">
+                    <span><i class="bi bi-globe"></i> Soil</span>
+                    <span class="outside-count" id="count-soil"></span>
+                </div>
+                <div class="detail-card-body" id="soil-metrics">
+                    <!-- Dynamic metrics -->
+                </div>
+            </div>
+
+            <div class="detail-card" id="card-climate">
+                <div class="detail-card-header">
+                    <span><i class="bi bi-cloud-sun"></i> Climate</span>
+                    <span class="outside-count" id="count-climate"></span>
+                </div>
+                <div class="detail-card-body" id="climate-metrics">
+                    <!-- Dynamic metrics -->
+                </div>
+            </div>
+
+            <div class="detail-card" id="card-other">
+                <div class="detail-card-header">
+                    <span><i class="bi bi-grid"></i> Other</span>
+                    <span class="outside-count" id="count-other"></span>
+                </div>
+                <div class="detail-card-body" id="other-metrics">
+                    <!-- Dynamic metrics -->
+                </div>
+            </div>
+
             <!-- Cluster detail cards (LEAF-53): shown when a cluster is picked -->
             <div id="cluster-cards" class="cluster-cards" style="display: none;"></div>
 
