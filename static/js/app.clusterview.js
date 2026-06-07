@@ -75,8 +75,8 @@
     }
 
     function clusterLabel(c) {
-        // cluster_code is the human-readable unique ID (e.g. MOBHGO01,
-        // Faiz 2026-06-06); older payloads fall back to the tier label.
+        // cluster_code is the human-readable unique ID (e.g. MO-BH-GO-01,
+        // Faiz 2026-06-07); older payloads fall back to the tier label.
         if (c.cluster_code != null) return c.cluster_code;
         if (c.cluster_label != null) return c.cluster_label;
         if (c.cluster_num != null) return String(c.cluster_num);
@@ -288,6 +288,10 @@
         tiles.innerHTML =
             '<a href="#" class="cluster-tiles-back" id="cluster-tiles-back">' +
                 '<i class="bi bi-arrow-left"></i> All clusters</a>' +
+            // 07-Jun feedback: surface the cluster's ID (cluster_code) in the
+            // ribbon when a cluster is selected.
+            '<span class="cluster-id-ribbon" data-tooltip="Cluster ID">' +
+                '<i class="bi bi-diagram-3"></i> ' + esc(String(clusterDisplay(c))) + '</span>' +
             tile(villages.length, 'Villages') +
             tile(esc(gpText), 'Gram Panchayat') +
             tile(Number(c.total_members || 0).toLocaleString(), 'Members') +
@@ -445,9 +449,9 @@
                 if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
                 pts.push([lat, lng]);
                 var dot = L.circleMarker([lat, lng], {
-                    // 06-Jun feedback: small dots (3-8px, mirrors clusters.js)
-                    // so the cluster rings read clearly.
-                    radius: Math.max(3, Math.min(8, 3 + Math.sqrt(Number(v.members) || 0) * 0.7)),
+                    // 07-Jun feedback: smaller dots (2-5px, mirrors clusters.js)
+                    // so the cluster rings clearly dominate the map.
+                    radius: Math.max(2, Math.min(5, 2 + Math.sqrt(Number(v.members) || 0) * 0.5)),
                     color: '#243240', weight: 1,
                     fillColor: COMMODITY_COLOR[c.commodity] || '#0297A6',
                     fillOpacity: 0.85,

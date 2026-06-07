@@ -3,8 +3,8 @@
 // =============================================================================
 
 // Display name for a cluster anywhere in the block-detail UI: prefer the
-// human-readable unique code (cluster_code, e.g. MOBHGO01 - first two letters
-// of district + block + commodity + sequence, Faiz 2026-06-06); legacy
+// human-readable unique code (cluster_code, e.g. MO-BH-GO-01 - first two letters
+// of district + block + commodity + sequence, Faiz 2026-06-07); legacy
 // payloads without it fall back to "Cluster <label>".
 function clusterDisplayName(c) {
     if (c.cluster_code != null) return String(c.cluster_code);
@@ -246,9 +246,9 @@ function initAllClustersMiniMap(clusters) {
             if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
             pts.push([lat, lng]);
             L.circleMarker([lat, lng], {
-                // 06-Jun feedback: small dots (3-8px, mirrors clusters.js) so
-                // the cluster grouping reads clearly.
-                radius: Math.max(3, Math.min(8, 3 + Math.sqrt(Number(v.members) || 0) * 0.7)),
+                // 07-Jun feedback: smaller dots (2-5px, mirrors clusters.js) so
+                // the cluster grouping clearly dominates the map.
+                radius: Math.max(2, Math.min(5, 2 + Math.sqrt(Number(v.members) || 0) * 0.5)),
                 color: '#243240', weight: 1, fillColor: color, fillOpacity: 0.85,
             }).addTo(state.blockMiniMap).bindTooltip(
                 `${escapeText(v.vill_name || 'Village')} · ${Number(v.members || 0)} members · ${escapeText(clusterDisplayName(c))}`,
