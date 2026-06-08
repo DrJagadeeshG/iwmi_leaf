@@ -176,24 +176,24 @@ def get_block_convergence(block_name):
     if meta is None:
         return result
 
-    # Locate the convergence tag column. The client added it as a SECOND
-    # "Cluster" column (column P); pandas dedups the duplicate header to
-    # 'Cluster.1'. We cannot detect it purely by value, because 'Infrastructure'
-    # is ALSO a legitimate value of the 'group' column (a variable group) - that
-    # collision would hijack the wrong column. 'Biophysical' is unique to the
-    # real tag column, so: prefer 'Cluster.1'; else fall back to whichever
-    # column (never 'group') actually carries a 'biophysical' value.
+    # Locate the convergence tag column by CONTENT, not by name. The client
+    # maintains this column in the dss_input sheet and has renamed it over time
+    # ("Cluster" -> duplicate read as "Cluster.1" -> "Cluster card"), so we pick
+    # the non-'group' column carrying the most Biophysical / Infrastructure
+    # cells. 'group' is excluded because it legitimately contains the value
+    # 'Infrastructure' (a variable group) and would otherwise hijack detection.
+    # Counting BOTH categories (not just 'Biophysical') keeps it working even
+    # when the client tags only Infrastructure rows.
     tag_col = None
-    if 'Cluster.1' in meta.columns:
-        tag_col = 'Cluster.1'
-    else:
-        for col in meta.columns:
-            if col == 'group':
-                continue
-            vals = meta[col].astype(str).str.strip().str.lower()
-            if vals.eq('biophysical').any():
-                tag_col = col
-                break
+    best = 0
+    for col in meta.columns:
+        if col == 'group':
+            continue
+        vals = meta[col].astype(str).str.strip().str.lower()
+        n = int(vals.isin(['biophysical', 'infrastructure']).sum())
+        if n > best:
+            best = n
+            tag_col = col
     if tag_col is None:
         return result
 
