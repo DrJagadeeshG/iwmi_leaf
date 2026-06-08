@@ -129,6 +129,17 @@ COMMODITY_BUCKETS = {
     ],
 }
 
+# "Other" livelihood activities outside the 6 clustering commodities. These were
+# previously dropped (so the planner's "other activities" panel was empty for
+# village-master blocks); now aggregated per village so block_shg_summary can
+# surface them. Output column names match villages._OTHER_KEYS labels exactly.
+OTHER_BUCKETS = {
+    "Fodder cultivation": ["Fodder Cultivation Or Production"],
+    "Feed manufacturing": ["Feed Manufacturing Or Production Unit"],
+    "Livestock transport": ["Livestock Transportation"],
+    "Meat shop": ["Meat Shop"],
+}
+
 # Survey LEAF Block spelling (UPPER) -> shapefile-canonical Block_name (UPPER).
 # Every value is verified present in data/4DSS_VAR_2.0.shp Block_name. These are
 # spelling variants only; no two survey blocks collide onto one shapefile block.
@@ -172,6 +183,7 @@ BLOCK_NAME_FIXES = {
 OUTPUT_COLUMNS = [
     "district_name", "block_name", "gp_name", "vill_name", "lat", "long",
     "Dairy", "Goatery", "Piggery", "Backyard_Poultry", "Duckery", "Fishery_Activity",
+    "Fodder cultivation", "Feed manufacturing", "Livestock transport", "Meat shop",
 ]
 
 
@@ -265,6 +277,11 @@ def survey_to_out(df, district_series, block_series):
         kobo[key] = df[survey_col].map(to_int)
     for commodity, keys in COMMODITY_BUCKETS.items():
         out[commodity] = kobo[keys].sum(axis=1).astype(int)
+    # "Other" activities (Fodder/Feed/Transport/Meat) - aggregated like commodities.
+    for label, survey_cols in OTHER_BUCKETS.items():
+        out[label] = pd.concat(
+            [df[c].map(to_int) for c in survey_cols], axis=1
+        ).sum(axis=1).astype(int)
     return out
 
 

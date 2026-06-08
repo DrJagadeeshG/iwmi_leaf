@@ -123,8 +123,10 @@ def block_shg_summary(block_name: str) -> Dict:
 
 def _village_master_summary(block_name: str) -> Dict:
     """SHG summary built from villages.csv for blocks absent from the Kobo
-    sidecar. Same shape as the Kobo path; commodity totals are the master's
-    aggregated counts, so there is no per-activity "other" breakdown."""
+    sidecar. Same shape as the Kobo path. The master now also carries the four
+    "other" activities (Fodder/Feed/Livestock transport/Meat shop) as their own
+    columns, so the planner's "other activities" panel populates for these
+    blocks too (Faiz 08-Jun: not reflecting on /clustering)."""
     df = load_villages()
     sub = df[df["block_name"].astype(str).str.upper() == str(block_name).upper()]
     if sub.empty:
@@ -134,6 +136,12 @@ def _village_master_summary(block_name: str) -> Dict:
     commodities = {
         c: int(pd.to_numeric(sub[c], errors="coerce").fillna(0).sum())
         for c in _COMMODITY_MAP if c in sub.columns
+    }
+    # "other" columns are named in the master with the same labels the Kobo path
+    # uses (villages._OTHER_KEYS values), so the panel reads identically.
+    other = {
+        label: int(pd.to_numeric(sub[label], errors="coerce").fillna(0).sum())
+        for label in _OTHER_KEYS.values() if label in sub.columns
     }
 
     return {
@@ -146,9 +154,9 @@ def _village_master_summary(block_name: str) -> Dict:
         "villages_without_gps": int((~has_gps).sum()),
         "gp_count": int(sub["gp_name"].nunique()),
         "gps": sorted(sub["gp_name"].dropna().unique().tolist()),
-        "members_total": int(sum(commodities.values())),
+        "members_total": int(sum(commodities.values()) + sum(other.values())),
         "commodities": commodities,
-        "other": {},
+        "other": other,
         "activities_raw": {},
     }
 
