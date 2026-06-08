@@ -51,6 +51,21 @@ _OTHER_KEYS = {
     "feed_manufacturing": "Feed manufacturing",
     "livestock_transport": "Livestock transport",
     "meat_shop": "Meat shop",
+    # Faiz 08-Jun: show every non-commodity activity under "Other Activities".
+    # Labels MUST match the village-master column names in build_village_master
+    # OTHER_BUCKETS; the kobo keys match shg_kobo_clean columns. These keys also
+    # appear in _COMMODITY_MAP, so for the summary panel they are counted under
+    # both their commodity and "other" (display only; clustering is unaffected).
+    "goat_breeding_farm": "Goat breeding farm",
+    "goat_kid_nursery": "Kid nursery for goat",
+    "pig_breeding_farm": "Pig breeding farm",
+    "pig_piglet_nursery": "Piglet nursery for pig",
+    "poultry_duck_hatchery": "Hatchery (poultry & duck)",
+    "fishery_hatchery": "Hatchery for fishery",
+    "fishery_equip_trading": "Fishing equipment trading",
+    "fishery_equip_lending": "Fishing equipment lending",
+    "fishery_equip_mfg": "Fishing equipment manufacturing",
+    "fish_trading": "Fish trading",
 }
 
 
