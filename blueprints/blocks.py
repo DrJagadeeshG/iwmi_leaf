@@ -242,6 +242,66 @@ def api_block_shg_summary(block_name):
         return jsonify({'error': str(e)}), 500
 
 
+
+
+@blocks_bp.route('/api/blocks/<block_name>/convergence')
+def api_block_convergence(block_name):
+    """Biophysical / Infrastructure (convergence) values for a block.
+    ---
+    tags:
+      - Blocks
+    summary: Block convergence (Biophysical / Infrastructure) values
+    description: |
+      Returns the block's values for the variables the client tagged
+      `Biophysical` or `Infrastructure` in the dss_input sheet's convergence
+      tag column (the second `Cluster` column, column P; read as `Cluster.1`).
+      Powers the cluster drill-down's Biophysical and Infrastructure
+      (convergence) cards. Each entry is `{code, label, value}`; `value` is null
+      when the block has no value for that code. `available` is true once the
+      block is found in the block_values sheet. Empty/untagged sheets return
+      empty lists (not an error).
+    parameters:
+      - name: block_name
+        in: path
+        type: string
+        required: true
+        description: Block name (case-insensitive match).
+    responses:
+      200:
+        description: Convergence values for the block
+        schema:
+          type: object
+          properties:
+            block_name: {type: string}
+            available: {type: boolean}
+            biophysical:
+              type: array
+              items:
+                type: object
+                properties:
+                  code: {type: string}
+                  label: {type: string}
+                  value: {type: number}
+            infrastructure:
+              type: array
+              items:
+                type: object
+                properties:
+                  code: {type: string}
+                  label: {type: string}
+                  value: {type: number}
+      500:
+        description: Server error
+        schema:
+          $ref: '#/definitions/Error'
+    """
+    try:
+        from data_utils import get_block_convergence
+        return jsonify(get_block_convergence(block_name))
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 # =============================================================================
 # Location APIs - Unified location data
 # =============================================================================
