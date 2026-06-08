@@ -150,6 +150,93 @@ def load_metadata():
     return _overlay_livestock_subfilter(df)
 
 
+def get_block_convergence(block_name):
+    """07-Jun: Biophysical / Infrastructure (convergence) values for one block.
+
+    The client tags individual variables in the dss_input sheet's SECOND
+    "Cluster" column (a per-variable convergence tag they added in column P;
+    pandas reads the duplicate header as ``Cluster.1``). Every row tagged
+    ``Biophysical`` or ``Infrastructure`` names an ``I_variable`` whose value
+    for this block (from the block_values sheet) is shown on the cluster
+    drill-down's Biophysical / Infrastructure (convergence) cards.
+
+    Returns ``{block_name, available, biophysical: [...], infrastructure: [...]}``
+    where each list item is ``{code, label, value}`` (value is a rounded float,
+    or None when the block has no value for that code). ``available`` is True
+    once the block is found in block_values. Empty/untagged sheets yield empty
+    lists so the cards show a graceful empty state rather than erroring.
+    """
+    result = {'block_name': block_name, 'available': False,
+              'biophysical': [], 'infrastructure': []}
+    try:
+        meta = load_metadata()
+    except Exception as e:
+        print(f"[data_utils] convergence: metadata load failed: {e}")
+        return result
+    if meta is None:
+        return result
+
+    # Locate the convergence tag column. The client added it as a SECOND
+    # "Cluster" column (column P); pandas dedups the duplicate header to
+    # 'Cluster.1'. We cannot detect it purely by value, because 'Infrastructure'
+    # is ALSO a legitimate value of the 'group' column (a variable group) - that
+    # collision would hijack the wrong column. 'Biophysical' is unique to the
+    # real tag column, so: prefer 'Cluster.1'; else fall back to whichever
+    # column (never 'group') actually carries a 'biophysical' value.
+    tag_col = None
+    if 'Cluster.1' in meta.columns:
+        tag_col = 'Cluster.1'
+    else:
+        for col in meta.columns:
+            if col == 'group':
+                continue
+            vals = meta[col].astype(str).str.strip().str.lower()
+            if vals.eq('biophysical').any():
+                tag_col = col
+                break
+    if tag_col is None:
+        return result
+
+    label_col = 'I_label' if 'I_label' in meta.columns else None
+    tagged = {}  # code -> (tag, label); first occurrence wins (dedupe)
+    for _, r in meta.iterrows():
+        tag = str(r.get(tag_col) or '').strip().lower()
+        if tag not in ('biophysical', 'infrastructure'):
+            continue
+        code = str(r.get('I_variable') or '').strip()
+        if not code or code in tagged:
+            continue
+        label = str(r.get(label_col) or '').strip() if label_col else ''
+        tagged[code] = (tag, label or code)
+    if not tagged:
+        return result
+
+    from google_sheets import get_block_values_overlaid
+    bv = get_block_values_overlaid()
+    if bv is None or 'Block_name' not in bv.columns:
+        return result
+    match = bv[bv['Block_name'].astype(str).str.strip().str.lower()
+               == str(block_name).strip().lower()]
+    if len(match) == 0:
+        return result
+    bvrow = match.iloc[0]
+    result['available'] = True
+    for code, (tag, label) in tagged.items():
+        if code not in bv.columns:
+            continue
+        raw = bvrow.get(code)
+        if raw is None or pd.isna(raw) or str(raw).strip() == '':
+            value = None
+        else:
+            try:
+                value = round(float(raw), 2)
+            except (ValueError, TypeError):
+                value = raw
+        entry = {'code': code, 'label': label, 'value': value}
+        result['biophysical' if tag == 'biophysical' else 'infrastructure'].append(entry)
+    return result
+
+
 def _overlay_livestock_subfilter(df):
     """LEAF-51: add the Livestock sub-types (Dairy/Goatery/Piggery/Backyard_Poultry/
     Duckery/Fishery_Activity) so the sub-filter dropdown + per-type config work

@@ -72,6 +72,9 @@
         blockOther: null,        // block-level "other activities" {label: count} from
                                  // /api/blocks/<block>/shg-summary; {} for fallback
                                  // (June-2) blocks, null until fetched.
+        blockConvergence: null,  // {biophysical:[], infrastructure:[]} from
+                                 // /api/blocks/<block>/convergence (column-P tags);
+                                 // null until fetched.
     };
 
     // ----- small helpers -------------------------------------------------------
@@ -163,6 +166,43 @@
         }).join('');
     }
 
+    // 07-Jun: Biophysical / Infrastructure (convergence) cards. The client tags
+    // variables in the dss_input sheet's column P; for the cluster's block we
+    // show each tagged variable's value. Mirrors fetchBlockOther: fetch once per
+    // block, cache, re-render the open cluster when it resolves.
+    async function fetchBlockConvergence(blockName) {
+        try {
+            var r = await fetch('/api/blocks/' + encodeURIComponent(blockName) + '/convergence');
+            var s = await r.json();
+            if (local.blockName !== blockName) return;   // user moved on
+            local.blockConvergence = (s && typeof s === 'object') ? s : {};
+        } catch (e) {
+            if (local.blockName === blockName) local.blockConvergence = {};
+        }
+        if (local.selectedId) {
+            var c = local.clusters.find(function (x) {
+                return String(x.cluster_id) === String(local.selectedId);
+            });
+            if (c) renderClusterCards(c);
+        }
+    }
+
+    // Build a convergence card body (kind = 'biophysical' | 'infrastructure')
+    // from the cached tags. No tags / not fetched -> graceful empty line.
+    function convergenceBody(kind) {
+        var conv = local.blockConvergence;
+        var items = (conv && Array.isArray(conv[kind])) ? conv[kind] : [];
+        if (!items.length) {
+            return '<p class="no-filters">No ' + kind + ' variables tagged for this block yet.</p>';
+        }
+        return items.map(function (it) {
+            var v = (it.value === null || it.value === undefined || it.value === '')
+                ? '—'
+                : (typeof it.value === 'number' ? it.value.toLocaleString() : esc(String(it.value)));
+            return row(esc(it.label || it.code || ''), v);
+        }).join('');
+    }
+
     // ----- public hooks --------------------------------------------------------
 
     // Called from updateBlockClusterDropdown() whenever the block, intervention
@@ -185,7 +225,9 @@
         if (local.blockName !== blockName) {
             local.blockName = blockName;
             local.blockOther = null;
+            local.blockConvergence = null;
             fetchBlockOther(blockName);
+            fetchBlockConvergence(blockName);
         }
 
         // Fetch clusters for this block+commodity (smart auto-refresh built in).
@@ -227,6 +269,7 @@
         local.selectedId = null;
         local.blockName = null;
         local.blockOther = null;
+        local.blockConvergence = null;
 
         // Clear the cross-cutting cluster selection so downstream consumers
         // (e.g. Download Summary in app.reports.js, which branches on
@@ -420,13 +463,15 @@
             mmuaBody(),
             getCardLink(c, 'mmua'));
 
-        // Card 4 — Biophysical (placeholder; NOT DC/BC/PS).
+        // Card 4 — Biophysical. Block values for the variables the client tagged
+        // 'Biophysical' in the dss_input sheet's column P (07-Jun feedback).
         var card4 = card('bi-tree', 'Biophysical',
-            '<p class="no-filters">Data to be populated by ASRLM.</p>');
+            convergenceBody('biophysical'));
 
-        // Card 5 — Infrastructure / convergence (linked, pending ASRLM).
+        // Card 5 — Infrastructure / convergence. Block values for the variables
+        // tagged 'Infrastructure' in column P; worksheet link kept in the header.
         var card5 = linkedCard('bi-hospital', 'Infrastructure (convergence)',
-            '<p class="no-filters">e.g. Vet centre and other convergence infrastructure. Data to be populated by ASRLM.</p>',
+            convergenceBody('infrastructure'),
             getCardLink(c, 'infrastructure'));
 
         // Card 6 — Members (linked, pending ASRLM; login gating deferred).
