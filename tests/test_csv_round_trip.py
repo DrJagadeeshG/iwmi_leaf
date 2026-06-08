@@ -22,9 +22,9 @@ import villages
 
 
 EXPECTED_COLUMNS = [
-    "cluster_code", "cluster_num", "cluster_id", "commodity", "district_name", "block_name",
-    "gp_name", "vill_name", "lat", "long", "members", "pashu_sakhi", "block_coordinator",
-    "district_coordinator",
+    "cluster_code", "cluster_name", "cluster_num", "cluster_id", "commodity", "district_name",
+    "block_name", "gp_name", "vill_name", "lat", "long", "members", "pashu_sakhi",
+    "block_coordinator", "district_coordinator",
 ]
 
 
@@ -149,6 +149,46 @@ def test_unknown_village_raises_with_useful_message(monkeypatch):
     with pytest.raises(ValueError) as exc:
         villages.csv_text_to_records(csv_text)
     assert "Phantom_Village" in str(exc.value)
+
+
+def test_cluster_name_round_trips_and_blank_parses_none(monkeypatch, sample_cluster_records):
+    """cluster_name is an editable display-name override for cluster_code: a
+    custom value must survive clusters_to_csv -> csv_text_to_records, and a
+    blank/whitespace cell must parse back to None so the auto code is kept."""
+    # C-001 gets a custom name; C-002 is left blank.
+    recs = [dict(c) for c in sample_cluster_records]
+    recs[0]["cluster_name"] = "Faiz Dairy Hub"
+    recs[1]["cluster_name"] = "   "  # whitespace-only -> must become None
+
+    csv_text = villages.clusters_to_csv(recs)
+    df = pd.read_csv(io.StringIO(csv_text))
+    assert "cluster_name" in df.columns
+    # Exported value is the custom name for C-001.
+    c1_rows = df[df["cluster_id"] == "C-001"]
+    assert (c1_rows["cluster_name"] == "Faiz Dairy Hub").all()
+
+    # CSV's lat/long present, so the master is not consulted.
+    monkeypatch.setattr(villages, "load_villages",
+                        lambda: pd.DataFrame(columns=["block_name", "vill_name", "lat", "long"]))
+    records = villages.csv_text_to_records(csv_text)
+    by_id = {r["cluster_id"]: r for r in records}
+    assert by_id["C-001"]["cluster_name"] == "Faiz Dairy Hub"
+    # Whitespace-only / blank -> None (auto cluster_code kept downstream).
+    assert by_id["C-002"]["cluster_name"] is None
+
+
+def test_cluster_name_absent_column_imports_as_none(monkeypatch):
+    """Older CSVs predating cluster_name (no such column) still import, with
+    cluster_name left None."""
+    legacy_csv = (
+        "cluster_id,commodity,district_name,block_name,vill_name,gp_name,"
+        "lat,long,members\n"
+        "C-1,Dairy,D,B,Foo,GP,1.23,4.56,30\n"
+    )
+    monkeypatch.setattr(villages, "load_villages",
+                        lambda: pd.DataFrame(columns=["block_name", "vill_name", "lat", "long"]))
+    records = villages.csv_text_to_records(legacy_csv)
+    assert records[0]["cluster_name"] is None
 
 
 def test_cluster_num_column_in_upload_is_ignored(monkeypatch, sample_cluster_records):

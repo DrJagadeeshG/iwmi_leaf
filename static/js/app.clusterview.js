@@ -86,6 +86,9 @@
     }
 
     function clusterLabel(c) {
+        // cluster_name is the editable display-name OVERRIDE for cluster_code
+        // (2026-06-08); when set it wins everywhere the cluster name shows.
+        if (c.cluster_name) return c.cluster_name;
         // cluster_code is the human-readable unique ID (e.g. MO-BH-GO-01,
         // Faiz 2026-06-07); older payloads fall back to the tier label.
         if (c.cluster_code != null) return c.cluster_code;
@@ -94,9 +97,10 @@
         return c.cluster_id;
     }
 
-    // Display name: the code is self-descriptive, the legacy "1"/"P1" labels
-    // still need the "Cluster " prefix to read as a name.
+    // Display name: a custom cluster_name or the self-descriptive code is shown
+    // as-is; the legacy "1"/"P1" labels still need the "Cluster " prefix.
     function clusterDisplay(c) {
+        if (c.cluster_name) return c.cluster_name;
         return c.cluster_code != null ? c.cluster_code : ('Cluster ' + clusterLabel(c));
     }
 

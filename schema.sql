@@ -15,6 +15,9 @@ CREATE TABLE IF NOT EXISTS clusters (
     -- District Coordinator for the Contact Persons card (DC row). Set via the
     -- cluster CSV edit/import cycle; NULL/empty until assigned.
     district_coordinator TEXT,
+    -- Editable display-name override for the auto-generated cluster_code. Set via
+    -- the cluster CSV edit/import cycle; NULL/empty keeps the auto code.
+    cluster_name      TEXT,
     finalized         BOOLEAN NOT NULL DEFAULT FALSE,
     -- TRUE when a human owns this cluster (CSV upload or manual edit). Locked
     -- scopes are never auto-regenerated, so smart-refresh can't wipe edits.

@@ -3,10 +3,12 @@
 // =============================================================================
 
 // Display name for a cluster anywhere in the block-detail UI: prefer the
+// editable display-name override (cluster_name, 2026-06-08) when set, else the
 // human-readable unique code (cluster_code, e.g. MO-BH-GO-01 - first two letters
 // of district + block + commodity + sequence, Faiz 2026-06-07); legacy
 // payloads without it fall back to "Cluster <label>".
 function clusterDisplayName(c) {
+    if (c.cluster_name) return String(c.cluster_name);
     if (c.cluster_code != null) return String(c.cluster_code);
     const lbl = c.cluster_label != null ? c.cluster_label
         : (c.cluster_num != null ? c.cluster_num : c.cluster_id);
