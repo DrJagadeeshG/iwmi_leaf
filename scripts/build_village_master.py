@@ -138,6 +138,19 @@ OTHER_BUCKETS = {
     "Feed manufacturing": ["Feed Manufacturing Or Production Unit"],
     "Livestock transport": ["Livestock Transportation"],
     "Meat shop": ["Meat Shop"],
+    # Faiz 08-Jun: every activity that is NOT one of the 6 clustering commodities
+    # is shown under "Other Activities". Commodity buckets (and thus clustering
+    # counts) are unchanged; this only widens the displayed "other" breakdown.
+    "Goat breeding farm": ["Goat Breeding Farm"],
+    "Kid nursery for goat": ["Kid Nursery For Goat"],
+    "Pig breeding farm": ["Pig Breeding Farm"],
+    "Piglet nursery for pig": ["Piglet Nursery For Pig"],
+    "Hatchery (poultry & duck)": ["Hatchery Unit For Poultry And Duck"],
+    "Hatchery for fishery": ["Hatchery Unit For Fishery"],
+    "Fishing equipment trading": ["Fishing Equipment Trading"],
+    "Fishing equipment lending": ["Fishing Equipment Lending"],
+    "Fishing equipment manufacturing": ["Fishing Equipment Manufacturing"],
+    "Fish trading": ["Fish Trading"],
 }
 
 # Survey LEAF Block spelling (UPPER) -> shapefile-canonical Block_name (UPPER).
@@ -183,8 +196,7 @@ BLOCK_NAME_FIXES = {
 OUTPUT_COLUMNS = [
     "district_name", "block_name", "gp_name", "vill_name", "lat", "long",
     "Dairy", "Goatery", "Piggery", "Backyard_Poultry", "Duckery", "Fishery_Activity",
-    "Fodder cultivation", "Feed manufacturing", "Livestock transport", "Meat shop",
-]
+] + list(OTHER_BUCKETS.keys())  # all "other" activity columns (Faiz 08-Jun)
 
 
 def to_int(v):
