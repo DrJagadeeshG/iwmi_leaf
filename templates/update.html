@@ -584,9 +584,10 @@
                 <p style="color:#666; font-size:0.85rem; margin-bottom:1rem;">
                     The Livestock dropdown's sub-categories (<strong>Dairy, Goatery, Piggery,
                     Backyard_Poultry, Duckery, Fishery_Activity</strong>) have their own variable
-                    ranges and weights. Edit them right here: download the current configuration,
-                    adjust the ranges / weights / labels in Excel, and upload the file back. The new
-                    settings take effect immediately - no redeploy needed.
+                    ranges and weights. These are now maintained <strong>directly in the
+                    Intervention &amp; Variable Config (dss_input) Google Sheet</strong> &mdash; edit a
+                    range, weight or label there and it flows to the live app within ~5 minutes.
+                    No file upload, no redeploy.
                 </p>
 
                 <table class="col-table">
@@ -594,46 +595,32 @@
                     <tbody>
                         <tr>
                             <td>1</td>
-                            <td>Download the currently effective sub-filter rows with the button below.</td>
+                            <td>Open the <strong>dss_input</strong> config Google Sheet (the same sheet that drives the interventions and variable ranges).</td>
                         </tr>
                         <tr>
                             <td>2</td>
-                            <td>Edit ranges / weights / labels in Excel. Keep <code>Cluster</code> = sub-type name and <code>parent</code> = <code>Livestock</code>, and keep all six commodities.</td>
+                            <td>Find the sub-type rows: <code>Cluster</code> = the commodity name (Dairy / Goatery / &hellip;) and <code>parent</code> = <code>Livestock</code>.</td>
                         </tr>
                         <tr>
                             <td>3</td>
-                            <td>Choose the edited file and click <strong>Upload Sub-filter CSV</strong>. It is validated and applied right away.</td>
+                            <td>Edit <code>range_min</code> / <code>range_max</code> / <code>I_weight</code> / <code>I_label</code> as needed. Keep all six commodities and keep <code>parent</code> = <code>Livestock</code>. Changes go live within ~5 min (or click <strong>Refresh</strong>).</td>
                         </tr>
                     </tbody>
                 </table>
 
                 <div class="btn-group" style="margin-top: 1.25rem;">
-                    <a href="/api/livestock-subfilter.csv" class="btn btn-primary">
-                        <i class="bi bi-download"></i> Download Sub-filter CSV
+                    <a href="/api/livestock-subfilter.csv" class="btn btn-outline">
+                        <i class="bi bi-download"></i> Download current sub-filter (snapshot)
                     </a>
-                    <button class="btn btn-outline" onclick="refreshData()">
+                    <button class="btn btn-primary" onclick="refreshData()">
                         <i class="bi bi-arrow-clockwise"></i> Refresh
                     </button>
                 </div>
 
-                <!-- Upload (admin only): persists data/livestock_subfilter.csv -->
-                <div id="subfilter-upload-row" style="display:none; margin-top: 1.25rem;">
-                    <label style="display:block; font-size:0.85rem; color:#444; margin-bottom:0.4rem;">
-                        Upload an edited sub-filter CSV
-                    </label>
-                    <div class="btn-group">
-                        <input type="file" id="subfilter-file" accept=".csv,text/csv">
-                        <button id="subfilter-upload-btn" class="btn btn-primary" onclick="uploadSubfilter()">
-                            <i class="bi bi-cloud-arrow-up"></i> Upload Sub-filter CSV
-                        </button>
-                    </div>
-                </div>
-
                 <div class="tip" style="margin-top: 1rem;">
-                    <strong>Tip:</strong> the downloaded file always reflects what the app is using
-                    right now, so it is the safe starting point for edits. If the Intervention &amp;
-                    Variable Config sheet itself declares all six sub-types (<code>parent</code> =
-                    <code>Livestock</code>), the sheet wins and the uploaded file is ignored.
+                    <strong>Tip:</strong> the download is a read-only snapshot of exactly what the app
+                    is using right now &mdash; handy to check the current numbers before you edit the
+                    sheet. All edits happen in the sheet; the sheet is the single source of truth.
                 </div>
             </div>
 
@@ -835,48 +822,8 @@
             if (IS_ADMIN) {
                 const card = document.getElementById('ai-upload-card');
                 if (card) card.style.display = '';
-                const subRow = document.getElementById('subfilter-upload-row');
-                if (subRow) subRow.style.display = '';
             }
         });
-
-        async function uploadSubfilter() {
-            const input = document.getElementById('subfilter-file');
-            const btn = document.getElementById('subfilter-upload-btn');
-            const file = input.files && input.files[0];
-
-            if (!file) { showToast('Choose a CSV file first.', 'error'); return; }
-            if (!file.name.toLowerCase().endsWith('.csv')) {
-                showToast('Only CSV files are accepted.', 'error');
-                return;
-            }
-
-            const fd = new FormData();
-            fd.append('file', file);
-
-            btn.disabled = true;
-            btn.innerHTML = '<span class="spinner"></span> Uploading...';
-
-            try {
-                const resp = await fetch('/api/livestock-subfilter?admin=1', {
-                    method: 'POST',
-                    headers: { 'X-Admin': '1' },
-                    body: fd,
-                });
-                const data = await resp.json();
-                if (resp.ok && data.ok) {
-                    showToast(data.message || 'Sub-filter updated.', 'success');
-                    input.value = '';
-                } else {
-                    showToast(data.error || 'Upload failed.', 'error');
-                }
-            } catch (e) {
-                showToast('Network error - could not reach the server.', 'error');
-            }
-
-            btn.disabled = false;
-            btn.innerHTML = '<i class="bi bi-cloud-arrow-up"></i> Upload Sub-filter CSV';
-        }
 
         async function uploadAiDoc() {
             const input = document.getElementById('ai-doc-file');
