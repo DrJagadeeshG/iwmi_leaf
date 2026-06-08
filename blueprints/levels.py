@@ -150,7 +150,10 @@ def serve_ai_docs(filename):
 def serve_documentation(filename='index.html'):
     """Serve the MkDocs documentation site."""
     from pathlib import Path
-    site_dir = Path(__file__).parent / "site"
+    # This file lives in blueprints/; the built MkDocs site is at the app root
+    # (mkdocs.yml site_dir: leaf_flask/site), so go up TWO levels, not one.
+    # Previously resolved to blueprints/site (non-existent) -> /documentation 404'd.
+    site_dir = Path(__file__).parent.parent / "site"
     if not site_dir.exists():
         return jsonify({'error': 'Documentation not built', 'site_dir': str(site_dir)}), 404
     # MkDocs uses directory-style URLs (e.g. quickstart/ → quickstart/index.html)
