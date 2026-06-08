@@ -62,9 +62,23 @@ function renderActiveMetricsByGroup(props) {
     let totalOutsideCount = 0;
     let totalRenderedCount = 0;
 
+    // Safety net: a group card must NEVER be visible with an empty body. The
+    // per-group logic below already hides data-less groups, but this guarantees
+    // it across every render path / async race (Faiz: blank Soil/Climate/Other
+    // cards in the block view). Call it right before returning from either path.
+    const hideBlankCards = () => {
+        Object.values(groupContainers).forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const card = el.closest('.detail-card');
+            if (card && el.innerHTML.trim() === '') card.style.display = 'none';
+        });
+    };
+
     // If no filters, show all available data from the block
     if (!state.currentFilters || state.currentFilters.length === 0) {
         renderAllBlockMetrics(props, groupContainers);
+        hideBlankCards();
         return { outside: totalOutsideCount, rendered: totalRenderedCount };
     }
 
@@ -123,6 +137,7 @@ function renderActiveMetricsByGroup(props) {
     // rendered = variables that actually have data for this scope. The
     // feasibility summary uses it as denominator so its % matches the
     // backend feasibility score (which excludes no-data variables).
+    hideBlankCards();
     return { outside: totalOutsideCount, rendered: totalRenderedCount };
 }
 
