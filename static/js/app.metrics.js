@@ -88,9 +88,6 @@ function renderActiveMetricsByGroup(props) {
         const countEl = document.getElementById(countId);
         if (!container) return;
 
-        // Show the card
-        container.closest('.detail-card').style.display = 'block';
-
         // Build metrics
         const metrics = filters.map(f => ({
             key: f.column,
@@ -104,6 +101,18 @@ function renderActiveMetricsByGroup(props) {
         const { outside, total } = renderMetricItemsWithStatus(container, props, metrics);
         totalOutsideCount += outside;
         totalRenderedCount += total;
+
+        // Only reveal the card if at least one selected variable actually has
+        // data for this scope. A group can carry active filters yet render zero
+        // rows (e.g. Soil/Climate/Other vars with no value for this block) -
+        // showing it then leaves an empty header bar (Faiz: empty cards in the
+        // block + all-clusters view that vanish under "All blocks"). The
+        // no-filter path (renderAllBlockMetrics) already gates on hasData; this
+        // makes the filtered path consistent. Cards start hidden (clear loop
+        // above), so total === 0 simply leaves this one hidden.
+        if (total > 0) {
+            container.closest('.detail-card').style.display = 'block';
+        }
 
         // Update count in header
         if (countEl && outside > 0) {
