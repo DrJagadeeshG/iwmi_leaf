@@ -69,7 +69,15 @@ function renderBlockDetail(feature) {
 // Toggle between the block's category cards and the cluster cards.
 function setClusterMode(on) {
     document.querySelectorAll('.detail-right > .detail-card').forEach(c => {
-        c.style.display = on ? 'none' : '';
+        if (on) { c.style.display = 'none'; return; }
+        // Returning to the block view: only un-hide cards that actually have
+        // rendered content. A blanket display:'' re-showed empty group cards
+        // (Soil/Climate/Other) that renderActiveMetricsByGroup had already
+        // hidden, leaving blank cards in the block view (Faiz). A populated
+        // card body always has element children; an empty/cleared body (or one
+        // holding only the "<!-- Dynamic metrics -->" comment) has none.
+        const body = c.querySelector('.detail-card-body');
+        c.style.display = (!body || body.children.length > 0) ? '' : 'none';
     });
     const cc = document.getElementById('cluster-cards');
     if (cc) cc.style.display = on ? '' : 'none';
