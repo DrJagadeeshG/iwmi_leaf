@@ -299,6 +299,28 @@ def nearest_block(pts, polys):
     return out_block, out_dist
 
 
+def canonical_block_district():
+    """Authoritative block_name(UPPER) -> district_name(UPPER), derived exactly
+    as the main app does (data_utils.load_shapefile / load_district_mapping):
+    4DSS_VAR_2.0 Block_name -> DISTRICT_I -> Block_assam Dist_name. Used to
+    override the survey's district labels so the village master groups blocks
+    under the SAME districts the dashboard shows (the survey carried old names
+    - Nowgaon/Sibsagar/Kamrup Rural/Karimganj/N.C.Hills - and old parent
+    districts for the 8 new carved districts)."""
+    g = gpd.read_file(SHP_4DSS)
+    g.columns = [c.strip() for c in g.columns]
+    gb = gpd.read_file(SHP_BLOCK_ASSAM)
+    gb.columns = [c.strip() for c in gb.columns]
+    dist_map = dict(zip(gb["DISTRICT_I"], gb["Dist_name"]))
+    out = {}
+    for _, r in g.iterrows():
+        bn = str(r.get("Block_name", "")).strip().upper()
+        d = dist_map.get(r.get("DISTRICT_I"))
+        if bn and d is not None and str(d).strip():
+            out[bn] = str(d).strip().upper()
+    return out
+
+
 def build(dry_run: bool = False) -> int:
     print(f"Reading {SURVEY_XLSX} :: {SURVEY_SHEET}")
     df = pd.read_excel(SURVEY_XLSX, sheet_name=SURVEY_SHEET)
@@ -480,6 +502,19 @@ def build(dry_run: bool = False) -> int:
 
     # ---- Merge recovered rows into the master frame. ----
     out = pd.concat([out, rec_out], ignore_index=True)
+
+    # ---- District alignment: override survey district labels with the
+    # canonical block->district map so /clustering groups blocks under the SAME
+    # districts as the main dashboard (5 renames + 8 new carved districts). All
+    # village blocks already match a shapefile block name (BLOCK_NAME_FIXES), so
+    # every row resolves; any that don't keep their survey district + are flagged.
+    canon = canonical_block_district()
+    mapped = out["block_name"].str.upper().map(canon)
+    unresolved = sorted(out.loc[mapped.isna(), "block_name"].unique().tolist())
+    if unresolved:
+        print(f"\n[district-align] {len(unresolved)} block(s) NOT in shapefile map "
+              f"(kept survey district): {unresolved[:15]}")
+    out["district_name"] = mapped.fillna(out["district_name"])
 
     # ---- Verification: every block matches the shapefile ----
     g = gpd.read_file(SHP_4DSS)
