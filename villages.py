@@ -34,17 +34,19 @@ SHG_CSV = DATA_DIR / "shg_kobo_clean.csv"
 
 # Mapping from raw Kobo activity column to the 6 clustering commodities.
 # Activities not listed below are surfaced under "other" in the SHG summary.
+# DISPLAY commodity definition (summary panel). Faiz 08-Jun: a commodity is only
+# its core activity; breeding farms, nurseries, hatcheries, fishing-equipment and
+# trading move to "Other Activities" (see _OTHER_KEYS) - so they are NOT listed
+# here, which nets them out of the commodity totals shown on the cards. NOTE this
+# is DISPLAY ONLY: the CLUSTERING input is the broad commodity columns in
+# villages.csv (build_village_master.COMMODITY_BUCKETS), which are unchanged.
 _COMMODITY_MAP = {
     "Dairy": ["dairy_production"],
-    "Goatery": ["goat_farming", "goat_breeding_farm", "goat_kid_nursery", "goat_nursery"],
-    "Piggery": ["pig_farming", "pig_breeding_farm", "pig_piglet_nursery", "pig_nursery"],
-    "Backyard_Poultry": ["poultry_backyard", "poultry_broiler", "poultry_hen", "poultry_duck_hatchery"],
+    "Goatery": ["goat_farming", "goat_nursery"],
+    "Piggery": ["pig_farming", "pig_nursery"],
+    "Backyard_Poultry": ["poultry_backyard", "poultry_broiler", "poultry_hen"],
     "Duckery": ["duck_rearing"],
-    "Fishery_Activity": [
-        "fishery_activity", "fishery_hatchery", "fishery_equip_trading",
-        "fishery_equip_lending", "fishery_equip_mfg", "fish_trading",
-        "fishery_nursery_pond",
-    ],
+    "Fishery_Activity": ["fishery_activity", "fishery_nursery_pond"],
 }
 _OTHER_KEYS = {
     "fodder_cultivation": "Fodder cultivation",
@@ -66,6 +68,21 @@ _OTHER_KEYS = {
     "fishery_equip_lending": "Fishing equipment lending",
     "fishery_equip_mfg": "Fishing equipment manufacturing",
     "fish_trading": "Fish trading",
+}
+
+# Village-master DISPLAY netting: villages.csv stores BROAD commodity sums (the
+# clustering input, built by build_village_master.COMMODITY_BUCKETS - unchanged).
+# To show Faiz's labeled-only commodity on the panel, subtract the sub-activities
+# that now live under "Other" from each broad column. Labels match the villages.csv
+# "other" column names exactly.
+_COMMODITY_OTHER_OVERLAP = {
+    "Goatery": ["Goat breeding farm", "Kid nursery for goat"],
+    "Piggery": ["Pig breeding farm", "Piglet nursery for pig"],
+    "Backyard_Poultry": ["Hatchery (poultry & duck)"],
+    "Fishery_Activity": [
+        "Hatchery for fishery", "Fishing equipment trading",
+        "Fishing equipment lending", "Fishing equipment manufacturing", "Fish trading",
+    ],
 }
 
 
@@ -148,10 +165,19 @@ def _village_master_summary(block_name: str) -> Dict:
         return {"block_name": block_name, "available": False}
 
     has_gps = sub["lat"].notna() & sub["long"].notna()
-    commodities = {
-        c: int(pd.to_numeric(sub[c], errors="coerce").fillna(0).sum())
-        for c in _COMMODITY_MAP if c in sub.columns
-    }
+
+    def _col_sum(col):
+        return int(pd.to_numeric(sub[col], errors="coerce").fillna(0).sum()) if col in sub.columns else 0
+
+    # Commodity totals are the BROAD villages.csv column (clustering input) minus
+    # the sub-activities now shown under "Other" - so the panel shows Faiz's
+    # labeled-only commodity with no double-count (clustering itself is unchanged).
+    commodities = {}
+    for c in _COMMODITY_MAP:
+        if c not in sub.columns:
+            continue
+        netted = sum(_col_sum(lbl) for lbl in _COMMODITY_OTHER_OVERLAP.get(c, []))
+        commodities[c] = max(0, _col_sum(c) - netted)
     # "other" columns are named in the master with the same labels the Kobo path
     # uses (villages._OTHER_KEYS values), so the panel reads identically.
     other = {
