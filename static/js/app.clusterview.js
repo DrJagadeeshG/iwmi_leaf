@@ -68,6 +68,10 @@
         overlayActive: false,    // true when the cluster overlay is on the map
         clusterLayer: null,      // L.featureGroup of village dots + radius rings
         ringById: {},            // cluster_id -> L.circle (for highlight toggling)
+        blockName: null,         // current block (for the MMUA "other activities" fetch)
+        blockOther: null,        // block-level "other activities" {label: count} from
+                                 // /api/blocks/<block>/shg-summary; {} for fallback
+                                 // (June-2) blocks, null until fetched.
     };
 
     // ----- small helpers -------------------------------------------------------
@@ -119,6 +123,46 @@
         return url;                                           // bare relative path (no scheme)
     }
 
+    // Fetch the block's "other activities" breakdown (Fodder cultivation / Feed
+    // manufacturing / Livestock transport / Meat shop counts) from the SHG
+    // summary endpoint and cache it for the MMUA card. The summary's `other`
+    // dict is {} for June-2 fallback blocks (village master has no per-activity
+    // data) — we keep it as {} so the card can show its empty-state line. On any
+    // failure we leave blockOther null (treated identically as "no data yet").
+    // If the user has a cluster open when this resolves, re-render its cards so
+    // the MMUA card fills in without needing a reselect.
+    async function fetchBlockOther(blockName) {
+        try {
+            var r = await fetch('/api/blocks/' + encodeURIComponent(blockName) + '/shg-summary');
+            var s = await r.json();
+            // Only adopt if still on the same block (user may have moved on).
+            if (local.blockName !== blockName) return;
+            local.blockOther = (s && typeof s.other === 'object' && s.other) ? s.other : {};
+        } catch (e) {
+            if (local.blockName === blockName) local.blockOther = {};
+        }
+        // Refresh the open cluster's cards so the MMUA card picks up the data.
+        if (local.selectedId) {
+            var c = local.clusters.find(function (x) {
+                return String(x.cluster_id) === String(local.selectedId);
+            });
+            if (c) renderClusterCards(c);
+        }
+    }
+
+    // Build the MMUA card body from the cached block "other activities" counts.
+    // Empty/absent -> a graceful single line instead of a blank card.
+    function mmuaBody() {
+        var other = local.blockOther;
+        var keys = other ? Object.keys(other) : [];
+        if (!keys.length) {
+            return '<p class="no-filters">No activity breakdown for this block yet.</p>';
+        }
+        return keys.map(function (label) {
+            return row(esc(label), Number(other[label] || 0).toLocaleString());
+        }).join('');
+    }
+
     // ----- public hooks --------------------------------------------------------
 
     // Called from updateBlockClusterDropdown() whenever the block, intervention
@@ -131,6 +175,17 @@
         if (!commodity || !blockName) {
             clusterViewReset();
             return;
+        }
+
+        // Block-level "other activities" feed the MMUA card (Card 3). It's the
+        // same for every cluster in this block, so fetch/cache it once per block
+        // here rather than per cluster selection. Refetch only when the block
+        // changes; a failed/missing fetch leaves blockOther null -> card shows
+        // the graceful empty line.
+        if (local.blockName !== blockName) {
+            local.blockName = blockName;
+            local.blockOther = null;
+            fetchBlockOther(blockName);
         }
 
         // Fetch clusters for this block+commodity (smart auto-refresh built in).
@@ -170,6 +225,8 @@
         removeOverlay();
         local.clusters = [];
         local.selectedId = null;
+        local.blockName = null;
+        local.blockOther = null;
 
         // Clear the cross-cutting cluster selection so downstream consumers
         // (e.g. Download Summary in app.reports.js, which branches on
@@ -342,20 +399,25 @@
             : '<p class="no-filters">No villages.</p>';
         var card1 = card('bi-pin-map', 'Village names', villageRows);
 
-        // Card 2 — Contact Persons. BC = block_coordinator, PS = pashu_sakhi,
-        // aggregated (distinct non-empty) from the cluster record. DC has no
-        // data yet -> placeholder.
+        // Card 2 — Contact Persons. DC = district_coordinator, BC =
+        // block_coordinator, PS = pashu_sakhi, aggregated (distinct non-empty)
+        // from the cluster record. Each shows an em-dash when unset.
+        var dcSet = distinctFrom(c, villages, 'district_coordinator');
         var bcSet = distinctFrom(c, villages, 'block_coordinator');
         var psSet = distinctFrom(c, villages, 'pashu_sakhi');
         var contactRows =
-            row('DC <small>(District Coordinator)</small>', '—') +
+            row('DC <small>(District Coordinator)</small>', dcSet.length ? esc(dcSet.join(', ')) : '—') +
             row('BC <small>(Block Coordinator)</small>', bcSet.length ? esc(bcSet.join(', ')) : '—') +
             row('PS <small>(Pashu Sakhi)</small>', psSet.length ? esc(psSet.join(', ')) : '—');
         var card2 = card('bi-person-badge', 'Contact Persons', contactRows);
 
-        // Card 3 — MMUA Supporting activities (linked, content pending ASRLM).
+        // Card 3 — MMUA Supporting activities. Shows the block-level "other
+        // activities" counts (Fodder cultivation / Feed manufacturing /
+        // Livestock transport / Meat shop) from the SHG summary; same for every
+        // cluster in the block. Empty for June-2 fallback blocks -> empty-state
+        // line. The worksheet link stays in the header.
         var card3 = linkedCard('bi-shop', 'MMUA Supporting activities',
-            '<p class="no-filters">e.g. Meat shop and other supporting activities. Data to be populated by ASRLM.</p>',
+            mmuaBody(),
             getCardLink(c, 'mmua'));
 
         // Card 4 — Biophysical (placeholder; NOT DC/BC/PS).

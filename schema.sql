@@ -12,6 +12,9 @@ CREATE TABLE IF NOT EXISTS clusters (
     centroid_lon      NUMERIC(10, 6),
     pashu_sakhi       TEXT,
     block_coordinator TEXT,
+    -- District Coordinator for the Contact Persons card (DC row). Set via the
+    -- cluster CSV edit/import cycle; NULL/empty until assigned.
+    district_coordinator TEXT,
     finalized         BOOLEAN NOT NULL DEFAULT FALSE,
     -- TRUE when a human owns this cluster (CSV upload or manual edit). Locked
     -- scopes are never auto-regenerated, so smart-refresh can't wipe edits.

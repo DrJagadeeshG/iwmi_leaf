@@ -333,15 +333,19 @@ def api_clusters_export_csv():
     description: |
       Produces a CSV with one row per (cluster, village). Columns: cluster_code,
       cluster_num, cluster_id, commodity, district_name, block_name, gp_name,
-      vill_name, lat, long, members, pashu_sakhi, block_coordinator.
+      vill_name, lat, long, members, pashu_sakhi, block_coordinator,
+      district_coordinator.
       `cluster_code` is the human-readable unique code (hyphen-separated first
       two letters of district + block + commodity, then the sequence number,
       e.g. `MO-BH-GO-01`; provisional tier carries a `P`, e.g. `MO-BH-GO-P01`).
       It is display-only and
       ignored on import - `cluster_id` remains the join key. Editors can change
-      villages, member counts, fill in `pashu_sakhi` / `block_coordinator`, or
+      villages, member counts, fill in `pashu_sakhi` / `block_coordinator` /
+      `district_coordinator`, or
       append a row for a brand-new village discovered in the field by supplying
-      its lat/long inline. Re-upload via `POST /api/clusters/import` to update
+      its lat/long inline. `district_coordinator` is the LAST column and is
+      optional: CSVs exported before it existed (no such column) still import,
+      with the DC left empty. Re-upload via `POST /api/clusters/import` to update
       the stored clusters. Same edit-via-CSV pattern as the existing LEAF data
       update flow.
     parameters:
@@ -413,7 +417,9 @@ def api_clusters_import():
       the row's `lat`/`long` are accepted as the coordinates for that new
       village (LEAF-44); when `lat`/`long` are omitted, the parser still backfills
       from the master for known villages, and fails fast with a clear error if
-      it can't (legacy schema). Re-upload as many times as needed.
+      it can't (legacy schema). The optional `district_coordinator` column
+      (last column of the export) is read when present and treated as empty when
+      absent, so CSVs predating it still import. Re-upload as many times as needed.
     consumes:
       - multipart/form-data
       - text/csv

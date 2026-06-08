@@ -22,8 +22,9 @@ import villages
 
 
 EXPECTED_COLUMNS = [
-    "cluster_num", "cluster_id", "commodity", "district_name", "block_name",
+    "cluster_code", "cluster_num", "cluster_id", "commodity", "district_name", "block_name",
     "gp_name", "vill_name", "lat", "long", "members", "pashu_sakhi", "block_coordinator",
+    "district_coordinator",
 ]
 
 

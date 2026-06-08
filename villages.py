@@ -223,8 +223,8 @@ def aggregate_villages(level: str, district: Optional[str] = None) -> List[Dict]
 
 CLUSTER_COLS = (
     "cluster_id, commodity, block_name, district_name, total_members, max_span_km, "
-    "centroid_lat, centroid_lon, pashu_sakhi, block_coordinator, finalized, locked, "
-    "provisional, dashboard"
+    "centroid_lat, centroid_lon, pashu_sakhi, block_coordinator, district_coordinator, "
+    "finalized, locked, provisional, dashboard"
 )
 
 
@@ -240,6 +240,7 @@ def _row_to_cluster(row: Dict, villages: List[Dict]) -> Dict:
         "centroid_lon": float(row["centroid_lon"]) if row["centroid_lon"] is not None else 0.0,
         "pashu_sakhi": row["pashu_sakhi"],
         "block_coordinator": row["block_coordinator"],
+        "district_coordinator": row.get("district_coordinator"),
         "finalized": bool(row["finalized"]),
         "locked": bool(row.get("locked", False)),
         "provisional": bool(row.get("provisional", False)),
@@ -382,6 +383,7 @@ def _insert_clusters(cur, clusters: List[Dict]) -> None:
             c.get("total_members", 0), c.get("max_span_km", 0.0),
             c.get("centroid_lat", 0.0), c.get("centroid_lon", 0.0),
             c.get("pashu_sakhi"), c.get("block_coordinator"),
+            c.get("district_coordinator"),
             bool(c.get("finalized", False)),
             bool(c.get("locked", False)),
             bool(c.get("provisional", False)),
@@ -542,8 +544,8 @@ def replace_clusters_from_records(records: List[Dict], scope: Dict) -> int:
     """Replace stored clusters within `scope` (block_name, optional commodity) with `records`.
 
     Each record needs: cluster_id, commodity, block_name, district_name, villages (list of
-    {vill_name, gp_name, lat, long, members}), plus optional pashu_sakhi, block_coordinator.
-    Derived fields (total_members, max_span_km, centroid) are recomputed.
+    {vill_name, gp_name, lat, long, members}), plus optional pashu_sakhi, block_coordinator,
+    district_coordinator. Derived fields (total_members, max_span_km, centroid) are recomputed.
     """
     from clustering import _max_pairwise_km
 
@@ -576,6 +578,7 @@ def replace_clusters_from_records(records: List[Dict], scope: Dict) -> int:
             "centroid_lon": round(c_lon, 6),
             "pashu_sakhi": r.get("pashu_sakhi"),
             "block_coordinator": r.get("block_coordinator"),
+            "district_coordinator": r.get("district_coordinator"),
             "finalized": False,
             # Human-owned: an uploaded CSV must survive smart-refresh reloads.
             "locked": True,
@@ -612,6 +615,7 @@ def set_cluster_dashboard(cluster_id: str, payload: Dict) -> Optional[Dict]:
 _CSV_COLUMNS = [
     "cluster_code", "cluster_num", "cluster_id", "commodity", "district_name", "block_name",
     "gp_name", "vill_name", "lat", "long", "members", "pashu_sakhi", "block_coordinator",
+    "district_coordinator",
 ]
 
 
@@ -645,6 +649,7 @@ def clusters_to_csv(clusters: List[Dict]) -> str:
                 "members": v.get("members"),
                 "pashu_sakhi": c.get("pashu_sakhi"),
                 "block_coordinator": c.get("block_coordinator"),
+                "district_coordinator": c.get("district_coordinator"),
             })
     if not rows:
         return ",".join(_CSV_COLUMNS) + "\n"
@@ -711,6 +716,10 @@ def csv_text_to_records(csv_text: str) -> List[Dict]:
             "villages": [],
             "pashu_sakhi": row.get("pashu_sakhi") if pd.notna(row.get("pashu_sakhi")) else None,
             "block_coordinator": row.get("block_coordinator") if pd.notna(row.get("block_coordinator")) else None,
+            # district_coordinator is the LAST CSV column (2026-06-07). Older CSVs
+            # predate it; pd.notna handles both the missing-column NaN and an empty
+            # cell, so legacy files import cleanly with the DC left empty.
+            "district_coordinator": row.get("district_coordinator") if pd.notna(row.get("district_coordinator")) else None,
         })
 
         lat = lon = None
