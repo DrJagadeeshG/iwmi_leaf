@@ -2,8 +2,15 @@ services:
   - type: web
     name: iwmi-leaf
     runtime: python
+    # Standard = $25/mo, 1 CPU / 2 GB, and crucially NO spin-down. Pinned here so
+    # a Blueprint sync can't silently drop the service back to Free (which shows
+    # the "SERVICE WAKING UP" cold-start page on the first request after idle).
+    plan: standard
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT
+    # 2 workers fit the 2 GB instance with --preload (the app loads shapefiles +
+    # RAG vectorstore once pre-fork, shared copy-on-write). --timeout 120 covers
+    # the heavier geopandas/feasibility requests.
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --preload
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.0
