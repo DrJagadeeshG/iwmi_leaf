@@ -224,7 +224,7 @@ def aggregate_villages(level: str, district: Optional[str] = None) -> List[Dict]
 CLUSTER_COLS = (
     "cluster_id, commodity, block_name, district_name, total_members, max_span_km, "
     "centroid_lat, centroid_lon, pashu_sakhi, block_coordinator, district_coordinator, "
-    "finalized, locked, provisional, dashboard"
+    "cluster_name, finalized, locked, provisional, dashboard"
 )
 
 
@@ -241,6 +241,9 @@ def _row_to_cluster(row: Dict, villages: List[Dict]) -> Dict:
         "pashu_sakhi": row["pashu_sakhi"],
         "block_coordinator": row["block_coordinator"],
         "district_coordinator": row.get("district_coordinator"),
+        # Editable display-name override for the auto-generated cluster_code
+        # (may be None until a user sets one via the CSV edit/import cycle).
+        "cluster_name": row.get("cluster_name"),
         "finalized": bool(row["finalized"]),
         "locked": bool(row.get("locked", False)),
         "provisional": bool(row.get("provisional", False)),
@@ -384,6 +387,7 @@ def _insert_clusters(cur, clusters: List[Dict]) -> None:
             c.get("centroid_lat", 0.0), c.get("centroid_lon", 0.0),
             c.get("pashu_sakhi"), c.get("block_coordinator"),
             c.get("district_coordinator"),
+            c.get("cluster_name"),
             bool(c.get("finalized", False)),
             bool(c.get("locked", False)),
             bool(c.get("provisional", False)),
@@ -545,7 +549,8 @@ def replace_clusters_from_records(records: List[Dict], scope: Dict) -> int:
 
     Each record needs: cluster_id, commodity, block_name, district_name, villages (list of
     {vill_name, gp_name, lat, long, members}), plus optional pashu_sakhi, block_coordinator,
-    district_coordinator. Derived fields (total_members, max_span_km, centroid) are recomputed.
+    district_coordinator, cluster_name. Derived fields (total_members, max_span_km, centroid)
+    are recomputed.
     """
     from clustering import _max_pairwise_km
 
@@ -579,6 +584,7 @@ def replace_clusters_from_records(records: List[Dict], scope: Dict) -> int:
             "pashu_sakhi": r.get("pashu_sakhi"),
             "block_coordinator": r.get("block_coordinator"),
             "district_coordinator": r.get("district_coordinator"),
+            "cluster_name": r.get("cluster_name"),
             "finalized": False,
             # Human-owned: an uploaded CSV must survive smart-refresh reloads.
             "locked": True,
@@ -613,9 +619,9 @@ def set_cluster_dashboard(cluster_id: str, payload: Dict) -> Optional[Dict]:
 
 
 _CSV_COLUMNS = [
-    "cluster_code", "cluster_num", "cluster_id", "commodity", "district_name", "block_name",
-    "gp_name", "vill_name", "lat", "long", "members", "pashu_sakhi", "block_coordinator",
-    "district_coordinator",
+    "cluster_code", "cluster_name", "cluster_num", "cluster_id", "commodity", "district_name",
+    "block_name", "gp_name", "vill_name", "lat", "long", "members", "pashu_sakhi",
+    "block_coordinator", "district_coordinator",
 ]
 
 
@@ -634,6 +640,9 @@ def clusters_to_csv(clusters: List[Dict]) -> str:
                 # Human-readable unique code (e.g. MOBHGO01); ignored on import
                 # (cluster_id is the join key) so field edits can't corrupt it.
                 "cluster_code": c.get("cluster_code"),
+                # Editable display-name override for cluster_code; empty string
+                # when unset so the cell is blank in the export.
+                "cluster_name": c.get("cluster_name") or "",
                 # Prefer the separate-tier display label ("1" / "P1") so
                 # provisional rows are unambiguous; fall back to the raw number
                 # for callers that haven't been through get_clusters numbering.
@@ -720,6 +729,14 @@ def csv_text_to_records(csv_text: str) -> List[Dict]:
             # predate it; pd.notna handles both the missing-column NaN and an empty
             # cell, so legacy files import cleanly with the DC left empty.
             "district_coordinator": row.get("district_coordinator") if pd.notna(row.get("district_coordinator")) else None,
+            # Editable display-name override (2026-06-08). Read from the cluster's
+            # first row; blank/whitespace or a missing column -> None so the auto
+            # cluster_code is kept. pd.notna also handles the missing-column NaN.
+            "cluster_name": (
+                str(row.get("cluster_name")).strip()
+                if pd.notna(row.get("cluster_name")) and str(row.get("cluster_name")).strip()
+                else None
+            ),
         })
 
         lat = lon = None
