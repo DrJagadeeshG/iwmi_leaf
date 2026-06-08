@@ -195,75 +195,128 @@
 
     <div class="container">
         <h2 class="page-title"><i class="bi bi-info-circle"></i> About LEAF DSS</h2>
-        <p class="page-subtitle">A web-based Decision Support System for planning and evaluating agricultural and livelihood interventions across Assam, India.</p>
+        <p class="page-subtitle">A GIS-enabled Decision Support System for evidence-based planning of agroecology initiatives across Assam, India.</p>
 
         <!-- What it is -->
         <div class="card">
             <div class="card-title"><i class="bi bi-compass"></i> What is LEAF DSS?</div>
             <p>
-                The <strong>Landscape Evaluation &amp; Assessment Framework (LEAF)</strong> Decision Support System
-                helps planners identify where specific agricultural and livelihood interventions are most likely to
-                succeed. It combines block- and Gram-Panchayat-level data on land, water, infrastructure, livestock,
-                soil, climate and demographics into a single interactive map and scoring engine.
+                <strong>LEAF (Landscape Evaluation and Assessment Framework)</strong> is a GIS-enabled Decision Support
+                System that supports evidence-based planning for agroecology (AE) initiatives including livestock,
+                organic, natural farming and integrated farming systems. LEAF collates a multi-dimensional dataset at
+                state, district, block, and cluster (group of villages) level, drawing on over 120 indicators organised
+                into seven data categories. Together, these categories allow LEAF to represent not only biophysical
+                suitability, but also the enabling conditions required for successful adoption and scaling of AE
+                pathways.
             </p>
             <p>
-                Users select an intervention, adjust the variables and thresholds that matter, and the system scores
-                each area for feasibility &mdash; turning scattered datasets into a clear, comparable picture of where
-                to act.
+                To ensure replicability and scalability, LEAF relies on freely available and open data sources wherever
+                possible, so that any state or implementing agency can adopt the tool without dependence on proprietary
+                datasets.
             </p>
         </div>
 
-        <!-- What it does -->
+        <!-- Decision Making -->
         <div class="card">
-            <div class="card-title"><i class="bi bi-grid-1x2"></i> What it does</div>
-            <div class="feature-grid">
-                <div class="feature">
-                    <div class="feature-icon"><i class="bi bi-geo-alt"></i></div>
-                    <div>
-                        <h4>Geospatial Visualization</h4>
-                        <p>Interactive maps of block and GP data across all districts, with district boundaries and protected-area overlays.</p>
-                    </div>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon"><i class="bi bi-sliders"></i></div>
-                    <div>
-                        <h4>Multi-Criteria Feasibility Scoring</h4>
-                        <p>A weighted scoring engine evaluates each area against configurable variable ranges and weights.</p>
-                    </div>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon"><i class="bi bi-diagram-3"></i></div>
-                    <div>
-                        <h4>Cluster Planning</h4>
-                        <p>Groups nearby villages into intervention clusters based on member counts and proximity, with CSV download/upload.</p>
-                    </div>
-                </div>
-                <div class="feature">
-                    <div class="feature-icon"><i class="bi bi-stars"></i></div>
-                    <div>
-                        <h4>AI-Powered Recommendations</h4>
-                        <p>Combines area metrics with policy documents to generate citation-backed, actionable recommendations.</p>
-                    </div>
-                </div>
-            </div>
+            <div class="card-title"><i class="bi bi-signpost-split"></i> Decision Making in LEAF</div>
+            <p>
+                LEAF enables users to identify suitable areas and landscapes &mdash; including districts, blocks, or
+                village clusters &mdash; by generating feasibility and suitability assessments for agroecology-aligned
+                interventions, including Organic, Natural, and livestock-based approaches.
+            </p>
+            <p>
+                It is designed to support government schemes and programmes such as PKVY (Paramparagat Krishi Vikas
+                Yojana) and DAY&ndash;NRLM (Deendayal Antyodaya Yojana &ndash; National Rural Livelihoods Mission), the
+                National Mission on Natural Farming and Assam&rsquo;s Mukhya Mantri Mahila Udyamita Abhiyan (MMUA) and
+                UDAYINI, which envisage cluster-based strategies to promote livestock, organic and natural farming in a
+                structured, scalable, and market-linked manner.
+            </p>
         </div>
 
-        <!-- Data & partners -->
+        <!-- Workflow -->
         <div class="card">
-            <div class="card-title"><i class="bi bi-clipboard-data"></i> Data &amp; Maintenance</div>
+            <div class="card-title"><i class="bi bi-diagram-3"></i> LEAF Decision Making Workflow</div>
             <p>
-                Intervention configurations and variable values are managed through linked Google Sheets and refreshed
-                into the dashboard on demand &mdash; see the <a href="/update" class="inline-link">Data Update</a> page.
-                Geospatial boundaries and the AI knowledge base are maintained by the development team.
+                At the core of LEAF&rsquo;s decision-making layer is a curated set of 120+ variables drawn from open,
+                government-published datasets &mdash; Mission Antyodaya, Livestock Census, IMD, MMUA scheme, SRLM
+                programme data, remote sensing, and soil health sources. These variables are organised into seven
+                thematic dimensions and are pre-assigned as critical variables with recommended ranges based on
+                literature review and consultations for each supported intervention type.
             </p>
+            <p>
+                However, the system is configurable: planners can adjust which variables are included, set preferred
+                ranges (e.g. minimum cattle density, maximum groundwater exploitation), and modify weights to reflect
+                local programme priorities or evolving policy guidance. For any selected area &mdash; a district, a
+                block, or a cluster of villages &mdash; LEAF compares actual values against these configured thresholds
+                and generates a composite suitability profile. Each variable contributes a scored signal: whether it is
+                in the preferred range (strength), close to it (marginal), or significantly below it (gap requiring
+                attention). This produces a transparent, indicator-by-indicator picture of where an area stands &mdash;
+                not a black-box score, but a structured diagnostic that practitioners can read, interrogate, and act on.
+            </p>
+            <p>
+                A <strong>summary dashboard view</strong> gives planners a 5&ndash;6 line snapshot with all of the data
+                of the area&rsquo;s key strengths, critical gaps, and headline recommendations &mdash; suitable for
+                presentations, review meetings, and quick prioritisation. A <strong>detailed report</strong> supported
+                by an AI recommendation engine, working with this data and those background references, provides full
+                indicator values, dimension-wise scores, gap analysis, and specific recommendations &mdash; grounded in
+                both the quantitative data and the policy background documents that define what &ldquo;suitable&rdquo;
+                means for that intervention type.
+            </p>
+        </div>
+
+        <!-- Multi-scale -->
+        <div class="card">
+            <div class="card-title"><i class="bi bi-layers"></i> Multi-Scale Planning: From State to Cluster</div>
+            <p>
+                LEAF operates across four spatial scales, allowing planners to move seamlessly from state-wide
+                prioritisation down to individual village cluster formation. Each level of the platform presents the
+                same underlying data at a different resolution, with outputs calibrated to the decisions made at each
+                scale.
+            </p>
+        </div>
+
+        <!-- ASRLM -->
+        <div class="card">
+            <div class="card-title"><i class="bi bi-people"></i> How LEAF Supports ASRLM</div>
+            <p>
+                Assam&rsquo;s diverse agro-climatic zones &mdash; from the Brahmaputra floodplains to the Barak valley
+                and hilly districts &mdash; require highly localised planning. The Assam State Rural Livelihood Mission
+                (ASRLM) works with over 27 lakh SHG households across 34 districts. LEAF enables ASRLM teams to spatially
+                identify where Organic Farming, Natural Farming, or Livestock clusters are most suitable and back those
+                decisions with data-driven evidence for approvals, convergence planning, and reporting.
+            </p>
+            <p>
+                LEAF is designed to support ASRLM teams in making clear, evidence-based, and scalable planning decisions
+                for agroecological initiatives. It can be used across the planning cycle &mdash; from identifying
+                priority geographies to generating communication-ready outputs for approvals and stakeholder
+                coordination.
+            </p>
+        </div>
+
+        <!-- Documentation & partners -->
+        <div class="card">
+            <div class="card-title"><i class="bi bi-clipboard-data"></i> Documentation &amp; Credits</div>
             <dl class="meta-list">
                 <dt>Region</dt>
                 <dd>Assam, India</dd>
                 <dt>Documentation</dt>
-                <dd><a href="/documentation/" class="inline-link">User &amp; API documentation</a> &middot; <a href="/docs" class="inline-link">Interactive API explorer</a></dd>
+                <dd>
+                    <a href="/static/LEAF_Brief_v3.pdf" class="inline-link" target="_blank" rel="noopener">LEAF Brief (PDF)</a>
+                    &middot; <a href="/documentation/" class="inline-link">User &amp; API documentation</a>
+                    &middot; <a href="/docs" class="inline-link">Interactive API explorer</a>
+                </dd>
                 <dt>Developed by</dt>
-                <dd>Smart Bhujal, in collaboration with IWMI</dd>
+                <dd>IWMI, in collaboration with Smart Bhujal</dd>
+                <dt>Built for</dt>
+                <dd>ASRLM</dd>
+                <dt>Funded by</dt>
+                <dd>GIZ</dd>
             </dl>
+            <div class="partners">
+                <img src="/static/images/asrlm_logo.png" alt="Assam State Rural Livelihoods Mission">
+                <img src="/static/images/iwmi_logo_full.png" alt="International Water Management Institute">
+                <img src="/static/images/giz_german_coop_logo.png" alt="German Cooperation / GIZ">
+            </div>
         </div>
 
     </div>
