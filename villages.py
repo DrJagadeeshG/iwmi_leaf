@@ -766,6 +766,39 @@ def csv_text_to_records(csv_text: str) -> List[Dict]:
         cid = str(row["cluster_id"])
         block = row.get("block_name")
         vill = row.get("vill_name")
+
+        # Cluster display-name override, read from the cluster's first row.
+        # The dedicated `cluster_name` column (2026-06-08) wins when filled.
+        # BUT users naturally rename a cluster by typing over the visible
+        # `cluster_code` column, which is otherwise display-only/ignored on
+        # import — so renames silently never stuck (2026-06-09 bug: 0/4270
+        # clusters ever had a saved name). Fix: if `cluster_name` is blank and
+        # the uploaded `cluster_code` differs from the auto-generated code for
+        # that cluster, treat the edited code as the chosen name so the rename
+        # sticks. An unchanged code (or blank cell) -> None, keeping the auto code.
+        cname = (str(row.get("cluster_name")).strip()
+                 if pd.notna(row.get("cluster_name")) else "")
+        if not cname:
+            code_cell = (str(row.get("cluster_code")).strip()
+                         if pd.notna(row.get("cluster_code")) else "")
+            if code_cell:
+                label = str(row.get("cluster_num") or "").strip()
+                prov = label.upper().startswith("P")
+                num_part = label[1:] if prov else label
+                try:
+                    num = int(float(num_part))
+                except (TypeError, ValueError):
+                    num = 0
+                auto_code = _cluster_code({
+                    "district_name": row.get("district_name"),
+                    "block_name": block,
+                    "commodity": row.get("commodity"),
+                    "provisional": prov,
+                    "cluster_num": num,
+                })
+                if code_cell.upper() != auto_code.upper():
+                    cname = code_cell
+
         rec = records.setdefault(cid, {
             "cluster_id": cid,
             "commodity": row.get("commodity"),
@@ -778,14 +811,7 @@ def csv_text_to_records(csv_text: str) -> List[Dict]:
             # predate it; pd.notna handles both the missing-column NaN and an empty
             # cell, so legacy files import cleanly with the DC left empty.
             "district_coordinator": row.get("district_coordinator") if pd.notna(row.get("district_coordinator")) else None,
-            # Editable display-name override (2026-06-08). Read from the cluster's
-            # first row; blank/whitespace or a missing column -> None so the auto
-            # cluster_code is kept. pd.notna also handles the missing-column NaN.
-            "cluster_name": (
-                str(row.get("cluster_name")).strip()
-                if pd.notna(row.get("cluster_name")) and str(row.get("cluster_name")).strip()
-                else None
-            ),
+            "cluster_name": cname or None,
         })
 
         lat = lon = None
