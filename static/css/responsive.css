@@ -45,6 +45,61 @@
     .block-detail-view {
         padding: 1rem;
     }
+
+    /* Mobile fix (2026-06-09): the outer detail grid stacks above, but the
+     * inner card grids stayed 2-column, so on a phone two cards (e.g. MMUA +
+     * Biophysical) crammed side-by-side and overflowed the screen with their
+     * text truncated. Stack every inner card grid to a single full-width
+     * column. */
+    .detail-5050 .detail-right,
+    .cluster-cards {
+        grid-template-columns: 1fr;
+    }
+
+    /* The map is sticky on desktop so it tracks the scrolling card column; on a
+     * phone the columns are stacked, so an un-stuck map reads naturally and
+     * never hovers over the cards. */
+    .detail-5050 .detail-left {
+        position: static;
+        top: auto;
+    }
+
+    /* The desktop map height is calc(100vh - 250px) to fill a tall column; on a
+     * phone that leaves the map dominating the screen. Cap it. */
+    .detail-5050 .detail-card-map .detail-card-body {
+        height: 320px;
+        min-height: 260px;
+    }
+
+    /* Grid items default to min-width:auto, so a card whose metric list is
+     * wider than the screen (min-width:max-content rows) would stretch the
+     * track and push the page wider than the viewport. min-width:0 lets the
+     * card stay viewport-width while its metric list scrolls inside its own
+     * body. */
+    .detail-5050 .detail-left,
+    .detail-5050 .detail-right,
+    .detail-card {
+        min-width: 0;
+    }
+
+    /* The block ribbon is a single non-wrapping flex row (Overview link +
+     * recommendation banner + feasibility badge + Cluster Planning button) with
+     * a 2rem gap, so it spills past a phone screen. Let it wrap and give the
+     * recommendation banner its own full-width line. */
+    .header-top-row {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+    .header-top-row .recommendation-line {
+        flex-basis: 100%;
+    }
+
+    /* Belt-and-braces: nothing in the detail view should trigger a horizontal
+     * page scroll on mobile. */
+    .block-detail-view,
+    .block-detail-grid {
+        overflow-x: hidden;
+    }
 }
 
 /* ============================================
