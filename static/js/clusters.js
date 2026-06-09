@@ -601,6 +601,11 @@
     // Provisional badge still rides alongside. Falls back to cluster_num, then
     // cluster_id, for older payloads.
     function clusterLabel(c) {
+        // cluster_name is the editable display-name OVERRIDE (2026-06-08): when a
+        // user has renamed the cluster via the CSV, show that everywhere instead
+        // of the auto code. (Without this the rename persists in the DB but the
+        // planner page never displayed it — matches app.clusterview.js.)
+        if (c.cluster_name != null && String(c.cluster_name).trim()) return String(c.cluster_name);
         // cluster_code is the human-readable unique ID (e.g. MO-BH-GO-01,
         // Faiz 2026-06-07); legacy payloads fall back to "Cluster <label>".
         if (c.cluster_code != null) return String(c.cluster_code);
