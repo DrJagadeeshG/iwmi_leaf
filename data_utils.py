@@ -198,16 +198,34 @@ def get_block_convergence(block_name):
         return result
 
     label_col = 'I_label' if 'I_label' in meta.columns else None
-    tagged = {}  # code -> (tag, label); first occurrence wins (dedupe)
+    tagged = {}        # code -> (tag, label); LAST tagged row wins (see below)
+    conflicts = set()  # codes tagged for BOTH cards across rows
     for _, r in meta.iterrows():
         tag = str(r.get(tag_col) or '').strip().lower()
         if tag not in ('biophysical', 'infrastructure'):
             continue
-        code = str(r.get('I_variable') or '').strip()
-        if not code or code in tagged:
+        # Skip blank rows: a stray tag on a row with no I_variable must not
+        # create a phantom entry. NB ``str(NaN)`` is the literal 'nan', which
+        # is truthy, so an explicit isna() guard is required here.
+        raw_code = r.get('I_variable')
+        if raw_code is None or pd.isna(raw_code):
             continue
+        code = str(raw_code).strip()
+        if not code:
+            continue
+        # The same variable can appear on multiple dss_input rows (one per
+        # intervention). When two of those rows carry DIFFERENT card tags the
+        # client has left a stale tag behind; LAST-row-wins lets a later
+        # corrective tag override the earlier one (the client appends fixes as
+        # new rows). The conflict is recorded and surfaced by validate_sheets()
+        # so the sheet can be cleaned up.
+        if code in tagged and tagged[code][0] != tag:
+            conflicts.add(code)
         label = str(r.get(label_col) or '').strip() if label_col else ''
         tagged[code] = (tag, label or code)
+    if conflicts:
+        print("[data_utils] convergence: variable(s) tagged for both cards, "
+              f"using last tag: {', '.join(sorted(conflicts))}")
     if not tagged:
         return result
 
