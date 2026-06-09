@@ -40,6 +40,7 @@ from villages import (
     replace_clusters_from_records,
     clusters_to_csv,
     csv_text_to_records,
+    _current_label_to_id,
     set_cluster_finalized,
     set_cluster_dashboard,
 )
@@ -417,7 +418,14 @@ def api_clusters_import():
       `/api/clusters/export.csv`. Required scope: `block` (and optionally
       `commodity`). All existing clusters within scope are replaced by the
       uploaded rows; derived fields (total_members, max_span_km, centroid) are
-      recomputed. When a row's `vill_name` is unknown to the village master,
+      recomputed.
+      Grouping follows the friendly `cluster_num` ("1", "2", "P1"...): change a
+      village's number to move it to that cluster, give rows the same number to
+      merge, or a new number to split. Each existing number maps back to the
+      cluster that currently holds it (stable `cluster_id`); a new number mints a
+      new cluster, and a "P" prefix marks the provisional tier. `cluster_id` is
+      no longer required from editors (used only as a fallback for rows with no
+      number). When a row's `vill_name` is unknown to the village master,
       the row's `lat`/`long` are accepted as the coordinates for that new
       village (LEAF-44); when `lat`/`long` are omitted, the parser still backfills
       from the master for known villages, and fails fast with a clear error if
@@ -470,7 +478,13 @@ def api_clusters_import():
         if not csv_text.strip():
             return jsonify({'error': 'No CSV content received'}), 400
 
-        records = csv_text_to_records(csv_text)
+        # Map the current display numbers ("1","2","P1"...) to their cluster_ids
+        # so an edited cluster_num reassigns/merges by number (users edit the
+        # friendly number, not the internal id). Built BEFORE the replace deletes
+        # the scope.
+        label_to_id = _current_label_to_id(block, commodity)
+        records = csv_text_to_records(csv_text, label_to_id=label_to_id,
+                                      scope={'block_name': block, 'commodity': commodity})
         n = replace_clusters_from_records(records, scope={'block_name': block, 'commodity': commodity})
         return jsonify({'imported': n})
     except Exception as e:

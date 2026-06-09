@@ -117,8 +117,9 @@
                     </tr>
                 </thead>
                 <tbody>
-                    <tr><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;"><code>cluster_num</code></td><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;">No</td><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;">Display-only sequence number (1, 2, 3...). Ignored on upload.</td></tr>
-                    <tr><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;"><code>cluster_id</code></td><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;">Yes</td><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;">Reuse existing IDs, or any string for new clusters. Same ID = same cluster.</td></tr>
+                    <tr><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;"><code>cluster_num</code></td><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;">Yes</td><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;">The cluster's number (1, 2, 3… / P1 for provisional). <b>This groups villages</b> — change a village's number to move it to that cluster; same number = same cluster; a new number makes a new cluster.</td></tr>
+                    <tr><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;"><code>cluster_id</code></td><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;">No</td><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;">Internal id. Leave it as-is — grouping now follows <code>cluster_num</code>. (Used only as a fallback for rows with no number.)</td></tr>
+                    <tr><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;"><code>cluster_code</code></td><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;">No</td><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;">Auto code (e.g. BA-BA-GO-01). Type a name over it to <b>rename</b> the cluster; leave unchanged to keep the auto code.</td></tr>
                     <tr><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;"><code>commodity</code></td><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;">Yes</td><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;">One of: Dairy, Goatery, Piggery, Backyard_Poultry, Duckery, Fishery_Activity</td></tr>
                     <tr><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;"><code>district_name</code></td><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;">Yes</td><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;">Match case used in the village data (uppercase for MMUA seed).</td></tr>
                     <tr><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;"><code>block_name</code></td><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;">Yes</td><td style="padding: 4px 8px; border-bottom: 1px solid #f0f0f0;">Must match the scope you're uploading to.</td></tr>
@@ -133,8 +134,10 @@
 
             <h4 style="margin: 16px 0 6px 0; color: #28537D;">Common edits</h4>
             <ul style="margin: 0 0 0 18px; padding: 0; font-size: 12px;">
-                <li><b>Split a cluster</b>: change one row's <code>cluster_id</code> to a new value.</li>
-                <li><b>Merge two clusters</b>: give them the same <code>cluster_id</code>.</li>
+                <li><b>Move a village</b>: change its <code>cluster_num</code> to the destination cluster's number.</li>
+                <li><b>Merge two clusters</b>: give their rows the same <code>cluster_num</code>.</li>
+                <li><b>Split a cluster</b>: give some rows a new <code>cluster_num</code> (a number not used yet).</li>
+                <li><b>Rename a cluster</b>: type a name over the <code>cluster_code</code> column.</li>
                 <li><b>Drop a village</b>: delete its row.</li>
                 <li><b>Assign people</b>: fill in <code>pashu_sakhi</code> / <code>block_coordinator</code> on each row.</li>
             </ul>

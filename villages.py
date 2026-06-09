@@ -13,7 +13,7 @@ import hashlib
 import json
 from functools import lru_cache
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import pandas as pd
 from psycopg2.extras import Json, execute_values
@@ -634,6 +634,10 @@ def replace_clusters_from_records(records: List[Dict], scope: Dict) -> int:
             "block_coordinator": r.get("block_coordinator"),
             "district_coordinator": r.get("district_coordinator"),
             "cluster_name": r.get("cluster_name"),
+            # Carry the provisional tier through (derived from the "P" number
+            # prefix on import) so a below-floor group stays provisional rather
+            # than silently becoming a fundable cluster on re-upload.
+            "provisional": bool(r.get("provisional", False)),
             "finalized": False,
             # Human-owned: an uploaded CSV must survive smart-refresh reloads.
             "locked": True,
@@ -741,7 +745,20 @@ def _village_coord_lookup(block_name: Optional[str]) -> Dict[str, Dict[str, floa
     return out
 
 
-def csv_text_to_records(csv_text: str) -> List[Dict]:
+def _current_label_to_id(block_name: Optional[str], commodity: Optional[str]) -> Dict[str, str]:
+    """Map the CURRENT display number ("1","2","P1"...) to its cluster_id for a
+    scope. The number is derived at read time (get_clusters), so this is how the
+    import resolves a user-edited cluster_num back to the cluster it refers to."""
+    out: Dict[str, str] = {}
+    for c in get_clusters(block_name=block_name, commodity=commodity):
+        lbl = c.get("cluster_label")
+        if lbl is not None:
+            out[str(lbl).strip()] = c["cluster_id"]
+    return out
+
+
+def csv_text_to_records(csv_text: str, label_to_id: Optional[Dict[str, str]] = None,
+                        scope: Optional[Dict] = None) -> List[Dict]:
     """Parse a clusters CSV (row-per-village) back into nested cluster records.
 
     Accepts the current schema (lat/long included, LEAF-44) and the legacy
@@ -750,22 +767,34 @@ def csv_text_to_records(csv_text: str) -> List[Dict]:
     When a row omits lat/long, the parser looks them up from the master by
     (block_name, vill_name); an unknown name then fails fast with a message
     pointing at the row.
+
+    Grouping (2026-06-09): when ``label_to_id`` (current display-number ->
+    cluster_id, from _current_label_to_id) is given, rows are grouped by the
+    friendly ``cluster_num`` ("1","2","P1"...) instead of the internal
+    cluster_id — because users reassign/merge/split by editing the NUMBER, which
+    was previously ignored. Each number maps back to the cluster that currently
+    holds it (stable id); a number not in the map mints a new cluster. The "P"
+    prefix keeps the provisional tier. Without ``label_to_id`` (legacy callers)
+    grouping falls back to cluster_id.
     """
     from io import StringIO
     df = pd.read_csv(StringIO(csv_text))
     df.columns = [c.strip() for c in df.columns]
 
+    by_number = label_to_id is not None
     has_coords = "lat" in df.columns and "long" in df.columns
     # Build lookup once per block referenced in the CSV; small N (one block
     # per upload in practice), so keyed by block name is fine.
     coord_cache: Dict[str, Dict[str, Dict[str, float]]] = {}
 
-    records: Dict[str, Dict] = {}
+    records: Dict[Tuple[str, str], Dict] = {}
     missing: List[str] = []
     for _, row in df.iterrows():
-        cid = str(row["cluster_id"])
+        cid = str(row["cluster_id"]) if pd.notna(row.get("cluster_id")) else ""
         block = row.get("block_name")
         vill = row.get("vill_name")
+        num_label = str(row.get("cluster_num")).strip() if pd.notna(row.get("cluster_num")) else ""
+        prov = num_label[:1].upper() == "P"
 
         # Cluster display-name override, read from the cluster's first row.
         # The dedicated `cluster_name` column (2026-06-08) wins when filled.
@@ -782,9 +811,7 @@ def csv_text_to_records(csv_text: str) -> List[Dict]:
             code_cell = (str(row.get("cluster_code")).strip()
                          if pd.notna(row.get("cluster_code")) else "")
             if code_cell:
-                label = str(row.get("cluster_num") or "").strip()
-                prov = label.upper().startswith("P")
-                num_part = label[1:] if prov else label
+                num_part = num_label[1:] if prov else num_label
                 try:
                     num = int(float(num_part))
                 except (TypeError, ValueError):
@@ -799,8 +826,15 @@ def csv_text_to_records(csv_text: str) -> List[Dict]:
                 if code_cell.upper() != auto_code.upper():
                     cname = code_cell
 
-        rec = records.setdefault(cid, {
-            "cluster_id": cid,
+        # Grouping key: by cluster NUMBER when the import passes the current
+        # numbering map (users edit the friendly number to move/merge); else by
+        # the internal cluster_id (legacy / rows with no number).
+        gkey = ("num", num_label) if (by_number and num_label) else ("id", cid)
+
+        rec = records.setdefault(gkey, {
+            "cluster_id": cid,        # resolved below when grouping by number
+            "_num_label": num_label,
+            "provisional": prov,
             "commodity": row.get("commodity"),
             "district_name": row.get("district_name"),
             "block_name": block,
@@ -843,4 +877,21 @@ def csv_text_to_records(csv_text: str) -> List[Dict]:
             f"Could not resolve lat/long for {len(missing)} village(s): {sample}{extra}. "
             "Either include lat/long columns in the CSV or use vill_name values that match the village master."
         )
-    return list(records.values())
+
+    # Resolve the cluster_id for number-grouped records: reuse the cluster that
+    # currently holds that number (stable id, so moves keep numbering), or mint
+    # a new id for a number that does not exist yet (a split / brand-new group).
+    out: List[Dict] = []
+    for rec in records.values():
+        lbl = rec.pop("_num_label", "")
+        if by_number and lbl:
+            existing = label_to_id.get(lbl)
+            # An existing number reuses its cluster (stable id, so a move keeps
+            # the numbering). A NEW number always mints a fresh id — the number
+            # is authoritative, so we must NOT inherit the cluster_id the moved
+            # rows still carry (that's the cluster they came FROM, which would
+            # collide on a split).
+            rec["cluster_id"] = existing or (
+                f"{rec.get('block_name')}-{rec.get('commodity','X')}-num-{lbl}")
+        out.append(rec)
+    return out
