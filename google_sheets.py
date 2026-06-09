@@ -222,6 +222,41 @@ def validate_sheets():
                     "I_variable code(s) not found in the block values sheet: "
                     + ", ".join(unknown[:15]) + (" …" if len(unknown) > 15 else "") + ".")
 
+        # Convergence cards: a variable tagged for BOTH the Biophysical and
+        # Infrastructure cards (the "Cluster card" tag column) is a stale-tag
+        # leftover — the drill-down can only show it on one card. Detect the tag
+        # column by content (same approach as get_block_convergence) and flag any
+        # I_variable carrying conflicting card tags so it can be cleaned up.
+        if "I_variable" in cols:
+            tag_col, best = None, 0
+            for c in cols:
+                if c == "group":
+                    continue
+                vals = di[c].astype(str).str.strip().str.lower()
+                n = int(vals.isin(["biophysical", "infrastructure"]).sum())
+                if n > best:
+                    best, tag_col = n, c
+            if tag_col is not None:
+                seen = {}  # code -> set of card tags
+                for _, r in di.iterrows():
+                    tag = str(r.get(tag_col) or "").strip().lower()
+                    if tag not in ("biophysical", "infrastructure"):
+                        continue
+                    code = r.get("I_variable")
+                    if code is None or pd.isna(code) or not str(code).strip():
+                        add("dss_input", "warning",
+                            f"A row with no I_variable is tagged '{tag.title()}' in "
+                            f"the '{tag_col}' column; it will be ignored.")
+                        continue
+                    seen.setdefault(str(code).strip(), set()).add(tag)
+                both = sorted(c for c, t in seen.items() if len(t) > 1)
+                if both:
+                    add("dss_input", "warning",
+                        "Variable(s) tagged for BOTH the Biophysical and Infrastructure "
+                        "cards in the '" + tag_col + "' column: " + ", ".join(both)
+                        + ". Each variable should carry only one card tag; the last "
+                        "tag in the sheet currently wins.")
+
     # --- End-user update sheet (LEAF-59) ------------------------------------
     # Only validate if the user has actually published a sheet — silence the
     # warning when the URL is empty (the overlay is a designed no-op then).
