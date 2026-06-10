@@ -32,12 +32,14 @@ async function loadLocationDropdowns() {
         districtSelect.innerHTML = '<option value="">All Districts</option>';
 
         // Districts are already sorted by the API (GP-enabled first)
-        // #8: Tinsukia is excluded from the dropdown.
-        state.districtData.filter(d => d.name !== 'Tinsukia').forEach(d => {
+        state.districtData.forEach(d => {
             const option = document.createElement('option');
             option.value = d.name;
-            // Mark districts with GP data available
-            if (d.has_gp_data) {
+            // Mark districts with GP data available — only while the GP
+            // drill-down feature is on. With GP_FEATURE_ENABLED off, Tinsukia
+            // shows as a plain block-level district like the other 33 (the GP
+            // pilot was the only reason it was ever special-cased here).
+            if (GP_FEATURE_ENABLED && d.has_gp_data) {
                 option.textContent = `★ ${d.name} (GP Data)`;
                 option.classList.add('gp-available');
             } else {
