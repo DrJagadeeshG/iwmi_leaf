@@ -616,6 +616,14 @@
         local.ringById = {};
     }
 
+    // Fundable cluster rings take the commodity colour (matching their village
+    // dots) instead of a uniform cyan, so the ring reads as "this is a Dairy /
+    // Goatery / … cluster" at a glance. Provisional rings keep the amber status
+    // colour. CLUSTER_STROKE is the fallback when a commodity has no mapping.
+    function ringColor(c) {
+        return COMMODITY_COLOR[c.commodity] || CLUSTER_STROKE;
+    }
+
     // A radius circle for a cluster (mirrors clusters.js clusterShape): centroid
     // + farthest-village radius with padding; amber dashed for provisional.
     function clusterRing(c) {
@@ -643,9 +651,10 @@
                 fillColor: PROVISIONAL_STROKE, fillOpacity: 0.06,
             });
         }
+        var col = ringColor(c);
         return L.circle(center, {
-            radius: radiusM, color: CLUSTER_STROKE, weight: 2.5,
-            opacity: 0.95, fillColor: CLUSTER_STROKE, fillOpacity: 0.10,
+            radius: radiusM, color: col, weight: 2.5,
+            opacity: 0.95, fillColor: col, fillOpacity: 0.10,
         });
     }
 
@@ -662,7 +671,7 @@
             var ring = local.ringById[id];
             if (!ring) return;
             var c = local.clusters.find(function (x) { return String(x.cluster_id) === String(id); }) || {};
-            var base = c.provisional ? PROVISIONAL_STROKE : CLUSTER_STROKE;
+            var base = c.provisional ? PROVISIONAL_STROKE : ringColor(c);
             ring.setStyle({ color: base, weight: c.provisional ? 2 : 2.5, fillOpacity: 0.10 });
         });
         if (selectedId && local.ringById[selectedId]) {
