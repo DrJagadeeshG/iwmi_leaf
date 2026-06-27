@@ -60,7 +60,9 @@ from shapely.geometry import Point
 
 REPO = Path(__file__).resolve().parent.parent
 DATA = REPO / "data"
-SURVEY_XLSX = Path(r"C:\Users\sindh\Downloads\SHG_Assam_Consolidated_final_Jun22 (1).xlsx")
+# Raw client survey workbook. Lives in source_data/ (gitignored — it carries
+# enumerator PII); only the derived data/villages.csv is committed.
+SURVEY_XLSX = REPO / "source_data" / "SHG_Assam_Consolidated_final_Jun22.xlsx"
 SURVEY_SHEET = "Village Location Detail"
 VILLAGES_CSV = DATA / "villages.csv"
 SHP_4DSS = DATA / "4DSS_VAR_2.0.shp"

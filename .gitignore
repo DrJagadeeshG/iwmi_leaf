@@ -24,6 +24,10 @@ Thumbs.db
 # Claude
 .claude/
 
+# Raw client survey workbooks (contain enumerator PII: names + mobile numbers).
+# Only the derived data/villages.csv is committed; the raw source stays local.
+source_data/
+
 # Runtime data artifacts (regenerated/uploaded at runtime, not source-of-truth)
 data/clusters.json
 data/infrastructure.csv
