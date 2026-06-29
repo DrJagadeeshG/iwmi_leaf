@@ -155,7 +155,6 @@ def cluster_block_commodity(
     if candidates.empty:
         return []
 
-    district_name = str(candidates["district_name"].iloc[0])
     coords = list(zip(candidates["lat"].astype(float), candidates["long"].astype(float)))
     members = candidates[commodity].astype(int).tolist()
     seed_order = sorted(range(len(candidates)), key=lambda i: members[i], reverse=True)
@@ -169,6 +168,14 @@ def cluster_block_commodity(
         cluster_coords = [coords[k] for k in idxs]
         c_lat = sum(c[0] for c in cluster_coords) / len(cluster_coords)
         c_lon = sum(c[1] for c in cluster_coords) / len(cluster_coords)
+        # District from the cluster's OWN villages, not the block's first row.
+        # The source survey reuses some block names across districts (e.g.
+        # GOBARDHANA in BAKSA and BARPETA, LAKHIPUR in CACHAR and GOALPARA);
+        # since clusters are distance-bounded they're geographically coherent
+        # (one district), so this keeps each cluster's true district instead of
+        # collapsing the whole block onto one — which would hide the minority
+        # district's clusters behind a district filter.
+        cl_district = str(candidates.iloc[idxs]["district_name"].mode().iloc[0])
         villages = []
         for k in idxs:
             row = candidates.iloc[k]
@@ -183,7 +190,7 @@ def cluster_block_commodity(
             cluster_id=f"{block_name}-{commodity}-{uuid.uuid4().hex[:8]}",
             commodity=commodity,
             block_name=block_name,
-            district_name=district_name,
+            district_name=cl_district,
             village_indices=[int(candidates.index[k]) for k in idxs],
             villages=villages,
             total_members=int(sum(members[k] for k in idxs)),
