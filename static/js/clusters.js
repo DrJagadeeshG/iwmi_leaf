@@ -246,6 +246,20 @@
         return rec ? rec.district_name : null;
     }
 
+    // Normalize a district name for loose matching across data sources:
+    // case-insensitive and treating runs of spaces/hyphens as one space. Lets
+    // "SOUTH SALMARA-MANKACHAR" (village data) match "South Salmara Mankachar"
+    // (block shapefile) (2026-07-01).
+    function _normDistrict(s) {
+        return String(s || '').toUpperCase().replace(/[\s\-]+/g, ' ').trim();
+    }
+
+    // Friendly display casing for a raw (often UPPERCASE) district/block name,
+    // capitalising after spaces, hyphens and slashes: "KAMRUP-METRO" -> "Kamrup-Metro".
+    function _titleCase(s) {
+        return String(s).toLowerCase().replace(/(^|[\s\-/])([a-z])/g, (_m, sep, c) => sep + c.toUpperCase());
+    }
+
     /**
      * Show only districts that have at least one block with village data.
      * If only one district qualifies, hide the dropdown and show its name as
@@ -256,28 +270,40 @@
         const districtLabel = $('modal-district-label');
         if (!districtSel) return;
 
-        // Districts in MMUA (uppercase) reconciled to display case via /api/locations.
-        const districtsWithDataUpper = new Set(
-            (local.blocksRich || []).map(d => (d.district_name || '').toUpperCase())
+        // Districts come from the village data (blocksRich) - the authoritative
+        // source of what has village data for clustering. We do NOT intersect
+        // with /api/locations (the block shapefile), because that silently drops
+        // districts the shapefile mislabels or spells differently (2026-07-01):
+        //   - KAMRUP-METRO: absent upstream (its blocks are labeled "Kamrup")
+        //   - SOUTH SALMARA-MANKACHAR: upstream spells it with a space, not "-"
+        // /api/locations is used only to borrow nicer display casing when a
+        // normalized (case/space/hyphen-insensitive) match exists.
+        const locByNorm = new Map(
+            Array.from((local.allLocations || new Map()).keys()).map(d => [_normDistrict(d), d])
         );
-        const allDistricts = Array.from((local.allLocations || new Map()).keys());
-        const eligible = allDistricts.filter(d => districtsWithDataUpper.has(d.toUpperCase())).sort();
-        const display = eligible.length ? eligible : allDistricts.sort();
+        const villDistricts = Array.from(new Set(
+            (local.blocksRich || []).map(d => d.district_name).filter(Boolean)
+        ));
+        // value = raw village name (round-trips through the block dropdown's
+        // uppercase match); text = friendly display casing.
+        const display = villDistricts
+            .map(v => ({ value: v, text: locByNorm.get(_normDistrict(v)) || _titleCase(v) }))
+            .sort((a, b) => a.text.localeCompare(b.text));
 
-        districtSel.innerHTML = display.map(d =>
-            `<option value="${d}">${d}</option>`
+        districtSel.innerHTML = display.map(o =>
+            `<option value="${o.value}">${o.text}</option>`
         ).join('');
 
         const wantUpper = (local.currentDistrict || '').toUpperCase();
-        const matchExact = display.find(d => d.toUpperCase() === wantUpper) || display[0] || '';
-        districtSel.value = matchExact;
+        const chosen = display.find(o => o.value.toUpperCase() === wantUpper) || display[0] || { value: '', text: '' };
+        districtSel.value = chosen.value;
         local.currentDistrict = districtSel.value || null;
 
         // Collapse the dropdown to a static label when only one district is available.
         if (display.length <= 1) {
             districtSel.style.display = 'none';
             if (districtLabel) {
-                districtLabel.textContent = matchExact;
+                districtLabel.textContent = chosen.text;
                 districtLabel.style.display = 'inline-flex';
             }
         } else {
@@ -312,7 +338,7 @@
         let displayBlocks = blocksWithData;
         if (local.allLocations) {
             const locBlocks = Array.from(
-                (Array.from(local.allLocations.entries()).find(([d]) => d.toUpperCase() === want) || [null, new Set()])[1]
+                (Array.from(local.allLocations.entries()).find(([d]) => _normDistrict(d) === _normDistrict(local.currentDistrict)) || [null, new Set()])[1]
             );
             displayBlocks = blocksWithData.map(b => ({
                 name: locBlocks.find(lb => lb.toUpperCase() === b.name.toUpperCase()) || b.name,
@@ -1054,11 +1080,16 @@
     function updateDownloadHref() {
         const a = $('cluster-download');
         if (!a) return;
+        // Download the WHOLE block (every commodity) in one file so the cluster
+        // file matches the block, not just the commodity currently on screen
+        // (2026-07-01: Faiz expected all commodities, got Dairy-only). Upload is
+        // likewise block-scoped (see handleUpload) so the edit->reupload round
+        // trip stays consistent; the backend groups by (commodity, cluster_num)
+        // so each commodity's numbering stays separate.
         const params = new URLSearchParams();
         if (local.currentBlock) params.set('block', local.currentBlock);
-        if (local.currentCommodity) params.set('commodity', local.currentCommodity);
         a.href = '/api/clusters/export.csv?' + params.toString();
-        a.classList.toggle('disabled', !local.currentCommodity);
+        a.classList.toggle('disabled', !local.currentBlock);
     }
 
     // ---- Right-side summary panel ----
@@ -1359,8 +1390,11 @@
         if (!file || !local.currentBlock) return;
         showPageLoader(`Uploading ${file.name}…`);
         const text = await file.text();
+        // Block-scoped import (no commodity): the downloaded CSV carries every
+        // commodity for the block, so replace the whole block to keep the
+        // download/upload round-trip consistent. The backend disambiguates each
+        // row by its commodity column + cluster_num (2026-07-01).
         const params = new URLSearchParams({ block: local.currentBlock });
-        if (local.currentCommodity) params.set('commodity', local.currentCommodity);
         try {
             const r = await fetch('/api/clusters/import?' + params.toString(), {
                 method: 'POST',
@@ -1489,9 +1523,10 @@
         // Refresh template href + filename label in case scope changed.
         const link = $('upload-dialog-template');
         if (link) {
+            // Whole-block template (all commodities) to match the block-scoped
+            // download/upload round-trip (2026-07-01).
             const params = new URLSearchParams();
             if (local.currentBlock) params.set('block', local.currentBlock);
-            if (local.currentCommodity) params.set('commodity', local.currentCommodity);
             link.href = '/api/clusters/export.csv?' + params.toString();
         }
         const fname = $('upload-dialog-filename');

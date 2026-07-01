@@ -191,6 +191,40 @@ def test_cluster_name_absent_column_imports_as_none(monkeypatch):
     assert records[0]["cluster_name"] is None
 
 
+def test_whole_block_import_keeps_commodities_separate(monkeypatch):
+    """Whole-block CSV (all commodities in one file, LEAF 2026-07-01): cluster_num
+    restarts per commodity, so a block has a Dairy "1" AND a Goatery "1". Grouping
+    by number must stay commodity-aware or the two "1"s collapse into one cluster.
+
+    Passes a label_to_id keyed by (commodity, label) exactly as
+    _current_label_to_id now builds it, and asserts the rows stay in two separate
+    clusters that keep their own commodity + cluster_id."""
+    csv_text = (
+        "cluster_code,cluster_name,cluster_num,cluster_id,commodity,district_name,"
+        "block_name,gp_name,vill_name,lat,long,members\n"
+        ",,1,D-1,Dairy,BAKSA,BARAMA,GP1,VillD1,26.50,91.30,30\n"
+        ",,1,D-1,Dairy,BAKSA,BARAMA,GP1,VillD2,26.51,91.31,20\n"
+        ",,1,G-1,Goatery,BAKSA,BARAMA,GP2,VillG1,26.60,91.40,25\n"
+        ",,1,G-1,Goatery,BAKSA,BARAMA,GP2,VillG2,26.61,91.41,15\n"
+    )
+    # lat/long present in every row, so the master is never consulted.
+    monkeypatch.setattr(villages, "load_villages",
+                        lambda: pd.DataFrame(columns=["block_name", "vill_name", "lat", "long"]))
+    label_to_id = {("Dairy", "1"): "D-1", ("Goatery", "1"): "G-1"}
+
+    records = villages.csv_text_to_records(csv_text, label_to_id=label_to_id)
+
+    # Two clusters, NOT one merged blob.
+    assert len(records) == 2, "Dairy '1' and Goatery '1' must not merge"
+    by_com = {r["commodity"]: r for r in records}
+    assert set(by_com) == {"Dairy", "Goatery"}
+    # Each keeps its own stable cluster_id and only its own villages.
+    assert by_com["Dairy"]["cluster_id"] == "D-1"
+    assert {v["vill_name"] for v in by_com["Dairy"]["villages"]} == {"VillD1", "VillD2"}
+    assert by_com["Goatery"]["cluster_id"] == "G-1"
+    assert {v["vill_name"] for v in by_com["Goatery"]["villages"]} == {"VillG1", "VillG2"}
+
+
 def test_cluster_num_column_in_upload_is_ignored(monkeypatch, sample_cluster_records):
     """cluster_num is display-only on download - we must not let it leak
     into stored records or affect cluster grouping."""

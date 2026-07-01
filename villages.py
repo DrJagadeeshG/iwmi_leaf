@@ -745,15 +745,19 @@ def _village_coord_lookup(block_name: Optional[str]) -> Dict[str, Dict[str, floa
     return out
 
 
-def _current_label_to_id(block_name: Optional[str], commodity: Optional[str]) -> Dict[str, str]:
-    """Map the CURRENT display number ("1","2","P1"...) to its cluster_id for a
-    scope. The number is derived at read time (get_clusters), so this is how the
-    import resolves a user-edited cluster_num back to the cluster it refers to."""
-    out: Dict[str, str] = {}
+def _current_label_to_id(block_name: Optional[str], commodity: Optional[str]) -> Dict[Tuple[str, str], str]:
+    """Map the CURRENT (commodity, display number) to its cluster_id for a scope.
+    The number is derived at read time (get_clusters), so this is how the import
+    resolves a user-edited cluster_num back to the cluster it refers to.
+
+    Keyed by (commodity, label) - NOT label alone - because numbering restarts
+    per commodity (Dairy "1", Goatery "1", ...), so a block-wide export/import
+    would otherwise collide every commodity's "1" onto one cluster (2026-07-01)."""
+    out: Dict[Tuple[str, str], str] = {}
     for c in get_clusters(block_name=block_name, commodity=commodity):
         lbl = c.get("cluster_label")
         if lbl is not None:
-            out[str(lbl).strip()] = c["cluster_id"]
+            out[(c.get("commodity"), str(lbl).strip())] = c["cluster_id"]
     return out
 
 
@@ -828,8 +832,11 @@ def csv_text_to_records(csv_text: str, label_to_id: Optional[Dict[str, str]] = N
 
         # Grouping key: by cluster NUMBER when the import passes the current
         # numbering map (users edit the friendly number to move/merge); else by
-        # the internal cluster_id (legacy / rows with no number).
-        gkey = ("num", num_label) if (by_number and num_label) else ("id", cid)
+        # the internal cluster_id (legacy / rows with no number). The commodity
+        # is part of the number key because numbering restarts per commodity, so
+        # a whole-block CSV has e.g. a Dairy "1" AND a Goatery "1" that must stay
+        # separate clusters (2026-07-01).
+        gkey = ("num", str(row.get("commodity")), num_label) if (by_number and num_label) else ("id", cid)
 
         rec = records.setdefault(gkey, {
             "cluster_id": cid,        # resolved below when grouping by number
@@ -885,7 +892,7 @@ def csv_text_to_records(csv_text: str, label_to_id: Optional[Dict[str, str]] = N
     for rec in records.values():
         lbl = rec.pop("_num_label", "")
         if by_number and lbl:
-            existing = label_to_id.get(lbl)
+            existing = label_to_id.get((rec.get("commodity"), lbl))
             # An existing number reuses its cluster (stable id, so a move keeps
             # the numbering). A NEW number always mints a fresh id — the number
             # is authoritative, so we must NOT inherit the cluster_id the moved
