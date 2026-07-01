@@ -88,6 +88,33 @@ def _load_shapefile_geometry():
     return gdf[[c for c in id_cols if c in gdf.columns]]
 
 
+# ---------------------------------------------------------------------------
+# District label overrides
+# ---------------------------------------------------------------------------
+# Kamrup Metropolitan was carved out of Kamrup, but Block_assam.shp still codes
+# BOTH districts as DISTRICT_I 266 "Kamrup". Because the district name is derived
+# purely from DISTRICT_I, the three Kamrup-Metro CD blocks otherwise render under
+# "Kamrup" and the district never appears on the map or in the dropdowns (Faiz,
+# 2026-07-01). The shared DISTRICT_I code can't distinguish the two, so reassign
+# by BLOCK_ID (stable, globally unique) to match the authoritative village master
+# (KAMRUP-METRO = Chandrapur, Dimoria, Ramcharani/Rani).
+KAMRUP_METRO_BLOCK_IDS = frozenset({1166, 1636, 5087})  # Chandrapur, Dimoria, Rani
+KAMRUP_METRO_NAME = "Kamrup Metro"
+
+
+def _apply_district_overrides(gdf):
+    """Correct block->district labels that the source shapefile gets wrong.
+
+    Currently only Kamrup Metro (see KAMRUP_METRO_BLOCK_IDS). Applied AFTER the
+    DISTRICT_I->name mapping so it wins. Keyed by BLOCK_ID, numeric-coerced so it
+    matches whether the column is int, float or string. No-op when the expected
+    columns are absent."""
+    if 'BLOCK_ID' in gdf.columns and 'Dist_Name' in gdf.columns:
+        bid = pd.to_numeric(gdf['BLOCK_ID'], errors='coerce')
+        gdf.loc[bid.isin(KAMRUP_METRO_BLOCK_IDS), 'Dist_Name'] = KAMRUP_METRO_NAME
+    return gdf
+
+
 def load_shapefile():
     """Load block data: geometry from shapefile + values from Google Sheets.
 
@@ -124,6 +151,10 @@ def load_shapefile():
     district_mapping = load_district_mapping()
     if district_mapping and 'DISTRICT_I' in gdf.columns:
         gdf['Dist_Name'] = gdf['DISTRICT_I'].map(district_mapping)
+
+    # Correct districts the source shapefile mislabels (e.g. Kamrup Metro, whose
+    # blocks share Kamrup's DISTRICT_I code). Must run after the mapping above.
+    gdf = _apply_district_overrides(gdf)
 
     # LEAF #24: normalize block-name capitalization to Title Case so dropdowns,
     # tooltips, and headers are consistent everywhere (the source sheet mixes
