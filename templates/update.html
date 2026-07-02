@@ -624,7 +624,7 @@
                 </div>
             </div>
 
-            <!-- Whole-state cluster data download -->
+            <!-- Whole-state cluster data download + coverage refresh -->
             <div class="card">
                 <div class="card-header">
                     <div class="card-title">
@@ -633,13 +633,50 @@
                 </div>
                 <p style="color:#666; font-size:0.85rem; margin-bottom:1rem;">
                     Download a single CSV of <strong>all cluster-planning data across the whole state</strong>
-                    &mdash; one row per (cluster, village), for every block that has clusters. It always
-                    reflects the <strong>current saved data, including edits</strong> uploaded on the
-                    Cluster Planning page.
+                    &mdash; one row per (cluster, village). It reflects the <strong>current saved data,
+                    including edits</strong> uploaded on the Cluster Planning page.
                 </p>
+
+                <!-- Coverage reconciliation: total interested members vs assigned vs unassigned -->
+                <div style="margin-bottom:1rem;">
+                    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.5rem;">
+                        <strong style="font-size:0.9rem; color:#28537D;">Coverage &mdash; members assigned to clusters</strong>
+                        <button id="clusters-refresh-btn" class="btn btn-primary" onclick="refreshAllClusters()"
+                                title="Rebuild clusters for every block so the totals below cover the whole state">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh all clusters
+                        </button>
+                    </div>
+                    <p style="color:#666; font-size:0.8rem; margin:0 0 0.75rem;">
+                        Clusters are normally built only for blocks someone opens on the map, so a fresh
+                        export can under-count. <strong>Refresh</strong> rebuilds every block (skipping any
+                        finalised/edited clusters). This also runs automatically once a day. After a refresh,
+                        <em>Assigned + Unassigned = Total</em> for each intervention.
+                    </p>
+                    <div style="overflow-x:auto;">
+                        <table class="col-table" id="coverage-table" style="width:100%; font-size:0.82rem;">
+                            <thead>
+                                <tr>
+                                    <th>Intervention</th>
+                                    <th style="text-align:right;">Total members</th>
+                                    <th style="text-align:right;">Assigned</th>
+                                    <th style="text-align:right;">Unassigned</th>
+                                    <th style="text-align:right;">Assigned %</th>
+                                    <th style="text-align:right;">Blocks</th>
+                                </tr>
+                            </thead>
+                            <tbody id="coverage-tbody">
+                                <tr><td colspan="6" style="color:#999;">Loading coverage…</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
                 <div class="btn-group" style="margin-top: 1rem;">
                     <a href="/api/clusters/export.csv" class="btn btn-primary" download>
                         <i class="bi bi-download"></i> Download all clusters (CSV)
+                    </a>
+                    <a href="/api/clusters/unassigned.csv" class="btn btn-outline" download>
+                        <i class="bi bi-download"></i> Download unassigned villages (CSV)
                     </a>
                 </div>
             </div>
@@ -839,11 +876,85 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadStatus();
             loadValidation();
+            loadCoverage();
             if (IS_ADMIN) {
                 const card = document.getElementById('ai-upload-card');
                 if (card) card.style.display = '';
             }
         });
+
+        const COMMODITY_LABELS = {
+            Dairy: 'Dairy', Goatery: 'Goatery', Piggery: 'Piggery',
+            Backyard_Poultry: 'Backyard Poultry', Duckery: 'Duckery',
+            Fishery_Activity: 'Fishery',
+        };
+
+        // Populate the coverage table (total interested members vs assigned vs
+        // unassigned, per commodity) so the numbers reconcile at a glance.
+        async function loadCoverage() {
+            const tbody = document.getElementById('coverage-tbody');
+            if (!tbody) return;
+            try {
+                const resp = await fetch('/api/clusters/coverage');
+                const rows = await resp.json();
+                if (!Array.isArray(rows) || !rows.length) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="color:#999;">No coverage data.</td></tr>';
+                    return;
+                }
+                const n = v => Number(v || 0).toLocaleString('en-IN');
+                tbody.innerHTML = rows.map(r => {
+                    const low = r.assigned_pct < 90;
+                    const pctColor = low ? '#dc2626' : '#059669';
+                    return `<tr>
+                        <td>${COMMODITY_LABELS[r.commodity] || r.commodity}</td>
+                        <td style="text-align:right;">${n(r.raw_total_members)}</td>
+                        <td style="text-align:right;">${n(r.assigned_members)}</td>
+                        <td style="text-align:right;">${n(r.unassigned_members)}</td>
+                        <td style="text-align:right; color:${pctColor}; font-weight:600;">${r.assigned_pct}%</td>
+                        <td style="text-align:right;">${r.blocks_with_clusters}/${r.total_blocks}</td>
+                    </tr>`;
+                }).join('');
+            } catch (e) {
+                tbody.innerHTML = '<tr><td colspan="6" style="color:#dc2626;">Could not load coverage.</td></tr>';
+            }
+        }
+
+        // Rebuild clusters for every block so the whole-state export/report is
+        // complete. Runs in the background on the server (a full rebuild can take
+        // a minute or two); we poll the coverage table so the numbers climb live.
+        // Admin-gated; finalised/edited scopes are preserved.
+        let coveragePoll = null;
+        async function refreshAllClusters() {
+            const btn = document.getElementById('clusters-refresh-btn');
+            const orig = btn.innerHTML;
+            btn.disabled = true;
+            btn.innerHTML = '<span class="spinner"></span> Rebuilding all blocks…';
+            try {
+                const resp = await fetch('/api/clusters/refresh-all?admin=1', {
+                    method: 'POST',
+                    headers: { 'X-Admin': '1' },
+                });
+                const data = await resp.json();
+                if ((resp.ok || resp.status === 202) && !data.error) {
+                    showToast('Refresh started — rebuilding every block in the background. The coverage table will update as it runs.', 'success');
+                    loadCoverage();
+                    // Poll coverage for ~3 min so the user sees Assigned climb to
+                    // the totals without reloading the page.
+                    if (coveragePoll) clearInterval(coveragePoll);
+                    let ticks = 0;
+                    coveragePoll = setInterval(() => {
+                        loadCoverage();
+                        if (++ticks >= 18) { clearInterval(coveragePoll); coveragePoll = null; }
+                    }, 10000);
+                } else {
+                    showToast(data.error || 'Refresh failed.', 'error');
+                }
+            } catch (e) {
+                showToast('Network error - could not reach the server.', 'error');
+            }
+            btn.disabled = false;
+            btn.innerHTML = orig;
+        }
 
         async function uploadAiDoc() {
             const input = document.getElementById('ai-doc-file');

@@ -593,6 +593,170 @@ def regenerate_clusters(
     return payload
 
 
+def refresh_all_coverage(params: Optional[Dict] = None) -> Dict:
+    """Materialise clusters for EVERY (block, commodity) that is stale and not
+    locked, so the whole-state export/report reflects all blocks - not just the
+    ones someone happened to open in the UI.
+
+    Background: clusters are normally generated lazily, per block, on view
+    (get_or_regenerate). The whole-state export just SELECTs what is already
+    stored, so any block nobody opened contributes zero - which made the report
+    show ~40% of the true members (Faiz, 2026-07-02). This sweep closes that gap.
+
+    Lock-aware: scopes with any finalized/locked cluster are skipped, so human
+    edits / uploaded CSVs survive (unlike a bare regenerate_clusters(), which
+    would DELETE the whole table). Fingerprint-aware: fresh scopes are skipped,
+    so a run with no data change is cheap and idempotent - safe to run daily and
+    on demand from the Refresh button. Returns a summary dict.
+    """
+    df = load_villages()
+    # Same block enumeration as regenerate_clusters (unstripped unique values) so
+    # the fingerprint keys we compare against line up byte-for-byte with what
+    # regenerate_clusters stored - otherwise a scope would always look stale.
+    blocks = sorted(df["block_name"].dropna().unique().tolist())
+
+    # Two upfront queries snapshot the whole state so the per-scope loop below is
+    # pure in-memory hashing (no DB round-trip per scope) until an actual regen
+    # is needed. Keeps a no-op run fast even across 219 x 6 scopes.
+    with get_cursor(commit=False) as cur:
+        cur.execute("SELECT block_name, commodity, fingerprint FROM cluster_generation")
+        gen = {(r["block_name"], r["commodity"]): r["fingerprint"] for r in cur.fetchall()}
+        # A scope is protected (never rebuilt) if ANY of its clusters is finalized,
+        # locked, or carries production-tool dashboard data - so cadre edits,
+        # finalised clusters and operational data all survive the sweep. This is
+        # scope-level: touching one cluster in (block, commodity) shields the
+        # whole scope, matching how the CSV edit/import flow locks a scope.
+        cur.execute(
+            "SELECT DISTINCT block_name, commodity FROM clusters "
+            "WHERE finalized OR locked OR dashboard IS NOT NULL"
+        )
+        locked = {(r["block_name"], r["commodity"]) for r in cur.fetchall()}
+
+    regenerated = fresh = skipped_locked = 0
+    errors: List[Dict] = []
+    for b in blocks:
+        for com in COMMODITIES:
+            key = (b, com)
+            if key in locked:
+                skipped_locked += 1
+                continue
+            try:
+                if gen.get(key) == scope_fingerprint(b, com, params):
+                    fresh += 1
+                    continue
+                regenerate_clusters(block_name=b, commodity=com, params=params)
+                regenerated += 1
+            except Exception as e:  # one bad scope must not abort the whole sweep
+                errors.append({"block": b, "commodity": com, "error": str(e)})
+
+    return {
+        "blocks": len(blocks),
+        "scopes_total": len(blocks) * len(COMMODITIES),
+        "regenerated": regenerated,
+        "fresh": fresh,
+        "skipped_locked": skipped_locked,
+        "errors": errors,
+        "coverage": coverage_summary(params),
+    }
+
+
+def coverage_summary(params: Optional[Dict] = None) -> List[Dict]:
+    """Per-commodity reconciliation for the whole state: raw interested members
+    (from the village master) vs members currently assigned to stored clusters
+    vs the unassigned remainder. Lets a reviewer confirm assigned + unassigned =
+    total, and see how many of the 219 blocks actually have clusters."""
+    df = load_villages()
+    total_blocks = int(df["block_name"].nunique())
+    with get_cursor(commit=False) as cur:
+        cur.execute(
+            "SELECT c.commodity, "
+            "       COUNT(DISTINCT c.cluster_id) AS clusters, "
+            "       COUNT(DISTINCT c.block_name) AS blocks, "
+            "       COALESCE(SUM(cv.members), 0) AS assigned_members "
+            "FROM clusters c LEFT JOIN cluster_villages cv ON cv.cluster_id = c.cluster_id "
+            "GROUP BY c.commodity"
+        )
+        stored = {r["commodity"]: r for r in cur.fetchall()}
+
+    out = []
+    for com in COMMODITIES:
+        col = df[com].fillna(0) if com in df.columns else pd.Series([], dtype=float)
+        raw_total = int(col.sum())
+        s = stored.get(com, {})
+        assigned = int(s.get("assigned_members", 0) or 0)
+        out.append({
+            "commodity": com,
+            "raw_total_members": raw_total,
+            "interested_villages": int((col >= 1).sum()),
+            "assigned_members": assigned,
+            "unassigned_members": raw_total - assigned,
+            "assigned_pct": round(100 * assigned / raw_total, 1) if raw_total else 0.0,
+            "clusters": int(s.get("clusters", 0) or 0),
+            "blocks_with_clusters": int(s.get("blocks", 0) or 0),
+            "total_blocks": total_blocks,
+        })
+    return out
+
+
+def unassigned_villages(commodity: str) -> List[Dict]:
+    """Villages that show interest in `commodity` (>=1 interested member) but are
+    NOT part of any stored cluster for it. After a full coverage refresh these
+    are almost entirely villages below the min-members-per-village floor (<6,
+    hidden by design per LEAF-42); any row with >=6 members flagged
+    'not_clustered' means that block was never materialised - a coverage gap."""
+    if commodity not in COMMODITIES:
+        raise ValueError(f"Unknown commodity '{commodity}'. Expected one of {COMMODITIES}.")
+    df = load_villages()
+    if commodity not in df.columns:
+        return []
+    interested = df[df[commodity].fillna(0) >= 1]
+    with get_cursor(commit=False) as cur:
+        cur.execute(
+            "SELECT DISTINCT upper(trim(c.block_name)) AS b, upper(trim(cv.vill_name)) AS v "
+            "FROM clusters c JOIN cluster_villages cv ON cv.cluster_id = c.cluster_id "
+            "WHERE c.commodity = %s",
+            (commodity,),
+        )
+        assigned = {(r["b"], r["v"]) for r in cur.fetchall()}
+
+    floor = DEFAULT_PARAMS["min_members_per_village"]
+    rows = []
+    for r in interested.itertuples(index=False):
+        rd = r._asdict()
+        key = (str(rd["block_name"]).upper().strip(), str(rd["vill_name"]).upper().strip())
+        if key in assigned:
+            continue
+        m = int(rd[commodity])
+        rows.append({
+            "district_name": rd["district_name"],
+            "block_name": rd["block_name"],
+            "gp_name": rd["gp_name"],
+            "vill_name": rd["vill_name"],
+            "members": m,
+            "reason": "below_min_per_village" if m < floor else "not_clustered",
+        })
+    rows.sort(key=lambda x: (str(x["district_name"]), str(x["block_name"]), -x["members"]))
+    return rows
+
+
+_UNASSIGNED_COLUMNS = [
+    "commodity", "district_name", "block_name", "gp_name", "vill_name", "members", "reason",
+]
+
+
+def unassigned_villages_csv(commodity: Optional[str] = None) -> str:
+    """Row-per-village CSV of unassigned villages (all commodities, or one).
+    Companion to the clusters export so `assigned + unassigned = total`."""
+    coms = [commodity] if commodity else list(COMMODITIES)
+    rows = []
+    for com in coms:
+        for v in unassigned_villages(com):
+            rows.append({"commodity": com, **v})
+    if not rows:
+        return ",".join(_UNASSIGNED_COLUMNS) + "\n"
+    return pd.DataFrame(rows, columns=_UNASSIGNED_COLUMNS).to_csv(index=False)
+
+
 def replace_clusters_from_records(records: List[Dict], scope: Dict) -> int:
     """Replace stored clusters within `scope` (block_name, optional commodity) with `records`.
 
@@ -661,9 +825,14 @@ def set_cluster_finalized(cluster_id: str, finalized: bool) -> Optional[Dict]:
 
 
 def set_cluster_dashboard(cluster_id: str, payload: Dict) -> Optional[Dict]:
+    # Also lock the cluster: once it carries production-tool dashboard data it is
+    # operational/human-owned and must never be silently regenerated (would drop
+    # the payload). Locking protects it in BOTH the daily coverage sweep and the
+    # on-view smart-refresh - directly honouring "don't remove cadre changes".
     with get_cursor(commit=True) as cur:
         cur.execute(
-            "UPDATE clusters SET dashboard = %s, updated_at = now() WHERE cluster_id = %s",
+            "UPDATE clusters SET dashboard = %s, locked = TRUE, updated_at = now() "
+            "WHERE cluster_id = %s",
             (Json(payload), cluster_id),
         )
         if cur.rowcount == 0:

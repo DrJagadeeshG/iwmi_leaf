@@ -175,6 +175,15 @@ app.register_blueprint(production_tool_bp)
 app.register_blueprint(api_info_bp)
 
 
+# Daily maintenance: rebuild whole-state cluster coverage so the export/report
+# reflects every block, not just the ones opened in the UI. Idempotent and
+# advisory-locked, so it is safe under multiple gunicorn workers and starting it
+# at import (once per process) is enough. The manual trigger is the "Refresh all
+# clusters" button (POST /api/clusters/refresh-all).
+from scheduler import start_scheduler
+start_scheduler()
+
+
 # =============================================================================
 # Error Handlers
 # =============================================================================

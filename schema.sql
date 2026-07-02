@@ -1,5 +1,5 @@
 -- LEAF DSS clustering schema
--- Tables: clusters, cluster_villages, infrastructure
+-- Tables: clusters, cluster_villages, infrastructure, cluster_generation, maintenance_run
 
 CREATE TABLE IF NOT EXISTS clusters (
     cluster_id        TEXT PRIMARY KEY,
@@ -73,3 +73,14 @@ CREATE TABLE IF NOT EXISTS infrastructure (
 );
 CREATE INDEX IF NOT EXISTS idx_infra_type  ON infrastructure(type);
 CREATE INDEX IF NOT EXISTS idx_infra_block ON infrastructure(block_name);
+
+-- Bookkeeping for background maintenance jobs. Currently one row:
+-- 'refresh_all_coverage', stamped by the daily scheduler (scheduler.py) each
+-- time it rebuilds whole-state cluster coverage. `last_run` gates the once-a-day
+-- interval; `last_summary` keeps the last run's counts for debugging. Created at
+-- runtime too (CREATE TABLE IF NOT EXISTS in scheduler._run_if_due).
+CREATE TABLE IF NOT EXISTS maintenance_run (
+    job          TEXT PRIMARY KEY,
+    last_run     TIMESTAMPTZ,
+    last_summary JSONB
+);

@@ -37,6 +37,8 @@ from villages import (
     get_cluster,
     get_or_regenerate,
     regenerate_clusters,
+    coverage_summary,
+    unassigned_villages_csv,
     replace_clusters_from_records,
     clusters_to_csv,
     csv_text_to_records,
@@ -399,6 +401,153 @@ def api_clusters_export_csv():
             csv_text,
             mimetype='text/csv',
             headers={'Content-Disposition': f'attachment; filename=clusters_{scope}.csv'},
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+
+@clusters_bp.route('/api/clusters/refresh-all', methods=['POST'])
+def api_clusters_refresh_all():
+    """Rebuild cluster coverage for every block in the state.
+    ---
+    tags:
+      - Clusters
+    summary: Refresh all clusters (whole-state coverage)
+    description: |
+      Kicks off a **background** rebuild of clusters for every (block, commodity)
+      that is **stale and not locked**, so the whole-state export/report reflects
+      **all 219 blocks** — not just the ones a user happened to open in the map
+      (the normal lazy path).
+
+      This exists because clusters are otherwise generated lazily, per block, on
+      view: the whole-state export only returns what is already stored, so blocks
+      nobody opened contribute zero and the report undercounts members (observed
+      ~40% of the true total). This sweep closes that gap.
+
+      Runs **asynchronously** (a full rebuild can take a while when many blocks
+      are stale) and returns immediately with `started: true` plus the *current*
+      coverage; poll `GET /api/clusters/coverage` to watch the numbers climb.
+
+      **Safe to re-run:** finalized/edited (locked) scopes are skipped so human
+      edits survive; fresh scopes are skipped via fingerprint, so a run with no
+      underlying data change does almost nothing; and an advisory lock means
+      overlapping triggers (or the daily job) never run twice at once. The daily
+      scheduler calls the same routine automatically; this endpoint is the manual
+      "Refresh" trigger.
+
+      **Admin-only.** Requires `?admin=1` or `X-Admin: 1`.
+    responses:
+      202:
+        description: Refresh started; returns current (pre-refresh) coverage
+        schema:
+          type: object
+          properties:
+            started: {type: boolean}
+            coverage: {type: array, items: {type: object}}
+      403:
+        description: Admin flag missing
+        schema: {$ref: '#/definitions/Error'}
+      500:
+        description: Server error
+        schema: {$ref: '#/definitions/Error'}
+    """
+    if not _is_admin_request():
+        return jsonify({'error': 'Admin-only endpoint. Pass ?admin=1 or X-Admin: 1.'}), 403
+    try:
+        from scheduler import trigger_async
+        trigger_async(force=True)
+        return jsonify({'started': True, 'coverage': coverage_summary()}), 202
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+
+@clusters_bp.route('/api/clusters/coverage')
+def api_clusters_coverage():
+    """Per-commodity coverage reconciliation.
+    ---
+    tags:
+      - Clusters
+    summary: Coverage summary (assigned vs unassigned)
+    description: |
+      Returns, for each of the six commodities: the raw interested-member total
+      from the village master, the members currently assigned to stored clusters,
+      the unassigned remainder (`raw_total - assigned`), the assigned percentage,
+      and how many of the 219 blocks have any clusters. Lets a reviewer confirm
+      that `assigned + unassigned = total` and spot coverage gaps at a glance.
+
+      Reflects whatever is currently stored — run `POST /api/clusters/refresh-all`
+      first (or wait for the daily job) to see full-coverage numbers.
+    responses:
+      200:
+        description: Array of per-commodity coverage records
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              commodity: {type: string}
+              raw_total_members: {type: integer}
+              interested_villages: {type: integer}
+              assigned_members: {type: integer}
+              unassigned_members: {type: integer}
+              assigned_pct: {type: number}
+              clusters: {type: integer}
+              blocks_with_clusters: {type: integer}
+              total_blocks: {type: integer}
+      500:
+        description: Server error
+        schema: {$ref: '#/definitions/Error'}
+    """
+    try:
+        return jsonify(coverage_summary())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+
+@clusters_bp.route('/api/clusters/unassigned.csv')
+def api_clusters_unassigned_csv():
+    """Download unassigned villages as CSV.
+    ---
+    tags:
+      - Clusters
+    summary: Export unassigned villages CSV
+    description: |
+      One row per village that shows interest in a commodity (>=1 interested
+      member) but is **not** part of any stored cluster for it. Columns:
+      commodity, district_name, block_name, gp_name, vill_name, members, reason.
+      `reason` is `below_min_per_village` (fewer than the min members/village
+      floor, hidden by design — LEAF-42) or `not_clustered` (>= the floor but no
+      cluster holds it — usually a block that has not been materialised yet).
+      Companion to `export.csv` so `assigned + unassigned = total`.
+    parameters:
+      - name: commodity
+        in: query
+        type: string
+        required: false
+        enum: [Dairy, Goatery, Piggery, Backyard_Poultry, Duckery, Fishery_Activity]
+        description: Restrict to one commodity; omit for all six.
+    responses:
+      200:
+        description: CSV file
+        schema: {type: string}
+      500:
+        description: Server error
+        schema: {$ref: '#/definitions/Error'}
+    """
+    try:
+        commodity = request.args.get('commodity')
+        csv_text = unassigned_villages_csv(commodity=commodity)
+        scope = commodity or 'all'
+        return Response(
+            csv_text,
+            mimetype='text/csv',
+            headers={'Content-Disposition': f'attachment; filename=unassigned_villages_{scope}.csv'},
         )
     except Exception as e:
         return jsonify({'error': str(e)}), 500
