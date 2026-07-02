@@ -615,7 +615,7 @@ def refresh_all_coverage(params: Optional[Dict] = None) -> Dict:
     # regenerate_clusters stored - otherwise a scope would always look stale.
     blocks = sorted(df["block_name"].dropna().unique().tolist())
 
-    # Two upfront queries snapshot the whole state so the per-scope loop below is
+    # Three upfront queries snapshot the whole state so the per-scope loop below is
     # pure in-memory hashing (no DB round-trip per scope) until an actual regen
     # is needed. Keeps a no-op run fast even across 219 x 6 scopes.
     with get_cursor(commit=False) as cur:
@@ -631,21 +631,40 @@ def refresh_all_coverage(params: Optional[Dict] = None) -> Dict:
             "WHERE finalized OR locked OR dashboard IS NOT NULL"
         )
         locked = {(r["block_name"], r["commodity"]) for r in cur.fetchall()}
+        # How many clusters each scope currently has, so we can catch scopes that
+        # look "fresh" (fingerprint matches) but hold ZERO clusters.
+        cur.execute("SELECT block_name, commodity, COUNT(*) AS n FROM clusters GROUP BY block_name, commodity")
+        have = {(r["block_name"], r["commodity"]): int(r["n"]) for r in cur.fetchall()}
 
-    regenerated = fresh = skipped_locked = 0
+    # Which (block, commodity) scopes SHOULD produce at least one cluster: any
+    # village clears the per-village floor. Used for the empty-but-eligible guard.
+    floor = _effective_params(params)["min_members_per_village"]
+
+    regenerated = fresh = skipped_locked = healed_empty = 0
     errors: List[Dict] = []
     for b in blocks:
+        block_df = df[df["block_name"] == b]
         for com in COMMODITIES:
             key = (b, com)
             if key in locked:
                 skipped_locked += 1
                 continue
             try:
-                if gen.get(key) == scope_fingerprint(b, com, params):
+                # Empty-but-eligible guard (LEAF, 2026-07-02): a scope generated
+                # empty under older data keeps a matching fingerprint forever, so a
+                # pure fingerprint check would treat it as "fresh" and never build
+                # the clusters the current data supports (the BILASIPARA-poultry
+                # class of gap). If the data has eligible villages but 0 clusters
+                # are stored, force a rebuild regardless of the fingerprint.
+                eligible = com in block_df.columns and bool((block_df[com].fillna(0) >= floor).any())
+                empty_gap = eligible and have.get(key, 0) == 0
+                if not empty_gap and gen.get(key) == scope_fingerprint(b, com, params):
                     fresh += 1
                     continue
                 regenerate_clusters(block_name=b, commodity=com, params=params)
                 regenerated += 1
+                if empty_gap:
+                    healed_empty += 1
             except Exception as e:  # one bad scope must not abort the whole sweep
                 errors.append({"block": b, "commodity": com, "error": str(e)})
 
@@ -653,6 +672,7 @@ def refresh_all_coverage(params: Optional[Dict] = None) -> Dict:
         "blocks": len(blocks),
         "scopes_total": len(blocks) * len(COMMODITIES),
         "regenerated": regenerated,
+        "healed_empty": healed_empty,  # rebuilt despite a "fresh" fingerprint (empty-but-eligible)
         "fresh": fresh,
         "skipped_locked": skipped_locked,
         "errors": errors,
@@ -664,26 +684,43 @@ def coverage_summary(params: Optional[Dict] = None) -> List[Dict]:
     """Per-commodity reconciliation for the whole state: raw interested members
     (from the village master) vs members currently assigned to stored clusters
     vs the unassigned remainder. Lets a reviewer confirm assigned + unassigned =
-    total, and see how many of the 219 blocks actually have clusters."""
+    total, and see how many of the 219 blocks actually have clusters.
+
+    Scoped to CURRENT master blocks only: clusters stored under an old/renamed
+    block name (not in the current village master) are excluded here so the
+    numbers can't exceed 100%. Those old-name blocks are reported separately by
+    unmapped_blocks() and reconciled once the rename mapping is confirmed."""
     df = load_villages()
-    total_blocks = int(df["block_name"].nunique())
+    master = set(df["block_name"].dropna().unique())
+    total_blocks = len(master)
     with get_cursor(commit=False) as cur:
         cur.execute(
-            "SELECT c.commodity, "
+            "SELECT c.commodity, c.block_name, "
             "       COUNT(DISTINCT c.cluster_id) AS clusters, "
-            "       COUNT(DISTINCT c.block_name) AS blocks, "
             "       COALESCE(SUM(cv.members), 0) AS assigned_members "
             "FROM clusters c LEFT JOIN cluster_villages cv ON cv.cluster_id = c.cluster_id "
-            "GROUP BY c.commodity"
+            "GROUP BY c.commodity, c.block_name"
         )
-        stored = {r["commodity"]: r for r in cur.fetchall()}
+        rows = cur.fetchall()
+
+    # Fold per-(commodity, block) rows into per-commodity totals, counting only
+    # blocks present in the current master (drops old-name duplicates).
+    agg: Dict[str, Dict] = {c: {"clusters": 0, "blocks": 0, "assigned": 0} for c in COMMODITIES}
+    for r in rows:
+        if r["block_name"] not in master or r["commodity"] not in agg:
+            continue
+        a = agg[r["commodity"]]
+        a["clusters"] += int(r["clusters"] or 0)
+        a["assigned"] += int(r["assigned_members"] or 0)
+        if r["clusters"]:
+            a["blocks"] += 1
 
     out = []
     for com in COMMODITIES:
         col = df[com].fillna(0) if com in df.columns else pd.Series([], dtype=float)
         raw_total = int(col.sum())
-        s = stored.get(com, {})
-        assigned = int(s.get("assigned_members", 0) or 0)
+        a = agg[com]
+        assigned = a["assigned"]
         out.append({
             "commodity": com,
             "raw_total_members": raw_total,
@@ -691,10 +728,42 @@ def coverage_summary(params: Optional[Dict] = None) -> List[Dict]:
             "assigned_members": assigned,
             "unassigned_members": raw_total - assigned,
             "assigned_pct": round(100 * assigned / raw_total, 1) if raw_total else 0.0,
-            "clusters": int(s.get("clusters", 0) or 0),
-            "blocks_with_clusters": int(s.get("blocks", 0) or 0),
+            "clusters": a["clusters"],
+            "blocks_with_clusters": a["blocks"],
             "total_blocks": total_blocks,
         })
+    return out
+
+
+def unmapped_blocks() -> List[Dict]:
+    """Blocks that have stored clusters but are NOT in the current village master
+    - i.e. clusters under an OLD/renamed block name. Surfaced so the coverage
+    view can flag "N blocks pending rename reconciliation" instead of silently
+    inflating totals. Each row notes how many of its clusters are cadre-owned
+    (must be carried onto the new name, not dropped)."""
+    df = load_villages()
+    master = set(df["block_name"].dropna().unique())
+    with get_cursor(commit=False) as cur:
+        cur.execute(
+            "SELECT c.block_name, "
+            "       COUNT(DISTINCT c.cluster_id) AS clusters, "
+            "       COUNT(DISTINCT c.cluster_id) FILTER "
+            "         (WHERE c.finalized OR c.locked OR c.dashboard IS NOT NULL) AS cadre_clusters, "
+            "       COALESCE(SUM(cv.members), 0) AS members "
+            "FROM clusters c LEFT JOIN cluster_villages cv ON cv.cluster_id = c.cluster_id "
+            "GROUP BY c.block_name"
+        )
+        rows = cur.fetchall()
+    out = [
+        {
+            "block_name": r["block_name"],
+            "clusters": int(r["clusters"] or 0),
+            "cadre_clusters": int(r["cadre_clusters"] or 0),
+            "members": int(r["members"] or 0),
+        }
+        for r in rows if r["block_name"] not in master
+    ]
+    out.sort(key=lambda x: -x["members"])
     return out
 
 

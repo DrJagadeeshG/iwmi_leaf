@@ -652,6 +652,7 @@
                         finalised/edited clusters). This also runs automatically once a day. After a refresh,
                         <em>Assigned + Unassigned = Total</em> for each intervention.
                     </p>
+                    <div id="pending-renames-note" style="display:none; margin:0 0 0.75rem; padding:0.6rem 0.8rem; background:#fff7ed; border-left:4px solid #f59e0b; border-radius:4px; font-size:0.8rem; color:#7c4a03;"></div>
                     <div style="overflow-x:auto;">
                         <table class="col-table" id="coverage-table" style="width:100%; font-size:0.82rem;">
                             <thead>
@@ -917,6 +918,25 @@
             } catch (e) {
                 tbody.innerHTML = '<tr><td colspan="6" style="color:#dc2626;">Could not load coverage.</td></tr>';
             }
+            loadPendingRenames();
+        }
+
+        // Old-name / renamed blocks are excluded from the coverage totals above
+        // (so they read <=100%) and surfaced here as a heads-up until the block
+        // rename reconciliation is done.
+        async function loadPendingRenames() {
+            const el = document.getElementById('pending-renames-note');
+            if (!el) return;
+            try {
+                const rows = await (await fetch('/api/clusters/pending-renames')).json();
+                if (!Array.isArray(rows) || !rows.length) { el.style.display = 'none'; return; }
+                const cadre = rows.reduce((s, r) => s + (r.cadre_clusters || 0), 0);
+                const members = rows.reduce((s, r) => s + (r.members || 0), 0);
+                el.innerHTML = `<strong>${rows.length} block(s) under old/renamed names</strong> are excluded from the totals above `
+                    + `(${members.toLocaleString('en-IN')} members, ${cadre} cadre-edited clusters). `
+                    + `Pending block-name reconciliation — not lost, just not yet merged onto current names.`;
+                el.style.display = '';
+            } catch (e) { el.style.display = 'none'; }
         }
 
         // Rebuild clusters for every block so the whole-state export/report is

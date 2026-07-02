@@ -38,6 +38,7 @@ from villages import (
     get_or_regenerate,
     regenerate_clusters,
     coverage_summary,
+    unmapped_blocks,
     unassigned_villages_csv,
     replace_clusters_from_records,
     clusters_to_csv,
@@ -504,6 +505,44 @@ def api_clusters_coverage():
     """
     try:
         return jsonify(coverage_summary())
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+
+
+@clusters_bp.route('/api/clusters/pending-renames')
+def api_clusters_pending_renames():
+    """Blocks with clusters stored under an OLD/renamed name.
+    ---
+    tags:
+      - Clusters
+    summary: Blocks pending rename reconciliation
+    description: |
+      Lists blocks that have stored clusters but are NOT in the current village
+      master - i.e. clusters under an old/renamed block name. These are excluded
+      from `/api/clusters/coverage` (so it can't exceed 100%) and surfaced here
+      instead. `cadre_clusters` counts clusters that are finalised/locked/carry
+      dashboard data and therefore must be migrated onto the new name (not
+      dropped) during rename reconciliation.
+    responses:
+      200:
+        description: Array of old-name blocks with counts
+        schema:
+          type: array
+          items:
+            type: object
+            properties:
+              block_name: {type: string}
+              clusters: {type: integer}
+              cadre_clusters: {type: integer}
+              members: {type: integer}
+      500:
+        description: Server error
+        schema: {$ref: '#/definitions/Error'}
+    """
+    try:
+        return jsonify(unmapped_blocks())
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
