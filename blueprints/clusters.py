@@ -609,9 +609,12 @@ def api_clusters_import():
     description: |
       Accepts the same row-per-village CSV format produced by
       `/api/clusters/export.csv`. Required scope: `block` (and optionally
-      `commodity`). All existing clusters within scope are replaced by the
-      uploaded rows; derived fields (total_members, max_span_km, centroid) are
-      recomputed.
+      `commodity`). Replace is **commodity-safe**: only the commodities the
+      uploaded file actually contains (or the single pinned `commodity`) are
+      replaced, so a partial upload — e.g. re-uploading a single-commodity
+      "view" export — never deletes the block's other commodities. A file with
+      no usable rows for the block is a no-op. Derived fields (total_members,
+      max_span_km, centroid) are recomputed.
       Grouping follows the friendly `cluster_num` ("1", "2", "P1"...): change a
       village's number to move it to that cluster, give rows the same number to
       merge, or a new number to split. Each existing number maps back to the

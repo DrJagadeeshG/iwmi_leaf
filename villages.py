@@ -833,6 +833,11 @@ def replace_clusters_from_records(records: List[Dict], scope: Dict) -> int:
     {vill_name, gp_name, lat, long, members}), plus optional pashu_sakhi, block_coordinator,
     district_coordinator, cluster_name. Derived fields (total_members, max_span_km, centroid)
     are recomputed.
+
+    Replace scope is commodity-safe: only the commodities the uploaded file
+    actually contains are replaced (or the single pinned `scope.commodity`), so a
+    partial upload never deletes commodities that aren't in the file. A file with
+    no usable rows for the block is a no-op.
     """
     from clustering import _max_pairwise_km
 
@@ -876,8 +881,21 @@ def replace_clusters_from_records(records: List[Dict], scope: Dict) -> int:
             "locked": True,
         })
 
+    # Decide which commodity scopes to replace. If the caller pinned a commodity,
+    # honour exactly that. Otherwise (a whole-block upload) replace ONLY the
+    # commodities actually present in the uploaded file - never the whole block
+    # blindly. This is the guardrail against the single-commodity-file footgun:
+    # re-uploading a "view" export (e.g. Dairy only) must NOT delete the block's
+    # other commodities. An upload with no usable rows deletes nothing (no-op)
+    # rather than wiping the block.
+    if commodity:
+        target_commodities = [commodity]
+    else:
+        target_commodities = sorted({c["commodity"] for c in cleaned if c.get("commodity")})
+
     with get_cursor(commit=True) as cur:
-        _delete_clusters(cur, block_name=block_name, commodity=commodity)
+        for com in target_commodities:
+            _delete_clusters(cur, block_name=block_name, commodity=com)
         _insert_clusters(cur, cleaned)
     return len(cleaned)
 

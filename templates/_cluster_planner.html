@@ -62,9 +62,9 @@
         </div>
     </div>
     <div class="cluster-modal-actions">
-        <a id="cluster-download" href="#" class="cluster-action-btn" data-tooltip-wrap data-tooltip="Download the WHOLE block (all commodities), one row per cluster-village. This is the file to edit and re-upload — the upload replaces the whole block, so it must contain every commodity."><i class="bi bi-download"></i> Download block CSV</a>
-        <a id="cluster-download-commodity" href="#" class="cluster-action-btn" data-tooltip-wrap data-tooltip="Download only the commodity currently selected, for viewing/reporting. Do NOT re-upload this file — a re-upload replaces the whole block and would drop the other commodities."><i class="bi bi-download"></i> Download commodity (view)</a>
-        <button id="open-upload-dialog" type="button" class="cluster-action-btn" data-tooltip-wrap data-tooltip="See the expected CSV structure, then upload your edited file. Upload replaces ALL commodities in the block, so upload the block CSV (not the view-only commodity file)."><i class="bi bi-upload"></i> Upload CSV</button>
+        <a id="cluster-download" href="#" class="cluster-action-btn" data-tooltip-wrap data-tooltip="Download the WHOLE block (all commodities), one row per cluster-village. This is the main edit file — edit in Excel and re-upload to update the block."><i class="bi bi-download"></i> Download block CSV</a>
+        <a id="cluster-download-commodity" href="#" class="cluster-action-btn" data-tooltip-wrap data-tooltip="Download only the commodity currently selected — handy for viewing/reporting one commodity. Safe to edit and re-upload too: an upload only replaces the commodities the file contains, so the block's other commodities are left untouched."><i class="bi bi-download"></i> Download commodity (view)</a>
+        <button id="open-upload-dialog" type="button" class="cluster-action-btn" data-tooltip-wrap data-tooltip="See the expected CSV structure, then upload your edited file. Upload replaces only the commodities present in the file — the block's other commodities are left as-is."><i class="bi bi-upload"></i> Upload CSV</button>
         <input type="file" id="cluster-upload" accept=".csv" style="display: none;" />
         <button id="cluster-regenerate" class="cluster-action-btn" style="display: none;" data-tooltip-wrap data-tooltip="Re-run the clustering algorithm with default thresholds, replacing your edits"><i class="bi bi-arrow-clockwise"></i> Regenerate</button>
     </div>

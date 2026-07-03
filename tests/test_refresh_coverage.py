@@ -129,6 +129,61 @@ def test_empty_but_eligible_scope_is_healed_despite_fresh_fingerprint(monkeypatc
     assert summary["fresh"] == 3
 
 
+def _fake_replace_env(monkeypatch):
+    """Stub the DB bits of replace_clusters_from_records; return the list of
+    (block, commodity) pairs passed to _delete_clusters."""
+    monkeypatch.setattr(villages, "_canonical_block", lambda b: b)
+    deleted = []
+    monkeypatch.setattr(villages, "_delete_clusters",
+                        lambda cur, block_name=None, commodity=None: deleted.append((block_name, commodity)))
+    monkeypatch.setattr(villages, "_insert_clusters", lambda cur, recs: None)
+
+    @contextlib.contextmanager
+    def fake_get_cursor(commit=False):
+        yield None
+    monkeypatch.setattr(villages, "get_cursor", fake_get_cursor)
+    return deleted
+
+
+def _rec(block, com):
+    return {"block_name": block, "commodity": com,
+            "villages": [{"vill_name": "V", "gp_name": "G", "lat": 26.5, "long": 92.0, "members": 10}]}
+
+
+def test_partial_upload_replaces_only_present_commodities(monkeypatch):
+    # A Dairy-only file uploaded whole-block (no scope commodity) must delete ONLY
+    # Dairy - never the whole block - so the block's other commodities survive.
+    deleted = _fake_replace_env(monkeypatch)
+    n = villages.replace_clusters_from_records([_rec("BLK", "Dairy")], scope={"block_name": "BLK"})
+    assert deleted == [("BLK", "Dairy")]
+    assert n == 1
+
+
+def test_whole_block_upload_replaces_all_present(monkeypatch):
+    deleted = _fake_replace_env(monkeypatch)
+    villages.replace_clusters_from_records(
+        [_rec("BLK", "Dairy"), _rec("BLK", "Goatery")], scope={"block_name": "BLK"})
+    assert set(deleted) == {("BLK", "Dairy"), ("BLK", "Goatery")}
+
+
+def test_empty_or_mismatched_upload_is_noop(monkeypatch):
+    # Rows for a different block -> nothing matches -> delete NOTHING (previously
+    # this wiped the whole block).
+    deleted = _fake_replace_env(monkeypatch)
+    n = villages.replace_clusters_from_records([_rec("OTHER", "Dairy")], scope={"block_name": "BLK"})
+    assert deleted == []
+    assert n == 0
+
+
+def test_pinned_commodity_scope_still_deletes_only_that(monkeypatch):
+    deleted = _fake_replace_env(monkeypatch)
+    # File has Dairy + Goatery but scope pins Dairy -> only Dairy replaced.
+    villages.replace_clusters_from_records(
+        [_rec("BLK", "Dairy"), _rec("BLK", "Goatery")],
+        scope={"block_name": "BLK", "commodity": "Dairy"})
+    assert deleted == [("BLK", "Dairy")]
+
+
 def test_coverage_summary_excludes_old_name_blocks(monkeypatch):
     # Master has only BLK1; BLK_OLD is a renamed/phantom block whose clusters must
     # NOT inflate the coverage totals (they belong in unmapped_blocks instead).
