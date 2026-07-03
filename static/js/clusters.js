@@ -64,7 +64,7 @@
             ['Step 4 - Review a cluster',
                 'Click any polygon to open its popup: cluster ID, total members, max pairwise span (km), the list of villages, and its status (Proposed or Finalised). A green ✓ at the cluster centre means it is finalised; absence of the ✓ means it is still proposed. The "?" inside the popup opens this same workflow help.'],
             ['Step 5 - Edit clusters via CSV',
-                'No in-map editor - the same backend-CSV pattern as the rest of LEAF. Download CSV gives you one row per (cluster, village). In Excel you can: move a village by changing its cluster_num to the target cluster’s number, merge two clusters by giving their rows the same number, split by giving rows a new number, rename a cluster by typing over the cluster_code column, drop a village by deleting its row, or fill in pashu_sakhi / block_coordinator. Upload CSV replaces the clusters in the current scope (block + commodity). Re-upload as many times as you need. Re-running Regenerate wipes your edits and starts fresh from the algorithm.'],
+                'No in-map editor - the same backend-CSV pattern as the rest of LEAF. Use "Download block CSV" for editing: it gives one row per (cluster, village) for the WHOLE block (all commodities). In Excel you can: move a village by changing its cluster_num to the target cluster’s number, merge two clusters by giving their rows the same number, split by giving rows a new number, rename a cluster by typing over the cluster_code column, drop a village by deleting its row, or fill in pashu_sakhi / block_coordinator. Upload CSV replaces ALL clusters in the block, so always edit and re-upload the whole-block file - do not upload a single-commodity file or the other commodities will be dropped. ("Download commodity (view)" is a filtered, view-only copy for reporting - not for re-upload.) Re-upload as many times as you need. Re-running Regenerate wipes your edits and starts fresh from the algorithm.'],
             ['Step 6 - Why some commodities have 0 clusters',
                 'Dairy is currently empty in Khowang because no village has ≥30 dairy-interested members at default thresholds - the floor cannot be met. Either accept that the algorithm has nothing to propose, or relax the thresholds via the regenerate API (e.g. min_cluster_members=20). A UI for these knobs is on the backlog.'],
             ['Step 7 - Finalise & publish',
@@ -1078,18 +1078,40 @@
     }
 
     function updateDownloadHref() {
+        // Two downloads, deliberately different scopes:
+        //  - #cluster-download          -> WHOLE block (every commodity). This is
+        //    the EDIT file: upload is block-scoped (see handleUpload) and replaces
+        //    the whole block, so the round-trip file must carry every commodity
+        //    (2026-07-01: Faiz expected all commodities, got Dairy-only).
+        //  - #cluster-download-commodity -> only the selected commodity, for
+        //    VIEW/report use (2026-07-02: Faiz's client wanted just the picked
+        //    commodity). Not for re-upload - a whole-block upload of a
+        //    single-commodity file would drop the other commodities.
         const a = $('cluster-download');
-        if (!a) return;
-        // Download the WHOLE block (every commodity) in one file so the cluster
-        // file matches the block, not just the commodity currently on screen
-        // (2026-07-01: Faiz expected all commodities, got Dairy-only). Upload is
-        // likewise block-scoped (see handleUpload) so the edit->reupload round
-        // trip stays consistent; the backend groups by (commodity, cluster_num)
-        // so each commodity's numbering stays separate.
-        const params = new URLSearchParams();
-        if (local.currentBlock) params.set('block', local.currentBlock);
-        a.href = '/api/clusters/export.csv?' + params.toString();
-        a.classList.toggle('disabled', !local.currentBlock);
+        if (a) {
+            const p = new URLSearchParams();
+            if (local.currentBlock) p.set('block', local.currentBlock);
+            a.href = '/api/clusters/export.csv?' + p.toString();
+            a.classList.toggle('disabled', !local.currentBlock);
+        }
+        const ac = $('cluster-download-commodity');
+        if (ac) {
+            const hasScope = !!(local.currentBlock && local.currentCommodity);
+            if (hasScope) {
+                const p = new URLSearchParams();
+                p.set('block', local.currentBlock);
+                p.set('commodity', local.currentCommodity);
+                ac.href = '/api/clusters/export.csv?' + p.toString();
+                const label = (typeof COMMODITY_LABEL !== 'undefined' && COMMODITY_LABEL[local.currentCommodity])
+                    || local.currentCommodity;
+                ac.innerHTML = '<i class="bi bi-download"></i> Download ' + escapeHtml(label) + ' (view)';
+            } else {
+                ac.href = '#';
+                ac.innerHTML = '<i class="bi bi-download"></i> Download commodity (view)';
+            }
+            // Needs a commodity selected (whole-block download only needs a block).
+            ac.classList.toggle('disabled', !hasScope);
+        }
     }
 
     // ---- Right-side summary panel ----

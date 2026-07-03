@@ -397,7 +397,12 @@ def api_clusters_export_csv():
                 district_name=district,
             )
         csv_text = clusters_to_csv(clusters)
+        # Name the file after its scope so a per-commodity "view" download is
+        # distinguishable from the whole-block edit file (e.g. clusters_BASKA.csv
+        # vs clusters_BASKA_Dairy.csv) - avoids the two getting confused.
         scope = block or district or 'all'
+        if commodity:
+            scope = f'{scope}_{commodity}'
         return Response(
             csv_text,
             mimetype='text/csv',
