@@ -840,34 +840,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../api/gps/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gram Panchayats
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../api/villages/" class="md-nav__link">
         
   
@@ -1789,45 +1761,44 @@ Postgres advisory lock.</p>
 <a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>│   │   ├── levels.py           # /health, /documentation, level config, AI docs
 <a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>│   │   ├── blocks.py           # /api/blocks*
 <a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>│   │   ├── locations.py        # /api/locations, /api/districts*
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>│   │   ├── gp.py               # /api/gp* (GP drill-down — disabled by default)
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>│   │   ├── interventions.py    # /api/interventions, /api/variables*
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>│   │   ├── feasibility.py      # /api/calculate-feasibility, /api/ai-recommendation*
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>│   │   ├── villages.py         # /api/villages* (village master reads)
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>│   │   ├── clusters.py         # /api/clusters* (needs Postgres)
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>│   │   ├── infrastructure.py   # /api/infrastructure* (POIs)
-<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>│   │   ├── production_tool.py  # /api/production-tool* (dashboard feed)
-<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>│   │   ├── export.py           # /api/export/csv
-<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>│   │   ├── config.py           # /api/config, sheet validate/refresh
-<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>│   │   └── api_info.py         # /api index listing
-<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>│   ├── db.py                   # Postgres connection pool (DSN from DATABASE_URL)
-<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>│   ├── schema.sql              # Cluster tables (clusters, cluster_villages, …)
-<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>│   ├── migrations/             # Numbered SQL migrations (applied manually)
-<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>│   ├── clustering.py           # Greedy seed-and-grow algorithm (ALGO_VERSION)
-<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>│   ├── villages.py             # Village-master loading + cadre-edit protection
-<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>│   ├── google_sheets.py        # Published-CSV overlay (dss_input, block_values)
-<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>│   ├── scheduler.py            # In-process daemon: coverage sweep + nightly backup
-<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>│   ├── db_backup.py            # Nightly dump to Supabase Storage
-<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a>│   ├── feasibility.py          # Block feasibility score calculations
-<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a>│   ├── rag_utils.py            # AI/RAG recommendation engine (LangChain + OpenAI)
-<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a>│   ├── config.py               # Colors, variable groups, map config
-<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a>│   ├── data_utils.py           # Shapefile/CSV loading, GeoJSON conversion
-<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a>│   ├── requirements.txt        # Python dependencies
-<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a>│   ├── templates/              # Jinja2 page templates
-<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a>│   ├── static/                 # css/, js/ (vanilla JS frontend), images/
-<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a>│   └── data/                   # Committed base geodata + village master
-<a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a>│       ├── villages.csv        # Cluster planner source of truth (~21,495 rows)
-<a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a>│       ├── 4DSS_VAR_2.0.shp    # Block-level shapefile (feasibility variables)
-<a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a>│       ├── Block_assam.shp     # District-block mapping
-<a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a>│       ├── districts.geojson   # District boundaries
-<a id="__codelineno-3-39" name="__codelineno-3-39" href="#__codelineno-3-39"></a>│       ├── protected_areas/    # Protected Areas of India shapefile
-<a id="__codelineno-3-40" name="__codelineno-3-40" href="#__codelineno-3-40"></a>│       ├── DSS_input2.csv      # Intervention &amp; variable config (Google Sheet fallback)
-<a id="__codelineno-3-41" name="__codelineno-3-41" href="#__codelineno-3-41"></a>│       ├── block_values.csv    # Per-block variable overlay (Google Sheet fallback)
-<a id="__codelineno-3-42" name="__codelineno-3-42" href="#__codelineno-3-42"></a>│       └── vectorstore/        # Chroma vector store (generated from ai-docs/)
-<a id="__codelineno-3-43" name="__codelineno-3-43" href="#__codelineno-3-43"></a>├── ai-docs/                    # PDF policy documents for RAG
-<a id="__codelineno-3-44" name="__codelineno-3-44" href="#__codelineno-3-44"></a>├── docs/                       # MkDocs source files
-<a id="__codelineno-3-45" name="__codelineno-3-45" href="#__codelineno-3-45"></a>├── leaf_flask/site/            # MkDocs built output (generated)
-<a id="__codelineno-3-46" name="__codelineno-3-46" href="#__codelineno-3-46"></a>├── mkdocs.yml                  # MkDocs configuration
-<a id="__codelineno-3-47" name="__codelineno-3-47" href="#__codelineno-3-47"></a>└── render.yaml / Dockerfile    # Deployment definitions
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>│   │   ├── interventions.py    # /api/interventions, /api/variables*
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>│   │   ├── feasibility.py      # /api/calculate-feasibility, /api/ai-recommendation*
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>│   │   ├── villages.py         # /api/villages* (village master reads)
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>│   │   ├── clusters.py         # /api/clusters* (needs Postgres)
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>│   │   ├── infrastructure.py   # /api/infrastructure* (POIs)
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>│   │   ├── production_tool.py  # /api/production-tool* (dashboard feed)
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>│   │   ├── export.py           # /api/export/csv
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>│   │   ├── config.py           # /api/config, sheet validate/refresh
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>│   │   └── api_info.py         # /api index listing
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>│   ├── db.py                   # Postgres connection pool (DSN from DATABASE_URL)
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>│   ├── schema.sql              # Cluster tables (clusters, cluster_villages, …)
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a>│   ├── migrations/             # Numbered SQL migrations (applied manually)
+<a id="__codelineno-3-21" name="__codelineno-3-21" href="#__codelineno-3-21"></a>│   ├── clustering.py           # Greedy seed-and-grow algorithm (ALGO_VERSION)
+<a id="__codelineno-3-22" name="__codelineno-3-22" href="#__codelineno-3-22"></a>│   ├── villages.py             # Village-master loading + cadre-edit protection
+<a id="__codelineno-3-23" name="__codelineno-3-23" href="#__codelineno-3-23"></a>│   ├── google_sheets.py        # Published-CSV overlay (dss_input, block_values)
+<a id="__codelineno-3-24" name="__codelineno-3-24" href="#__codelineno-3-24"></a>│   ├── scheduler.py            # In-process daemon: coverage sweep + nightly backup
+<a id="__codelineno-3-25" name="__codelineno-3-25" href="#__codelineno-3-25"></a>│   ├── db_backup.py            # Nightly dump to Supabase Storage
+<a id="__codelineno-3-26" name="__codelineno-3-26" href="#__codelineno-3-26"></a>│   ├── feasibility.py          # Block feasibility score calculations
+<a id="__codelineno-3-27" name="__codelineno-3-27" href="#__codelineno-3-27"></a>│   ├── rag_utils.py            # AI/RAG recommendation engine (LangChain + OpenAI)
+<a id="__codelineno-3-28" name="__codelineno-3-28" href="#__codelineno-3-28"></a>│   ├── config.py               # Colors, variable groups, map config
+<a id="__codelineno-3-29" name="__codelineno-3-29" href="#__codelineno-3-29"></a>│   ├── data_utils.py           # Shapefile/CSV loading, GeoJSON conversion
+<a id="__codelineno-3-30" name="__codelineno-3-30" href="#__codelineno-3-30"></a>│   ├── requirements.txt        # Python dependencies
+<a id="__codelineno-3-31" name="__codelineno-3-31" href="#__codelineno-3-31"></a>│   ├── templates/              # Jinja2 page templates
+<a id="__codelineno-3-32" name="__codelineno-3-32" href="#__codelineno-3-32"></a>│   ├── static/                 # css/, js/ (vanilla JS frontend), images/
+<a id="__codelineno-3-33" name="__codelineno-3-33" href="#__codelineno-3-33"></a>│   └── data/                   # Committed base geodata + village master
+<a id="__codelineno-3-34" name="__codelineno-3-34" href="#__codelineno-3-34"></a>│       ├── villages.csv        # Cluster planner source of truth (~21,495 rows)
+<a id="__codelineno-3-35" name="__codelineno-3-35" href="#__codelineno-3-35"></a>│       ├── 4DSS_VAR_2.0.shp    # Block-level shapefile (feasibility variables)
+<a id="__codelineno-3-36" name="__codelineno-3-36" href="#__codelineno-3-36"></a>│       ├── Block_assam.shp     # District-block mapping
+<a id="__codelineno-3-37" name="__codelineno-3-37" href="#__codelineno-3-37"></a>│       ├── districts.geojson   # District boundaries
+<a id="__codelineno-3-38" name="__codelineno-3-38" href="#__codelineno-3-38"></a>│       ├── protected_areas/    # Protected Areas of India shapefile
+<a id="__codelineno-3-39" name="__codelineno-3-39" href="#__codelineno-3-39"></a>│       ├── DSS_input2.csv      # Intervention &amp; variable config (Google Sheet fallback)
+<a id="__codelineno-3-40" name="__codelineno-3-40" href="#__codelineno-3-40"></a>│       ├── block_values.csv    # Per-block variable overlay (Google Sheet fallback)
+<a id="__codelineno-3-41" name="__codelineno-3-41" href="#__codelineno-3-41"></a>│       └── vectorstore/        # Chroma vector store (generated from ai-docs/)
+<a id="__codelineno-3-42" name="__codelineno-3-42" href="#__codelineno-3-42"></a>├── ai-docs/                    # PDF policy documents for RAG
+<a id="__codelineno-3-43" name="__codelineno-3-43" href="#__codelineno-3-43"></a>├── docs/                       # MkDocs source files
+<a id="__codelineno-3-44" name="__codelineno-3-44" href="#__codelineno-3-44"></a>├── leaf_flask/site/            # MkDocs built output (generated)
+<a id="__codelineno-3-45" name="__codelineno-3-45" href="#__codelineno-3-45"></a>├── mkdocs.yml                  # MkDocs configuration
+<a id="__codelineno-3-46" name="__codelineno-3-46" href="#__codelineno-3-46"></a>└── render.yaml / Dockerfile    # Deployment definitions
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">What is and isn't in git</p>
@@ -2002,19 +1973,11 @@ recommendation backed by policy document citations (requires <code>OPENAI_API_KE
 <h3 id="8-export-data">8. Export Data<a class="headerlink" href="#8-export-data" title="Permanent link">&para;</a></h3>
 <p>Use the export controls to download the current block dataset (<code>/api/export/csv</code>)
 or the cluster coverage as row-per-village CSV (<code>/api/clusters/export.csv</code>).</p>
-<div class="admonition note">
-<p class="admonition-title">GP drill-down is retired</p>
-<p>Village/GP drill-down (originally piloted on Tinsukia) is <strong>disabled by
-default</strong> (<code>GP_FEATURE_ENABLED = false</code> in <code>static/js/app.core.js</code>). The
-<code>/api/gp/*</code> endpoints still exist server-side but the frontend never enters the
-GP level. Cluster planning now operates at the village level via the clustering
-view.</p>
-</div>
 <hr />
 <h2 id="using-the-swagger-ui">Using the Swagger UI<a class="headerlink" href="#using-the-swagger-ui" title="Permanent link">&para;</a></h2>
 <ol>
 <li>Navigate to <code>https://leaf-asrlm.in/docs</code> (or <code>http://localhost:5000/docs</code>).</li>
-<li>Endpoints are grouped by tag: Blocks, Locations, GPs, Interventions, Variables,
+<li>Endpoints are grouped by tag: Blocks, Locations, Interventions, Variables,
    Feasibility, AI, Export, Config, Clusters, Villages, Infrastructure.</li>
 <li>Click any endpoint to expand it and see parameters + response schema.</li>
 <li>Click <strong>Try it out</strong> to enable editing.</li>
@@ -2068,10 +2031,6 @@ a template based on the schema. Admin-gated POSTs need <code>?admin=1</code> app
 <tr>
 <td>Map shows no blocks</td>
 <td>Check that <code>4DSS_VAR_2.0.shp</code> and its <code>.dbf</code>/<code>.shx</code> sidecars exist in <code>leaf_flask/data/</code></td>
-</tr>
-<tr>
-<td>GP dropdown missing</td>
-<td>Expected — the GP drill-down feature is retired/disabled by default</td>
 </tr>
 </tbody>
 </table>

@@ -56,7 +56,15 @@ swagger_config = {
         {
             "endpoint": "apispec",
             "route": "/apispec.json",
-            "rule_filter": lambda rule: rule.rule.startswith('/api') or rule.rule == '/health',
+            # Expose the current tool's API only. The Gram Panchayat (/api/gp/*)
+            # feature is retired (disabled in the frontend) and the /names
+            # endpoints are deprecated (superseded by /api/districts and
+            # /api/locations), so they are excluded from the docs.
+            "rule_filter": lambda rule: (
+                (rule.rule.startswith('/api') or rule.rule == '/health')
+                and not rule.rule.startswith('/api/gp')
+                and rule.rule not in ('/api/district/names', '/api/block/names')
+            ),
             "model_filter": lambda tag: True,
         }
     ],
@@ -71,14 +79,13 @@ swagger_template = {
         "version": "1.0.0",
         "description": (
             "Decision Support System for Agricultural Interventions in Assam, India. "
-            "Provides block-level and GP-level geospatial data, feasibility analysis, "
-            "and AI-powered recommendations."
+            "Provides block-level geospatial data, feasibility analysis, village "
+            "cluster planning, and AI-powered recommendations."
         ),
     },
     "tags": [
         {"name": "Blocks", "description": "Block-level geospatial data and lookups"},
-        {"name": "Locations", "description": "Hierarchical location data (districts, blocks, GPs)"},
-        {"name": "GPs", "description": "Gram Panchayat level data and lookups"},
+        {"name": "Locations", "description": "Hierarchical location data (districts and blocks)"},
         {"name": "Interventions", "description": "Agricultural intervention definitions and configurations"},
         {"name": "Variables", "description": "Data variable metadata and statistics"},
         {"name": "Feasibility", "description": "Feasibility score calculation endpoints"},
@@ -89,7 +96,6 @@ swagger_template = {
         {"name": "Clusters", "description": "Per-commodity village clusters: generation, retrieval, CSV edit cycle"},
         {"name": "Infrastructure", "description": "Vet centres, pharmacies, input shops - POI database with nearest-to-cluster query"},
         {"name": "ProductionTool", "description": "Outbound feed of finalised clusters and inbound dashboard data exchange with the external production tool"},
-        {"name": "Deprecated", "description": "Deprecated endpoints - use newer alternatives"},
     ],
     "definitions": {
         "Error": {

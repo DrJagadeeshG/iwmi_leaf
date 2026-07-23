@@ -520,34 +520,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../gps/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gram Panchayats
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../villages/" class="md-nav__link">
         
   
@@ -1799,21 +1771,15 @@
 </div>
 <hr />
 <h2 id="get-available-data-levels">Get Available Data Levels<a class="headerlink" href="#get-available-data-levels" title="Permanent link">&para;</a></h2>
-<p>Returns the data hierarchy levels (block, GP) and which districts support GP-level data.</p>
+<p>Returns the data hierarchy levels available for analysis.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>GET /api/levels
 </code></pre></div>
-<div class="admonition warning">
-<p class="admonition-title">GP drill-down is retired</p>
-<p>The Gram Panchayat (GP) level is <strong>disabled in the frontend</strong> (<code>GP_FEATURE_ENABLED = false</code>). This endpoint still reports GP availability based on whether the GP shapefile loads server-side, but the UI never enters the GP level and the former Tinsukia GP drill-down is no longer active. Treat GP fields here as legacy/present-but-disabled.</p>
-</div>
 <h3 id="response_1">Response<a class="headerlink" href="#response_1" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="p">{</span>
 <a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="w">  </span><span class="nt">&quot;levels&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;block&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Block&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;available&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">},</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;gp&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Gram Panchayat&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;available&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;districts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Tinsukia&quot;</span><span class="p">]</span><span class="w"> </span><span class="p">}</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="w">  </span><span class="p">],</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="w">  </span><span class="nt">&quot;gp_districts&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;Tinsukia&quot;</span><span class="p">]</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="p">}</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="w">    </span><span class="p">{</span><span class="w"> </span><span class="nt">&quot;id&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;block&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;name&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Block&quot;</span><span class="p">,</span><span class="w"> </span><span class="nt">&quot;available&quot;</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="p">}</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="w">  </span><span class="p">]</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="p">}</span>
 </code></pre></div>
 <table>
 <thead>
@@ -1832,7 +1798,7 @@
 <tr>
 <td><code>levels[].id</code></td>
 <td>string</td>
-<td>Level identifier (<code>block</code> or <code>gp</code>)</td>
+<td>Level identifier (<code>block</code>)</td>
 </tr>
 <tr>
 <td><code>levels[].name</code></td>
@@ -1842,17 +1808,7 @@
 <tr>
 <td><code>levels[].available</code></td>
 <td>boolean</td>
-<td><code>block</code> is always <code>true</code>; <code>gp</code> is <code>true</code> only when the GP shapefile loads server-side</td>
-</tr>
-<tr>
-<td><code>levels[].districts</code></td>
-<td>array</td>
-<td>Districts supporting the GP level (GP entry only; <code>["Tinsukia"]</code> when available, else <code>[]</code>)</td>
-</tr>
-<tr>
-<td><code>gp_districts</code></td>
-<td>array</td>
-<td>Shortcut list of districts with GP-level data</td>
+<td>Whether the level's data is loaded (<code>block</code> is always <code>true</code>)</td>
 </tr>
 </tbody>
 </table>
@@ -1870,8 +1826,7 @@
 <a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="n">data</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
 <a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
 <a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="k">for</span> <span class="n">level</span> <span class="ow">in</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;levels&#39;</span><span class="p">]:</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="n">districts</span> <span class="o">=</span> <span class="n">level</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;districts&#39;</span><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;All&#39;</span><span class="p">])</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">level</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">: available=</span><span class="si">{</span><span class="n">level</span><span class="p">[</span><span class="s1">&#39;available&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">, districts=</span><span class="si">{</span><span class="n">districts</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">level</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">: available=</span><span class="si">{</span><span class="n">level</span><span class="p">[</span><span class="s1">&#39;available&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
 </code></pre></div>
 </div>
 </div>
@@ -2092,72 +2047,61 @@
 <a id="__codelineno-20-8" name="__codelineno-20-8" href="#__codelineno-20-8"></a><span class="w">      </span><span class="nt">&quot;GET /api/blocks/by-name/&lt;block_name&gt;&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get block by name&quot;</span>
 <a id="__codelineno-20-9" name="__codelineno-20-9" href="#__codelineno-20-9"></a><span class="w">    </span><span class="p">},</span>
 <a id="__codelineno-20-10" name="__codelineno-20-10" href="#__codelineno-20-10"></a><span class="w">    </span><span class="nt">&quot;locations&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a><span class="w">      </span><span class="nt">&quot;GET /api/locations&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get hierarchical list of districts, blocks, and GPs&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-11" name="__codelineno-20-11" href="#__codelineno-20-11"></a><span class="w">      </span><span class="nt">&quot;GET /api/locations&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get hierarchical list of districts and blocks&quot;</span><span class="p">,</span>
 <a id="__codelineno-20-12" name="__codelineno-20-12" href="#__codelineno-20-12"></a><span class="w">      </span><span class="nt">&quot;GET /api/districts&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get list of all districts with metadata&quot;</span><span class="p">,</span>
 <a id="__codelineno-20-13" name="__codelineno-20-13" href="#__codelineno-20-13"></a><span class="w">      </span><span class="nt">&quot;GET /api/districts/&lt;district&gt;/blocks&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get all blocks in a district&quot;</span>
 <a id="__codelineno-20-14" name="__codelineno-20-14" href="#__codelineno-20-14"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a><span class="w">    </span><span class="nt">&quot;gp&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-20-16" name="__codelineno-20-16" href="#__codelineno-20-16"></a><span class="w">      </span><span class="nt">&quot;GET /api/gp&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get all GPs as GeoJSON&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-17" name="__codelineno-20-17" href="#__codelineno-20-17"></a><span class="w">      </span><span class="nt">&quot;GET /api/gp/geojson&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get all GPs as GeoJSON (alias)&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-18" name="__codelineno-20-18" href="#__codelineno-20-18"></a><span class="w">      </span><span class="nt">&quot;GET /api/gp/&lt;gp_id&gt;&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get GP by GP_CODE&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-19" name="__codelineno-20-19" href="#__codelineno-20-19"></a><span class="w">      </span><span class="nt">&quot;GET /api/gp/by-name/&lt;gp_name&gt;&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get GP by name&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-20" name="__codelineno-20-20" href="#__codelineno-20-20"></a><span class="w">      </span><span class="nt">&quot;GET /api/gp/block/&lt;block_name&gt;&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get all GPs in a block&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-21" name="__codelineno-20-21" href="#__codelineno-20-21"></a><span class="w">      </span><span class="nt">&quot;GET /api/gp/locations&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get list of GPs grouped by block&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-22" name="__codelineno-20-22" href="#__codelineno-20-22"></a><span class="w">      </span><span class="nt">&quot;GET /api/gp/variables&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get GP-level variables&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-23" name="__codelineno-20-23" href="#__codelineno-20-23"></a><span class="w">      </span><span class="nt">&quot;GET /api/gp/statistics&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get GP statistics&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-24" name="__codelineno-20-24" href="#__codelineno-20-24"></a><span class="w">      </span><span class="nt">&quot;POST /api/gp/calculate-feasibility&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Calculate GP feasibility&quot;</span>
-<a id="__codelineno-20-25" name="__codelineno-20-25" href="#__codelineno-20-25"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-20-26" name="__codelineno-20-26" href="#__codelineno-20-26"></a><span class="w">    </span><span class="nt">&quot;interventions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-20-27" name="__codelineno-20-27" href="#__codelineno-20-27"></a><span class="w">      </span><span class="nt">&quot;GET /api/interventions&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;List available interventions&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-28" name="__codelineno-20-28" href="#__codelineno-20-28"></a><span class="w">      </span><span class="nt">&quot;GET /api/intervention/&lt;name&gt;/config&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get intervention configuration&quot;</span>
+<a id="__codelineno-20-15" name="__codelineno-20-15" href="#__codelineno-20-15"></a><span class="w">    </span><span class="nt">&quot;interventions&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-20-16" name="__codelineno-20-16" href="#__codelineno-20-16"></a><span class="w">      </span><span class="nt">&quot;GET /api/interventions&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;List available interventions&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-17" name="__codelineno-20-17" href="#__codelineno-20-17"></a><span class="w">      </span><span class="nt">&quot;GET /api/intervention/&lt;name&gt;/config&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get intervention configuration&quot;</span>
+<a id="__codelineno-20-18" name="__codelineno-20-18" href="#__codelineno-20-18"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-20-19" name="__codelineno-20-19" href="#__codelineno-20-19"></a><span class="w">    </span><span class="nt">&quot;variables&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-20-20" name="__codelineno-20-20" href="#__codelineno-20-20"></a><span class="w">      </span><span class="nt">&quot;GET /api/variables&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get all block-level variables&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-21" name="__codelineno-20-21" href="#__codelineno-20-21"></a><span class="w">      </span><span class="nt">&quot;GET /api/variable-groups&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get variable groups&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-22" name="__codelineno-20-22" href="#__codelineno-20-22"></a><span class="w">      </span><span class="nt">&quot;GET /api/variable-stats/&lt;variable&gt;&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get variable statistics&quot;</span>
+<a id="__codelineno-20-23" name="__codelineno-20-23" href="#__codelineno-20-23"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-20-24" name="__codelineno-20-24" href="#__codelineno-20-24"></a><span class="w">    </span><span class="nt">&quot;feasibility&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-20-25" name="__codelineno-20-25" href="#__codelineno-20-25"></a><span class="w">      </span><span class="nt">&quot;POST /api/calculate-feasibility&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Calculate block feasibility&quot;</span>
+<a id="__codelineno-20-26" name="__codelineno-20-26" href="#__codelineno-20-26"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-20-27" name="__codelineno-20-27" href="#__codelineno-20-27"></a><span class="w">    </span><span class="nt">&quot;export&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-20-28" name="__codelineno-20-28" href="#__codelineno-20-28"></a><span class="w">      </span><span class="nt">&quot;POST /api/export/csv&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Export data as CSV&quot;</span>
 <a id="__codelineno-20-29" name="__codelineno-20-29" href="#__codelineno-20-29"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-20-30" name="__codelineno-20-30" href="#__codelineno-20-30"></a><span class="w">    </span><span class="nt">&quot;variables&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-20-31" name="__codelineno-20-31" href="#__codelineno-20-31"></a><span class="w">      </span><span class="nt">&quot;GET /api/variables&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get all block-level variables&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-32" name="__codelineno-20-32" href="#__codelineno-20-32"></a><span class="w">      </span><span class="nt">&quot;GET /api/variable-groups&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get variable groups&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-33" name="__codelineno-20-33" href="#__codelineno-20-33"></a><span class="w">      </span><span class="nt">&quot;GET /api/variable-stats/&lt;variable&gt;&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get variable statistics&quot;</span>
+<a id="__codelineno-20-30" name="__codelineno-20-30" href="#__codelineno-20-30"></a><span class="w">    </span><span class="nt">&quot;config&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-20-31" name="__codelineno-20-31" href="#__codelineno-20-31"></a><span class="w">      </span><span class="nt">&quot;GET /api/config&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get app configuration&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-32" name="__codelineno-20-32" href="#__codelineno-20-32"></a><span class="w">      </span><span class="nt">&quot;GET /api/levels&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get available data levels&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-33" name="__codelineno-20-33" href="#__codelineno-20-33"></a><span class="w">      </span><span class="nt">&quot;GET /api/protected-areas/geojson&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get protected areas as GeoJSON&quot;</span>
 <a id="__codelineno-20-34" name="__codelineno-20-34" href="#__codelineno-20-34"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-20-35" name="__codelineno-20-35" href="#__codelineno-20-35"></a><span class="w">    </span><span class="nt">&quot;feasibility&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-20-36" name="__codelineno-20-36" href="#__codelineno-20-36"></a><span class="w">      </span><span class="nt">&quot;POST /api/calculate-feasibility&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Calculate block feasibility&quot;</span>
-<a id="__codelineno-20-37" name="__codelineno-20-37" href="#__codelineno-20-37"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-20-38" name="__codelineno-20-38" href="#__codelineno-20-38"></a><span class="w">    </span><span class="nt">&quot;export&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-20-39" name="__codelineno-20-39" href="#__codelineno-20-39"></a><span class="w">      </span><span class="nt">&quot;POST /api/export/csv&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Export data as CSV&quot;</span>
+<a id="__codelineno-20-35" name="__codelineno-20-35" href="#__codelineno-20-35"></a><span class="w">    </span><span class="nt">&quot;villages&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-20-36" name="__codelineno-20-36" href="#__codelineno-20-36"></a><span class="w">      </span><span class="nt">&quot;GET /api/villages&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;List villages (optionally filtered by block)&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-37" name="__codelineno-20-37" href="#__codelineno-20-37"></a><span class="w">      </span><span class="nt">&quot;GET /api/villages/geojson&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Villages as GeoJSON points&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-38" name="__codelineno-20-38" href="#__codelineno-20-38"></a><span class="w">      </span><span class="nt">&quot;GET /api/villages/aggregate&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Aggregated counts by district or block (state/district map levels)&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-39" name="__codelineno-20-39" href="#__codelineno-20-39"></a><span class="w">      </span><span class="nt">&quot;GET /api/villages/blocks&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Blocks with village data available&quot;</span>
 <a id="__codelineno-20-40" name="__codelineno-20-40" href="#__codelineno-20-40"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-20-41" name="__codelineno-20-41" href="#__codelineno-20-41"></a><span class="w">    </span><span class="nt">&quot;config&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-20-42" name="__codelineno-20-42" href="#__codelineno-20-42"></a><span class="w">      </span><span class="nt">&quot;GET /api/config&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get app configuration&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-43" name="__codelineno-20-43" href="#__codelineno-20-43"></a><span class="w">      </span><span class="nt">&quot;GET /api/levels&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get available data levels&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-44" name="__codelineno-20-44" href="#__codelineno-20-44"></a><span class="w">      </span><span class="nt">&quot;GET /api/protected-areas/geojson&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get protected areas as GeoJSON&quot;</span>
-<a id="__codelineno-20-45" name="__codelineno-20-45" href="#__codelineno-20-45"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-20-46" name="__codelineno-20-46" href="#__codelineno-20-46"></a><span class="w">    </span><span class="nt">&quot;villages&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-20-47" name="__codelineno-20-47" href="#__codelineno-20-47"></a><span class="w">      </span><span class="nt">&quot;GET /api/villages&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;List villages (optionally filtered by block)&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-48" name="__codelineno-20-48" href="#__codelineno-20-48"></a><span class="w">      </span><span class="nt">&quot;GET /api/villages/geojson&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Villages as GeoJSON points&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-49" name="__codelineno-20-49" href="#__codelineno-20-49"></a><span class="w">      </span><span class="nt">&quot;GET /api/villages/aggregate&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Aggregated counts by district or block (state/district map levels)&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-50" name="__codelineno-20-50" href="#__codelineno-20-50"></a><span class="w">      </span><span class="nt">&quot;GET /api/villages/blocks&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Blocks with village data available&quot;</span>
-<a id="__codelineno-20-51" name="__codelineno-20-51" href="#__codelineno-20-51"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-20-52" name="__codelineno-20-52" href="#__codelineno-20-52"></a><span class="w">    </span><span class="nt">&quot;clusters&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-20-53" name="__codelineno-20-53" href="#__codelineno-20-53"></a><span class="w">      </span><span class="nt">&quot;GET /api/clusters/params&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Default clustering parameters&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-54" name="__codelineno-20-54" href="#__codelineno-20-54"></a><span class="w">      </span><span class="nt">&quot;GET /api/clusters&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;List stored clusters (filter by block/district/commodity)&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-55" name="__codelineno-20-55" href="#__codelineno-20-55"></a><span class="w">      </span><span class="nt">&quot;GET /api/clusters/&lt;cluster_id&gt;&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get a cluster by ID&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-56" name="__codelineno-20-56" href="#__codelineno-20-56"></a><span class="w">      </span><span class="nt">&quot;GET /api/clusters/&lt;cluster_id&gt;/report&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Cluster report card with block-level LEAF variables&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-57" name="__codelineno-20-57" href="#__codelineno-20-57"></a><span class="w">      </span><span class="nt">&quot;POST /api/clusters/regenerate&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Run clustering algorithm and replace stored clusters in scope&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-58" name="__codelineno-20-58" href="#__codelineno-20-58"></a><span class="w">      </span><span class="nt">&quot;GET /api/clusters/export.csv&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Export clusters as row-per-village CSV&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-59" name="__codelineno-20-59" href="#__codelineno-20-59"></a><span class="w">      </span><span class="nt">&quot;POST /api/clusters/import&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Replace stored clusters in scope from uploaded CSV&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-60" name="__codelineno-20-60" href="#__codelineno-20-60"></a><span class="w">      </span><span class="nt">&quot;POST /api/clusters/&lt;cluster_id&gt;/finalize&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Mark a cluster as finalised&quot;</span>
-<a id="__codelineno-20-61" name="__codelineno-20-61" href="#__codelineno-20-61"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-20-62" name="__codelineno-20-62" href="#__codelineno-20-62"></a><span class="w">    </span><span class="nt">&quot;infrastructure&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-20-63" name="__codelineno-20-63" href="#__codelineno-20-63"></a><span class="w">      </span><span class="nt">&quot;GET /api/infrastructure&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;List POIs (filter by type/block/district)&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-64" name="__codelineno-20-64" href="#__codelineno-20-64"></a><span class="w">      </span><span class="nt">&quot;POST /api/infrastructure/import&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Replace POI dataset from CSV&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-65" name="__codelineno-20-65" href="#__codelineno-20-65"></a><span class="w">      </span><span class="nt">&quot;GET /api/infrastructure/nearest&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Nearest POIs to cluster centroid or arbitrary point&quot;</span>
-<a id="__codelineno-20-66" name="__codelineno-20-66" href="#__codelineno-20-66"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-20-67" name="__codelineno-20-67" href="#__codelineno-20-67"></a><span class="w">    </span><span class="nt">&quot;production_tool&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-20-68" name="__codelineno-20-68" href="#__codelineno-20-68"></a><span class="w">      </span><span class="nt">&quot;GET /api/production-tool/clusters&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Outbound feed of finalised clusters&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-69" name="__codelineno-20-69" href="#__codelineno-20-69"></a><span class="w">      </span><span class="nt">&quot;GET /api/production-tool/dashboard/&lt;cluster_id&gt;&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get stored dashboard payload&quot;</span><span class="p">,</span>
-<a id="__codelineno-20-70" name="__codelineno-20-70" href="#__codelineno-20-70"></a><span class="w">      </span><span class="nt">&quot;POST /api/production-tool/dashboard/&lt;cluster_id&gt;&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Receive aggregated dashboard data per cluster&quot;</span>
-<a id="__codelineno-20-71" name="__codelineno-20-71" href="#__codelineno-20-71"></a><span class="w">    </span><span class="p">},</span>
-<a id="__codelineno-20-72" name="__codelineno-20-72" href="#__codelineno-20-72"></a><span class="w">    </span><span class="nt">&quot;health&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
-<a id="__codelineno-20-73" name="__codelineno-20-73" href="#__codelineno-20-73"></a><span class="w">      </span><span class="nt">&quot;GET /health&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Health check&quot;</span>
-<a id="__codelineno-20-74" name="__codelineno-20-74" href="#__codelineno-20-74"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-20-75" name="__codelineno-20-75" href="#__codelineno-20-75"></a><span class="w">  </span><span class="p">}</span>
-<a id="__codelineno-20-76" name="__codelineno-20-76" href="#__codelineno-20-76"></a><span class="p">}</span>
+<a id="__codelineno-20-41" name="__codelineno-20-41" href="#__codelineno-20-41"></a><span class="w">    </span><span class="nt">&quot;clusters&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-20-42" name="__codelineno-20-42" href="#__codelineno-20-42"></a><span class="w">      </span><span class="nt">&quot;GET /api/clusters/params&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Default clustering parameters&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-43" name="__codelineno-20-43" href="#__codelineno-20-43"></a><span class="w">      </span><span class="nt">&quot;GET /api/clusters&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;List stored clusters (filter by block/district/commodity)&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-44" name="__codelineno-20-44" href="#__codelineno-20-44"></a><span class="w">      </span><span class="nt">&quot;GET /api/clusters/&lt;cluster_id&gt;&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get a cluster by ID&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-45" name="__codelineno-20-45" href="#__codelineno-20-45"></a><span class="w">      </span><span class="nt">&quot;GET /api/clusters/&lt;cluster_id&gt;/report&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Cluster report card with block-level LEAF variables&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-46" name="__codelineno-20-46" href="#__codelineno-20-46"></a><span class="w">      </span><span class="nt">&quot;POST /api/clusters/regenerate&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Run clustering algorithm and replace stored clusters in scope&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-47" name="__codelineno-20-47" href="#__codelineno-20-47"></a><span class="w">      </span><span class="nt">&quot;GET /api/clusters/export.csv&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Export clusters as row-per-village CSV&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-48" name="__codelineno-20-48" href="#__codelineno-20-48"></a><span class="w">      </span><span class="nt">&quot;POST /api/clusters/import&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Replace stored clusters in scope from uploaded CSV&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-49" name="__codelineno-20-49" href="#__codelineno-20-49"></a><span class="w">      </span><span class="nt">&quot;POST /api/clusters/&lt;cluster_id&gt;/finalize&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Mark a cluster as finalised&quot;</span>
+<a id="__codelineno-20-50" name="__codelineno-20-50" href="#__codelineno-20-50"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-20-51" name="__codelineno-20-51" href="#__codelineno-20-51"></a><span class="w">    </span><span class="nt">&quot;infrastructure&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-20-52" name="__codelineno-20-52" href="#__codelineno-20-52"></a><span class="w">      </span><span class="nt">&quot;GET /api/infrastructure&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;List POIs (filter by type/block/district)&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-53" name="__codelineno-20-53" href="#__codelineno-20-53"></a><span class="w">      </span><span class="nt">&quot;POST /api/infrastructure/import&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Replace POI dataset from CSV&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-54" name="__codelineno-20-54" href="#__codelineno-20-54"></a><span class="w">      </span><span class="nt">&quot;GET /api/infrastructure/nearest&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Nearest POIs to cluster centroid or arbitrary point&quot;</span>
+<a id="__codelineno-20-55" name="__codelineno-20-55" href="#__codelineno-20-55"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-20-56" name="__codelineno-20-56" href="#__codelineno-20-56"></a><span class="w">    </span><span class="nt">&quot;production_tool&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-20-57" name="__codelineno-20-57" href="#__codelineno-20-57"></a><span class="w">      </span><span class="nt">&quot;GET /api/production-tool/clusters&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Outbound feed of finalised clusters&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-58" name="__codelineno-20-58" href="#__codelineno-20-58"></a><span class="w">      </span><span class="nt">&quot;GET /api/production-tool/dashboard/&lt;cluster_id&gt;&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Get stored dashboard payload&quot;</span><span class="p">,</span>
+<a id="__codelineno-20-59" name="__codelineno-20-59" href="#__codelineno-20-59"></a><span class="w">      </span><span class="nt">&quot;POST /api/production-tool/dashboard/&lt;cluster_id&gt;&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Receive aggregated dashboard data per cluster&quot;</span>
+<a id="__codelineno-20-60" name="__codelineno-20-60" href="#__codelineno-20-60"></a><span class="w">    </span><span class="p">},</span>
+<a id="__codelineno-20-61" name="__codelineno-20-61" href="#__codelineno-20-61"></a><span class="w">    </span><span class="nt">&quot;health&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<a id="__codelineno-20-62" name="__codelineno-20-62" href="#__codelineno-20-62"></a><span class="w">      </span><span class="nt">&quot;GET /health&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Health check&quot;</span>
+<a id="__codelineno-20-63" name="__codelineno-20-63" href="#__codelineno-20-63"></a><span class="w">    </span><span class="p">}</span>
+<a id="__codelineno-20-64" name="__codelineno-20-64" href="#__codelineno-20-64"></a><span class="w">  </span><span class="p">}</span>
+<a id="__codelineno-20-65" name="__codelineno-20-65" href="#__codelineno-20-65"></a><span class="p">}</span>
 </code></pre></div>
 <div class="admonition note">
 <p class="admonition-title">This is a static listing</p>

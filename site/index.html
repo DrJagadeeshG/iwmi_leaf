@@ -628,34 +628,6 @@
   
   
     <li class="md-nav__item">
-      <a href="api/gps/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gram Panchayats
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="api/villages/" class="md-nav__link">
         
   
@@ -1269,9 +1241,9 @@
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>┌────────▼───────────────▼────────────────▼───────────────────┐
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>│                 Flask Application (app:app)                   │
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│                                                               │
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│   blueprints/  (14 modules: pages, blocks, locations,         │
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│   blueprints/  (modules: pages, blocks, locations,            │
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│   clusters, villages, feasibility, interventions, config,     │
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│   export, levels, infrastructure, gp*, production_tool, …)    │
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│   export, levels, infrastructure, production_tool, …)         │
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│                          │                                    │
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│   ┌──────────────────────▼───────────────────────────────┐   │
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│   │  Business logic: clustering · feasibility · rag_utils │   │
@@ -1288,17 +1260,10 @@
 <a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a>│   In-process scheduler thread: daily cluster sweep +          │
 <a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a>│   nightly Supabase Storage backup                             │
 <a id="__codelineno-0-29" name="__codelineno-0-29" href="#__codelineno-0-29"></a>└───────────────────────────────────────────────────────────────┘
-<a id="__codelineno-0-30" name="__codelineno-0-30" href="#__codelineno-0-30"></a>
-<a id="__codelineno-0-31" name="__codelineno-0-31" href="#__codelineno-0-31"></a>* The GP (Gram Panchayat) blueprint still exists server-side but the
-<a id="__codelineno-0-32" name="__codelineno-0-32" href="#__codelineno-0-32"></a>  drill-down is disabled in the frontend (GP_FEATURE_ENABLED = false).
 </code></pre></div>
 <hr />
 <h2 id="coverage">Coverage<a class="headerlink" href="#coverage" title="Permanent link">&para;</a></h2>
 <p>LEAF DSS covers <strong>all 35 districts and 220 blocks of Assam</strong>. Village clustering reads from <code>data/villages.csv</code> (the planner's source of truth); block-level map and feasibility indicators come from a published Google Sheet overlay (<code>block_values</code>), falling back to the committed CSV.</p>
-<div class="admonition note">
-<p class="admonition-title">Gram Panchayat drill-down retired</p>
-<p>Earlier builds enabled a village-level GP drill-down (originally piloted on Tinsukia). That feature is now <strong>disabled</strong> (<code>GP_FEATURE_ENABLED = false</code> in <code>static/js/app.core.js</code>). The GP API routes remain present but return no active frontend view; cluster planning has replaced the GP workflow.</p>
-</div>
 <hr />
 <h2 id="map-overlays">Map Overlays<a class="headerlink" href="#map-overlays" title="Permanent link">&para;</a></h2>
 <table>

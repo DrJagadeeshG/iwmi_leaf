@@ -744,34 +744,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../gps/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gram Panchayats
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../villages/" class="md-nav__link">
         
   
@@ -1475,7 +1447,7 @@
 
 <h1 id="api-overview">API Overview<a class="headerlink" href="#api-overview" title="Permanent link">&para;</a></h1>
 <p>The LEAF DSS API provides RESTful endpoints for geospatial data (blocks, districts, villages), per-commodity village clustering, feasibility analysis, infrastructure (POI) queries, and AI recommendations. All API routes are prefixed with <code>/api/</code> except the health check at <code>/health</code>.</p>
-<p>The backend is a Flask app (<code>leaf_flask/app.py</code>) running under gunicorn on Render, backed by a <strong>Supabase Postgres</strong> database (cluster data) plus committed CSV/shapefile geodata. Routes are organised into 15 blueprint modules under <code>leaf_flask/blueprints/</code>.</p>
+<p>The backend is a Flask app (<code>leaf_flask/app.py</code>) running under gunicorn on Render, backed by a <strong>Supabase Postgres</strong> database (cluster data) plus committed CSV/shapefile geodata. Routes are organised into 13 blueprint modules under <code>leaf_flask/blueprints/</code>.</p>
 <hr />
 <h2 id="base-url">Base URL<a class="headerlink" href="#base-url" title="Permanent link">&para;</a></h2>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>Production: https://leaf-asrlm.in
@@ -1529,15 +1501,9 @@
 </tr>
 <tr>
 <td><a href="../locations/">Locations</a></td>
-<td><code>/api/locations</code>, <code>/api/districts</code>, <code>/api/*/names</code></td>
-<td>8</td>
-<td>Hierarchical location tree, district list + GeoJSON, protected-areas GeoJSON, blocks-in-district, name lookups</td>
-</tr>
-<tr>
-<td><a href="../gps/">Gram Panchayats</a></td>
-<td><code>/api/gp</code></td>
-<td>9</td>
-<td>GP GeoJSON, lookups, per-block GPs, variables, statistics, GP feasibility — <strong>retired/disabled by default</strong></td>
+<td><code>/api/locations</code>, <code>/api/districts</code></td>
+<td>5</td>
+<td>Hierarchical location tree, district list + GeoJSON, protected-areas GeoJSON, blocks-in-district</td>
 </tr>
 <tr>
 <td><a href="../villages/">Villages</a></td>
@@ -1601,15 +1567,11 @@
 </tr>
 </tbody>
 </table>
-<p><strong>Total: 65 API endpoints across 13 categories.</strong></p>
-<p>In addition, the app serves <strong>15 non-API routes</strong> — 12 server-rendered HTML pages (<code>/</code>, <code>/clustering</code>, <code>/update</code>, <code>/about</code>, and the <code>/&lt;district&gt;/&lt;block&gt;</code> drill-down family, in <code>pages.py</code>) and 3 file-serving routes (<code>/ai-docs/&lt;path&gt;</code>, <code>/documentation/</code>, <code>/documentation/&lt;path&gt;</code>, in <code>levels.py</code>) — for <strong>~80 Flask route rules total</strong>.</p>
+<p><strong>Total: 53 API endpoints across 12 categories.</strong></p>
+<p>In addition, the app serves <strong>15 non-API routes</strong> — 12 server-rendered HTML pages (<code>/</code>, <code>/clustering</code>, <code>/update</code>, <code>/about</code>, and the <code>/&lt;district&gt;/&lt;block&gt;</code> drill-down family, in <code>pages.py</code>) and 3 file-serving routes (<code>/ai-docs/&lt;path&gt;</code>, <code>/documentation/</code>, <code>/documentation/&lt;path&gt;</code>, in <code>levels.py</code>) — for <strong>~68 Flask route rules total</strong>.</p>
 <div class="admonition info">
 <p class="admonition-title">Assam coverage</p>
 <p>The village master (<code>data/villages.csv</code>) currently covers <strong>35 districts</strong> and <strong>220 blocks</strong> across Assam, aggregated into <strong>6 livestock commodities</strong> (Dairy, Goatery, Piggery, Backyard Poultry, Duckery, Fishery Activity).</p>
-</div>
-<div class="admonition warning">
-<p class="admonition-title">GP endpoints are disabled by default</p>
-<p>The Gram Panchayat (<code>/api/gp/*</code>) endpoints and the Tinsukia GP drill-down are <strong>retired</strong>. The blueprint and server-side loaders still exist, but the frontend never enters GP level (<code>GP_FEATURE_ENABLED = false</code>), and GP shapefile data is only present for Tinsukia. Treat these endpoints as present-but-inactive; they may return empty data or <code>null</code> where GP data is unavailable.</p>
 </div>
 <hr />
 <h2 id="common-patterns">Common Patterns<a class="headerlink" href="#common-patterns" title="Permanent link">&para;</a></h2>
@@ -1707,7 +1669,7 @@
 <tr>
 <td><code>404</code></td>
 <td>Resource not found</td>
-<td>Invalid block/cluster/GP identifier, or missing data file</td>
+<td>Invalid block/cluster identifier, or missing data file</td>
 </tr>
 <tr>
 <td><code>500</code></td>

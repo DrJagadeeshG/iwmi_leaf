@@ -520,34 +520,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../gps/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gram Panchayats
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../villages/" class="md-nav__link">
         
   
@@ -1651,10 +1623,6 @@
 </div>
 </div>
 </div>
-<div class="admonition warning">
-<p class="admonition-title">GP variables retired</p>
-<p>A separate GP-level variables endpoint (<code>GET /api/gp/variables</code>) exists in the code but the GP (Gram Panchayat) drill-down is <strong>disabled by default</strong> (<code>GP_FEATURE_ENABLED=false</code>). The frontend never enters GP level, so <code>/api/variables</code> is the endpoint in active use. See <a href="../gps/">GPs</a> for the disabled GP endpoints.</p>
-</div>
 <hr />
 <h2 id="get-variable-groups">Get Variable Groups<a class="headerlink" href="#get-variable-groups" title="Permanent link">&para;</a></h2>
 <p>Returns the list of variable group categories used to organize variables in the UI. Groups are the unique, non-empty values of the <code>group</code> column in the variable configuration.</p>
@@ -1752,7 +1720,7 @@
 </table>
 <div class="admonition note">
 <p class="admonition-title">Block-level only</p>
-<p>This route always computes statistics from the <strong>block-level</strong> shapefile. The underlying helper can also compute GP-level stats, but the route does not expose a <code>level</code> parameter, so there is no way to request GP data here.</p>
+<p>This route computes statistics from the <strong>block-level</strong> shapefile.</p>
 </div>
 <h3 id="response_2">Response<a class="headerlink" href="#response_2" title="Permanent link">&para;</a></h3>
 <p><code>200 OK</code>:</p>

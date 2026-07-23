@@ -520,34 +520,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../gps/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gram Panchayats
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../villages/" class="md-nav__link">
         
   
@@ -836,56 +808,6 @@
     <span class="md-ellipsis">
       
         Example
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#calculate-gp-feasibility-disabled-by-default" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Calculate GP Feasibility (disabled by default)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Calculate GP Feasibility (disabled by default)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#request-body_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Request Body
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#response_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Response
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#errors_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Errors
       
     </span>
   </a>
@@ -1296,56 +1218,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#calculate-gp-feasibility-disabled-by-default" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Calculate GP Feasibility (disabled by default)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Calculate GP Feasibility (disabled by default)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#request-body_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Request Body
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#response_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Response
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#errors_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Errors
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -1737,73 +1609,6 @@
 </div>
 </div>
 </div>
-<hr />
-<h2 id="calculate-gp-feasibility-disabled-by-default">Calculate GP Feasibility (disabled by default)<a class="headerlink" href="#calculate-gp-feasibility-disabled-by-default" title="Permanent link">&para;</a></h2>
-<div class="admonition warning">
-<p class="admonition-title">GP drill-down is retired</p>
-<p>The Gram Panchayat (GP) level has been <strong>disabled</strong> in the frontend (<code>GP_FEATURE_ENABLED = false</code>). The route below still exists server-side, but a GP shapefile is not shipped in the default deployment, so it returns <code>404 GP data not available</code>. This endpoint is owned by the <a href="../gps/">GP API</a>; it is noted here only for completeness of the feasibility engine.</p>
-</div>
-<p>Calculates feasibility scores at the GP level using the same scoring algorithm as block feasibility. Lives in the <code>gp</code> blueprint, not the feasibility blueprint.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>POST /api/gp/calculate-feasibility
-</code></pre></div>
-<h3 id="request-body_1">Request Body<a class="headerlink" href="#request-body_1" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="p">{</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="w">  </span><span class="nt">&quot;filters&quot;</span><span class="p">:</span><span class="w"> </span><span class="p">[</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="w">    </span><span class="p">{</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="w">      </span><span class="nt">&quot;column&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;AD&quot;</span><span class="p">,</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="w">      </span><span class="nt">&quot;min_val&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">20</span><span class="p">,</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="w">      </span><span class="nt">&quot;max_val&quot;</span><span class="p">:</span><span class="w"> </span><span class="mi">60</span><span class="p">,</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="w">      </span><span class="nt">&quot;weight&quot;</span><span class="p">:</span><span class="w"> </span><span class="mf">1.0</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="w">    </span><span class="p">}</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a><span class="w">  </span><span class="p">],</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="w">  </span><span class="nt">&quot;block&quot;</span><span class="p">:</span><span class="w"> </span><span class="s2">&quot;Digboi&quot;</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="p">}</span>
-</code></pre></div>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Required</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>filters</code></td>
-<td>array</td>
-<td>No</td>
-<td>Filter criteria (same format as block feasibility).</td>
-</tr>
-<tr>
-<td><code>block</code></td>
-<td>string</td>
-<td>No</td>
-<td>Block name. When given, only GPs whose <code>Block_Name</code> matches are scored.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="response_1">Response<a class="headerlink" href="#response_1" title="Permanent link">&para;</a></h3>
-<p>Same shape as block feasibility (<code>geojson</code> + <code>statistics</code>), computed over GP features. <code>district</code> scoping is not applied at the GP level.</p>
-<h3 id="errors_1">Errors<a class="headerlink" href="#errors_1" title="Permanent link">&para;</a></h3>
-<table>
-<thead>
-<tr>
-<th>Code</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>404</code></td>
-<td>GP data not available (the default deployment ships no GP shapefile).</td>
-</tr>
-<tr>
-<td><code>500</code></td>
-<td>Server error. Response body: <code>{ "error": "&lt;message&gt;" }</code>.</td>
-</tr>
-</tbody>
-</table>
 
 
 

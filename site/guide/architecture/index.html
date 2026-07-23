@@ -517,34 +517,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../api/gps/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Gram Panchayats
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../api/villages/" class="md-nav__link">
         
   
@@ -972,10 +944,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#the-14-blueprints" class="md-nav__link">
+  <a href="#the-13-blueprints" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The 14 Blueprints
+        The 13 Blueprints
       
     </span>
   </a>
@@ -1314,10 +1286,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#the-14-blueprints" class="md-nav__link">
+  <a href="#the-13-blueprints" class="md-nav__link">
     <span class="md-ellipsis">
       
-        The 14 Blueprints
+        The 13 Blueprints
       
     </span>
   </a>
@@ -1496,7 +1468,7 @@
 
 
 <h1 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h1>
-<p>LEAF DSS is a Flask application (Python 3.11) that serves both the interactive map UI and the REST API from a single process. Routes are organised into a <strong>blueprints package</strong> (14 blueprints), and the codebase is layered into clear service modules for data loading, clustering, feasibility scoring, and AI/RAG.</p>
+<p>LEAF DSS is a Flask application (Python 3.11) that serves both the interactive map UI and the REST API from a single process. Routes are organised into a <strong>blueprints package</strong> (13 blueprints), and the codebase is layered into clear service modules for data loading, clustering, feasibility scoring, and AI/RAG.</p>
 <p>State that must survive restarts and be shared across worker processes lives in a <strong>Supabase Postgres</strong> database (the village clusters and their edit-protection flags). Base map geodata and the village master list are shipped as <strong>CSV and shapefiles</strong> committed to the repo, and per-block indicator values are overlaid live from <strong>Google Sheets</strong>. The app is deployed on Render behind the custom domain <strong><a href="https://leaf-asrlm.in">https://leaf-asrlm.in</a></strong>.</p>
 <div class="admonition info">
 <p class="admonition-title">This is not a stateless, database-free app</p>
@@ -1516,9 +1488,9 @@
 <a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>│                     Flask Application (app:app)                │
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>│                                                                │
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>│  ┌──────────────────────────────────────────────────────────┐ │
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│  │        Blueprints package (14) — routes only             │ │
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>│  │        Blueprints package (13) — routes only             │ │
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>│  │  pages · blocks · locations · interventions · feasibility│ │
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│  │  export · config · gp · levels · villages · clusters ·   │ │
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>│  │  export · config · levels · villages · clusters ·        │ │
 <a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>│  │  infrastructure · production_tool · api_info             │ │
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>│  └───────────────────────────┬──────────────────────────────┘ │
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>│                              │                                 │
@@ -1548,10 +1520,10 @@
 <li>Loads <code>.env</code> (so <code>DATABASE_URL</code> is available before any module needs it).</li>
 <li>Creates the Flask app with CORS enabled.</li>
 <li>Configures Flasgger — Swagger UI at <strong><code>/docs</code></strong>, spec at <code>/apispec.json</code>. A <code>rule_filter</code> exposes only routes under <code>/api*</code> plus <code>/health</code>.</li>
-<li>Registers <strong>14 blueprints</strong> from the <code>blueprints/</code> package.</li>
+<li>Registers <strong>13 blueprints</strong> from the <code>blueprints/</code> package.</li>
 <li>Calls <code>start_scheduler()</code> to launch the background maintenance thread.</li>
 </ol>
-<h3 id="the-14-blueprints">The 14 Blueprints<a class="headerlink" href="#the-14-blueprints" title="Permanent link">&para;</a></h3>
+<h3 id="the-13-blueprints">The 13 Blueprints<a class="headerlink" href="#the-13-blueprints" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -1595,11 +1567,6 @@
 <td><code>config</code></td>
 <td><code>blueprints/config.py</code></td>
 <td>App config, sheet validation, sheet refresh, AI-doc upload</td>
-</tr>
-<tr>
-<td><code>gp</code></td>
-<td><code>blueprints/gp.py</code></td>
-<td>Gram Panchayat endpoints (<strong>present but disabled by default</strong> — see below)</td>
 </tr>
 <tr>
 <td><code>levels</code></td>
@@ -1668,9 +1635,9 @@
 <td>About page</td>
 </tr>
 <tr>
-<td><code>/&lt;district&gt;</code> · <code>/&lt;district&gt;/&lt;block&gt;</code> · <code>/&lt;district&gt;/&lt;block&gt;/&lt;gp&gt;</code></td>
+<td><code>/&lt;district&gt;</code> · <code>/&lt;district&gt;/&lt;block&gt;</code></td>
 <td>app shell</td>
-<td>URL drill-down; the GP segment renders but the GP level is disabled</td>
+<td>URL drill-down to district and block level</td>
 </tr>
 <tr>
 <td><code>/documentation/</code> · <code>/documentation/&lt;path&gt;</code></td>
@@ -1933,14 +1900,10 @@
 <tr>
 <td><strong>Modules</strong></td>
 <td>plain ES scripts</td>
-<td><code>app.core.js</code> (bootstrap/state) plus feature files: <code>app.map.js</code>, <code>app.blocks.js</code>, <code>app.feasibility.js</code>, <code>app.clusterview.js</code>, <code>app.airec.js</code>, <code>app.district.js</code>, <code>app.gp.js</code>, <code>clusters.js</code>, …</td>
+<td><code>app.core.js</code> (bootstrap/state) plus feature files: <code>app.map.js</code>, <code>app.blocks.js</code>, <code>app.feasibility.js</code>, <code>app.clusterview.js</code>, <code>app.airec.js</code>, <code>app.district.js</code>, <code>clusters.js</code>, …</td>
 </tr>
 </tbody>
 </table>
-<div class="admonition info">
-<p class="admonition-title">GP level is disabled by default</p>
-<p><code>GP_FEATURE_ENABLED = false</code> in <code>static/js/app.core.js</code>. The GP blueprint, shapefiles, and loaders still exist server-side, and the <code>/&lt;district&gt;/&lt;block&gt;/&lt;gp&gt;</code> URL still resolves, but the frontend never enters GP level — the former Tinsukia GP drill-down is retired. Document GP endpoints as <strong>present but disabled by default</strong>.</p>
-</div>
 <hr />
 <h2 id="coverage-counts">Coverage &amp; Counts<a class="headerlink" href="#coverage-counts" title="Permanent link">&para;</a></h2>
 <table>
